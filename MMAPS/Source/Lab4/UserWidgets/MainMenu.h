@@ -47,6 +47,12 @@ public:
 	void OnToSelectModeButtonClicked();
 
 	UFUNCTION()
+	void OnTogglePasswordButtonPressed();
+
+	UFUNCTION()
+	void OnTogglePasswordButtonReleased();
+
+	UFUNCTION()
 	void OnLogInButtonClicked();
 	
 	UFUNCTION()
@@ -128,6 +134,9 @@ private:
 
 	UPROPERTY(meta=(BindWidget))
 	UButton* ConfirmCredentials;
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* TogglePassword;
 
 	UPROPERTY(meta=(BindWidget))
 	UEditableText* UserEmail;

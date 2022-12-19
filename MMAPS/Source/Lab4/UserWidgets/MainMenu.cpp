@@ -15,6 +15,11 @@ UMainMenu::UMainMenu(const FObjectInitializer& ObjectInitializer) : UUserWidget(
 	m_ServerRowWidget = ServerRowWBP.Class;
 
 	bWasLoggedIn = false;
+
+	if (UserPassword != nullptr)
+	{
+		UserPassword->SetIsPassword(true);
+	}
 }
 
 bool UMainMenu::Initialize()
@@ -38,6 +43,8 @@ bool UMainMenu::Initialize()
 	MainMenuExitButton->OnClicked.AddDynamic(this, &UMainMenu::OnMainMenuExitButtonClicked);
 	CancelCredentialsButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnCancelCredentialsClicked);
 	ConfirmCredentials->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnConfirmCredentialsClicked);
+	TogglePassword->OnPressed.AddDynamic(this, &UMainMenu::UMainMenu::OnTogglePasswordButtonPressed);
+	TogglePassword->OnReleased.AddDynamic(this, &UMainMenu::UMainMenu::OnTogglePasswordButtonReleased);
 	return true;
 }
 
@@ -175,6 +182,22 @@ void UMainMenu::OnToSelectModeButtonClicked()
 	if (ModeSelect == nullptr) return;
 	
 	MenuSwitcher->SetActiveWidget(ModeSelect);
+}
+
+void UMainMenu::OnTogglePasswordButtonPressed()
+{
+	if (UserPassword != nullptr)
+	{
+		UserPassword->SetIsPassword(false);
+	}
+}
+
+void UMainMenu::OnTogglePasswordButtonReleased()
+{
+	if (UserPassword != nullptr)
+	{
+		UserPassword->SetIsPassword(true);
+	}
 }
 
 void UMainMenu::OnLogInButtonClicked()
