@@ -69,7 +69,7 @@ protected:
 	bool bIsElimed;
 
 	UPROPERTY(EditDefaultsOnly)
-	float ElimDelay = 0.f;
+	float ElimDelay;
 	
 	FTimerHandle ElimTimer;
 
@@ -150,15 +150,10 @@ public:
 	
 public:
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastShowPlayersFrags(const ALab4Character* p_Instigator, const ALab4Character* AttackerPlayer);
-	
-	UFUNCTION(NetMulticast, Reliable)
 	void MulticastElim();
 
 	// функция для возрождения игрока, выполняемая на сервере
 	void Elim();
-
-	void ShowPlayersFrags(const ALab4Character*, const ALab4Character*);
 
 	void UpdateHUDHealth();
 	
@@ -183,8 +178,6 @@ public:
 	float GetPlayerMaxHealth() const { return MaxHealth; }
 	
 	FString GetPlayerName() const;
-
-	FString GetLocalPlayerName() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -216,5 +209,8 @@ private:
 
 	UPROPERTY()
 	class ALab4PlayerController* Lab4PlayerController;
+
+	UPROPERTY()
+	bool bIsInGameMenu;
 };
 

@@ -94,8 +94,11 @@ void AMainMenuInitializer::OnWidgetToPlayerNameAtCreation(const FString& ServerN
 
 void AMainMenuInitializer::OnWidgetToStartGame(const FString& PlayerName, bool bIsFromCreate) const
 {
-	m_pInputSaver->SavePlayerName(PlayerName);
-	m_pGameInstance->SetPlayerName(PlayerName);
+	if (GetGameInstance<ULab4GameInstance>()->GetIsLanGame())
+	{
+		m_pInputSaver->SavePlayerName(PlayerName);
+		m_pGameInstance->SetPlayerName(PlayerName);
+	}
 
 	if (bIsFromCreate)
 	{

@@ -111,6 +111,9 @@ private:
 	UPROPERTY()
 	class UGameOverMenu* GameOverWidget;
 
+	UPROPERTY()
+	class UGameMenu* InGameMenu;
+	
 	EOS_HPlatform PlatformInterface;
 	EOS_HAuth AuthInterface;
 	EOS_HConnect ConnectInterface;

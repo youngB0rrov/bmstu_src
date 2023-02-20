@@ -15,6 +15,7 @@ void UPlayerTableRow::SetPlayerRowText(ALab4PlayerState* PlayerState, uint32 Pla
 	{
 		Name = FString::Printf(TEXT("%s"), *PlayerState->GetPlayerName());
 		Score = FString::Printf(TEXT("%d"), FMath::FloorToInt(PlayerState->GetPlayerScore()));
+		UE_LOG(LogTemp, Error, TEXT("PlayerName: %s, PlayerScore: %s"), *Name, *Score);
 	}
 
 	if (PlayerRankText)

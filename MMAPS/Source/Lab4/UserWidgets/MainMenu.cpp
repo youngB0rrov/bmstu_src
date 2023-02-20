@@ -124,18 +124,38 @@ void UMainMenu::OnClickedPlayerNameAtJoining()
 {
 	if (!m_SelectedIndex.IsSet()) return;
 	
-	MenuSwitcher->SetActiveWidget(NameMenu);
+	if (GetGameInstance<ULab4GameInstance>()->GetIsLanGame())
+	{
+		MenuSwitcher->SetActiveWidget(NameMenu);
+		
+		// запомнить выбранный индекс выбираемой комнаты
+		m_pMainMenu->OnWidgetToPlayerNameAtJoining(m_SelectedIndex.GetValue());
+	}
+	else
+	{
+		m_pMainMenu->OnWidgetToPlayerNameAtJoining(m_SelectedIndex.GetValue());
+		m_pMainMenu->OnWidgetToStartGame(FString(""), m_bIsCreateGame);
+	}
 
-	m_pMainMenu->OnWidgetToPlayerNameAtJoining(m_SelectedIndex.GetValue());
 }
 
 void UMainMenu::OnClickedPlayerNameAtCreation()
 {
 	if (SessionNameEnterText->GetText().IsEmpty()) return;
 	
-	MenuSwitcher->SetActiveWidget(NameMenu);
-
-	m_pMainMenu->OnWidgetToPlayerNameAtCreation(SessionNameEnterText->GetText().ToString());
+	if (GetGameInstance<ULab4GameInstance>()->GetIsLanGame())
+	{
+		MenuSwitcher->SetActiveWidget(NameMenu);
+		
+		// Запомнить введенное имя комнаты
+		m_pMainMenu->OnWidgetToPlayerNameAtCreation(SessionNameEnterText->GetText().ToString());
+	}
+	else
+	{
+		// Запомнить введенное имя комнаты
+		m_pMainMenu->OnWidgetToPlayerNameAtCreation(SessionNameEnterText->GetText().ToString());
+		m_pMainMenu->OnWidgetToStartGame(FString(""), m_bIsCreateGame);
+	}
 }
 
 void UMainMenu::OnClickedStartGame()

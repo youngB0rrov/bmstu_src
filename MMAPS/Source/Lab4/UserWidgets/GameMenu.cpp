@@ -18,7 +18,7 @@ void UGameMenu::SetupInGameMenu()
 
 	if (PlayerController == nullptr) return;
 
-	FInputModeUIOnly InputMode;
+	FInputModeGameAndUI InputMode;
 
 	InputMode.SetWidgetToFocus(this->TakeWidget());
 	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
@@ -67,11 +67,6 @@ void UGameMenu::OnExitButtonClicked()
 	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
 }
 
-void UGameMenu::OnInGameCancelButtonClicked()
-{
-	TearDownInGameMenu();
-}
-
 bool UGameMenu::Initialize()
 {
 	// вся та логика, которая была написана для базового класса UUserWidget прописывается здесь, чтобы не переписывать ее
@@ -84,10 +79,6 @@ bool UGameMenu::Initialize()
 	if (ExitGameButton == nullptr) return false;
 	
 	ExitGameButton->OnClicked.AddDynamic(this, &UGameMenu::OnExitButtonClicked);
-
-	if (InGameCancelButton == nullptr) return false;
-
-	InGameCancelButton->OnClicked.AddDynamic(this, &UGameMenu::OnInGameCancelButtonClicked);
 
 	return true;
 }

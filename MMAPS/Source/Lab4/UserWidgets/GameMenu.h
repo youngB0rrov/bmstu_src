@@ -25,9 +25,6 @@ public:
 	UFUNCTION()
 	void OnExitButtonClicked();
 
-	UFUNCTION()
-	void OnInGameCancelButtonClicked();
-
 	virtual bool Initialize() override;
 	
 protected:
@@ -36,9 +33,6 @@ protected:
 
 	UPROPERTY(meta=(BindWidget))
 	UButton *ExitGameButton;
-
-	UPROPERTY(meta=(BindWidget))
-	UButton *InGameCancelButton;
 
 	const FString TravelMainMenuPath = TEXT("/Game/MainMenu/MainMenuMap");
 };

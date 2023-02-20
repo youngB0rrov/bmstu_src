@@ -595,9 +595,16 @@ void ULab4GameInstance::DestroySession()
 
 void ULab4GameInstance::ShowInGameMenu()
 {
+	if (InGameMenu != nullptr)
+	{
+		InGameMenu->TearDownInGameMenu();
+		InGameMenu = nullptr;
+		return;
+	}
+	
 	if (BPInGameMenuClass == nullptr) return;
 	
-	UGameMenu *InGameMenu = CreateWidget<UGameMenu>(this, BPInGameMenuClass);
+	InGameMenu = CreateWidget<UGameMenu>(this, BPInGameMenuClass);
 	
 	if (InGameMenu == nullptr)
 	{

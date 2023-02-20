@@ -19,7 +19,6 @@
 #include "Lab4HUD.h"
 #include "Lab4PlayerController.h"
 #include "Lab4PlayerState.h"
-#include "Actors/MainMenuInitializer.h"
 #include "Engine/Engine.h"
 #include "Net/UnrealNetwork.h"
 #include "UserWidgets/WidgetPlayers.h"
@@ -72,6 +71,8 @@ ALab4Character::ALab4Character()
 	FireRate = 0.25f;
 	bIsFiring = false;
 	bIsElimed = false;
+	ElimDelay = 0.1f;
+	bIsInGameMenu = false;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -156,6 +157,8 @@ void ALab4Character::TouchStopped(ETouchIndex::Type FingerIndex, FVector Locatio
 
 void ALab4Character::StartFire()
 {
+	if (bIsInGameMenu) return;
+	
 	if (!bIsFiring)
 	{
 		bIsFiring = true;
@@ -183,7 +186,7 @@ void ALab4Character::HandleFire_Implementation()
 	SpawnParameters.Instigator = GetInstigator();
 	SpawnParameters.Owner = this;
 
-	APersonProjectile* spawnedProjectile = GetWorld()->SpawnActor<APersonProjectile>(
+	GetWorld()->SpawnActor<APersonProjectile>(
 		spawnLocation, spawnRotation, SpawnParameters);
 }
 
@@ -204,12 +207,17 @@ void ALab4Character::PollInit()
 		Lab4PlayerState = GetPlayerState<ALab4PlayerState>();
 		if (Lab4PlayerState)
 		{
-			if (m_PlayerName.IsEmpty())
+			// if (m_PlayerName.IsEmpty())
+			// {
+			// 	Lab4PlayerState->SetPlayerName(m_PlayerName);
+			// 	UE_LOG(LogTemp, Warning, TEXT("PlayerName: %s"), *Lab4PlayerState->GetPlayerName());
+			// }
+			if (HasAuthority() && IsLocallyControlled() || GetLocalRole() == ROLE_AutonomousProxy)
 			{
 				m_PlayerName = GetGameInstance<ULab4GameInstance>()->GetPlayerName();
 				Lab4PlayerState->SetPlayerName(m_PlayerName);
+				Lab4PlayerState->AddToScore(0);
 			}
-			Lab4PlayerState->AddToScore(0);
 		}
 	}
 }
@@ -285,19 +293,21 @@ void ALab4Character::BeginPlay()
 		m_pGameInitializer = GetWorld()->SpawnActor<AGameInitializer>(AGameInitializer::StaticClass());
 		m_pGameInitializer->ConnectCharacter(this);
 		m_pGameInitializer->SetPlayerName(m_PlayerName);
+
 		APlayerController* PlayerController = Cast<APlayerController>(Controller);
 		Lab4HUD = Lab4HUD == nullptr ? PlayerController->GetHUD<ALab4HUD>() : Lab4HUD;
-		
 		if (Lab4HUD && !Lab4HUD->GetIsSet())
 		{
 			Lab4HUD->AddCharacterOverlay();
 		}
-		
+
+		/* Update HUD health on initialized*/
 		UpdateHUDHealth();
 	}
 
 	if (HasAuthority())
 	{
+		UE_LOG(LogTemp, Error, TEXT("I am a  server player!"));
 		OnTakeAnyDamage.AddDynamic(this, &ALab4Character::ReceiveDamage);
 	}
 }
@@ -318,28 +328,6 @@ void ALab4Character::SetCurrentHealth(float healthValue)
 		// UpdateHUDHealth();
 	}
 }
-
-// float ALab4Character::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
-//                                  AActor* DamageCauser)
-// {
-// 	// по-хорошему TakeDamage должен находиться на сервере
-// 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-// 	float damagedApplied = CurrentHealth - DamageAmount;
-//
-// 	// выполняется на сервере
-// 	SetCurrentHealth(damagedApplied);
-//
-// 	if (CurrentHealth <= 0)
-// 	{
-// 		ALab4GameMode* MyGameMode = GetWorld()->GetAuthGameMode<ALab4GameMode>();
-// 		if (MyGameMode)
-// 		{
-// 			MyGameMode->PlayerEliminated(this, EventInstigator);
-// 		}
-// 	}
-//
-// 	return damagedApplied;
-// }
 
 void ALab4Character::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
                                    AController* InstigatorController, AActor* DamageCauser)
@@ -368,25 +356,9 @@ void ALab4Character::UpdateHUDHealth()
 		                       : Lab4PlayerController;
 	if (Lab4PlayerController)
 	{
-		Lab4PlayerController->SetHUDHealth(CurrentHealth, MaxHealth);
+		UE_LOG(LogTemp, Error, TEXT("Has Authority: %d, Current Health%f"), HasAuthority(), CurrentHealth);
+		Lab4PlayerController->SetHUDHealth(CurrentHealth == 0.0 ? 100.0 : CurrentHealth, MaxHealth);
 	}
-}
-
-void ALab4Character::MulticastShowPlayersFrags_Implementation(const ALab4Character* p_Instigator,
-                                                              const ALab4Character* AttackerCharacter)
-{
-	const FVector2D TextMessageLocation = FVector2D(3.0f);
-	const ALab4PlayerState* AttackerPlayerState = AttackerCharacter->GetPlayerState<ALab4PlayerState>();
-
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald,
-	                                 FString::Printf(
-		                                 TEXT("Player %s now has %d frags"), *AttackerCharacter->GetPlayerName(),
-		                                 FMath::FloorToInt(AttackerPlayerState->GetPlayerScore())), true,
-	                                 TextMessageLocation);
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald,
-	                                 FString::Printf(TEXT("Player %s now has %d frags"), *GetPlayerName(),
-	                                                 FMath::FloorToInt(Lab4PlayerState->GetPlayerScore())), true,
-	                                 TextMessageLocation);
 }
 
 void ALab4Character::MulticastElim_Implementation()
@@ -406,11 +378,6 @@ void ALab4Character::Elim()
 	);
 }
 
-void ALab4Character::ShowPlayersFrags(const ALab4Character* Lab4Character, const ALab4Character* AttackerCharacter)
-{
-	MulticastShowPlayersFrags(Lab4Character, AttackerCharacter);
-}
-
 void ALab4Character::ElimTimerFinished()
 {
 	ALab4GameMode* MyGameMode = GetWorld()->GetAuthGameMode<ALab4GameMode>();
@@ -424,7 +391,7 @@ void ALab4Character::OnPressedPlayersList()
 {
 	APlayerController* PlayerController = Cast<APlayerController>(Controller);
 	Lab4HUD = Lab4HUD == nullptr ? PlayerController->GetHUD<ALab4HUD>() : Lab4HUD;
-		
+
 	if (Lab4HUD)
 	{
 		Lab4HUD->AddPlayerList();
@@ -435,7 +402,7 @@ void ALab4Character::OnReleasedPlayersList()
 {
 	APlayerController* PlayerController = Cast<APlayerController>(Controller);
 	Lab4HUD = Lab4HUD == nullptr ? PlayerController->GetHUD<ALab4HUD>() : Lab4HUD;
-		
+
 	if (Lab4HUD)
 	{
 		Lab4HUD->RemovePlayerList();
@@ -469,6 +436,7 @@ void ALab4Character::SetPlayerNames(const TArray<FString>& Names)
 
 void ALab4Character::ShowInGameMenu()
 {
+	bIsInGameMenu = !bIsInGameMenu;
 	GetGameInstance<ULab4GameInstance>()->ShowInGameMenu();
 }
 
@@ -476,11 +444,6 @@ FString ALab4Character::GetPlayerName() const
 {
 	return this->GetPlayerState()->GetPlayerName();
 	// return m_PlayerName;
-}
-
-FString ALab4Character::GetLocalPlayerName() const
-{
-	return m_PlayerName;
 }
 
 void ALab4Character::GetLifetimeReplicatedProps(
