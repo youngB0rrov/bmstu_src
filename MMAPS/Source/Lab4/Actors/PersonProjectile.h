@@ -32,6 +32,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category="Components")
 	class UParticleSystem* ExplosionEffect;
 
+	UPROPERTY(VisibleAnywhere, Category="Audio")
+	class USoundBase* ExplosionSoundEffect;
+
 	UPROPERTY(EditAnywhere, Category="Damage")
 	TSubclassOf<class UDamageType> DamageType;
 

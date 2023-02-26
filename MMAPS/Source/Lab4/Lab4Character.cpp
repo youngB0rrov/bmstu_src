@@ -122,7 +122,6 @@ void ALab4Character::OnHealthUpdate()
 {
 	// вызывается дважды при изменении всех реплицированных переменных на клиенте
 	UpdateHUDHealth();
-	UE_LOG(LogTemp, Warning, TEXT("UPDATING HEALTH ON CLIENTS"));
 }
 
 void ALab4Character::OnScoreUpdate()
@@ -307,7 +306,6 @@ void ALab4Character::BeginPlay()
 
 	if (HasAuthority())
 	{
-		UE_LOG(LogTemp, Error, TEXT("I am a  server player!"));
 		OnTakeAnyDamage.AddDynamic(this, &ALab4Character::ReceiveDamage);
 	}
 }
@@ -356,7 +354,6 @@ void ALab4Character::UpdateHUDHealth()
 		                       : Lab4PlayerController;
 	if (Lab4PlayerController)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Has Authority: %d, Current Health%f"), HasAuthority(), CurrentHealth);
 		Lab4PlayerController->SetHUDHealth(CurrentHealth == 0.0 ? 100.0 : CurrentHealth, MaxHealth);
 	}
 }

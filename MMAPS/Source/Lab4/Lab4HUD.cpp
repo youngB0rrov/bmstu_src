@@ -17,29 +17,33 @@
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
+#include "UserWidgets/MyUserWidget.h"
 #include "UserWidgets/PlayerTable.h"
 
 ALab4HUD::ALab4HUD()
 {
 	static ConstructorHelpers::FClassFinder<UUserWidget> BPCharacterOverlay(TEXT("/Game/GameUI/WBP_HealthBar"));
-
 	if (BPCharacterOverlay.Succeeded())
 	{
 		CharacterOverlayClass = BPCharacterOverlay.Class;
 	}
 
 	static ConstructorHelpers::FClassFinder<UUserWidget> BPElimText(TEXT("/Game/GameUI/WBP_ElimAnouncment"));
-
 	if (BPElimText.Succeeded())
 	{
 		ElimAnnouncementClass = BPElimText.Class;
 	}
 
 	static ConstructorHelpers::FClassFinder<UUserWidget> BPPlayerTable(TEXT("/Game/GameUI/WBP_Player_Table"));
-
 	if (BPPlayerTable.Succeeded())
 	{
 		PlayerTableClass = BPPlayerTable.Class;
+	}
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> BPGameOverWidget(TEXT("/Game/MainMenu/WBP_GameOverWidget"));
+	if (BPGameOverWidget.Succeeded())
+	{
+		GameOverWidgetClass = BPGameOverWidget.Class;
 	}
 
 	ElimAnnouncementDuration = 3.f;
@@ -124,6 +128,22 @@ void ALab4HUD::AddElimOverlay(FString Attacker, FString Victim)
 				false
 			);
 		}
+	}
+}
+
+void ALab4HUD::ShowGameOverWidget(const ALab4PlayerState* WinnerPlayerState)
+{
+	APlayerController* 	PlayerController = GetOwningPlayerController();
+
+	if (PlayerController && GameOverWidgetClass)
+	{
+		GameOverWidget = CreateWidget<UMyUserWidget>(PlayerController, GameOverWidgetClass);
+	}
+
+	if (GameOverWidget && WinnerPlayerState)
+	{
+		GameOverWidget->SetWinnerText(WinnerPlayerState);
+		GameOverWidget->AddToViewport();
 	}
 }
 

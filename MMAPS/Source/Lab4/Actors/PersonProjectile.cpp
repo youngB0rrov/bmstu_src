@@ -44,12 +44,18 @@ APersonProjectile::APersonProjectile()
 	ProjectileMovementComponent->InitialSpeed = 1500.0f;
 	ProjectileMovementComponent->MaxSpeed = 1500.0f;
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
-	ProjectileMovementComponent->ProjectileGravityScale = 0.0f;
+	ProjectileMovementComponent->ProjectileGravityScale = 0.1f;
 
 	static ConstructorHelpers::FObjectFinder<UParticleSystem> DefaultExplosionEffect(TEXT("/Game/StarterContent/Particles/P_Explosion"));
 	if (DefaultExplosionEffect.Succeeded())
 	{
 		ExplosionEffect = DefaultExplosionEffect.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> DefaultExplosionSoundEffect(TEXT("/Game/StarterContent/Audio/Explosion_Cue"));
+	if (DefaultExplosionSoundEffect.Succeeded())
+	{
+		ExplosionSoundEffect = DefaultExplosionSoundEffect.Object;
 	}
 	
 	DamageType = UDamageType::StaticClass();
@@ -114,5 +120,6 @@ void APersonProjectile::Destroyed()
 	Super::Destroyed();
 	FVector spawnLocation = GetActorLocation();
 	UGameplayStatics::SpawnEmitterAtLocation(this, ExplosionEffect, spawnLocation, FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);
+	UGameplayStatics::SpawnSoundAtLocation(this, ExplosionSoundEffect, spawnLocation, FRotator::ZeroRotator);
 }
 

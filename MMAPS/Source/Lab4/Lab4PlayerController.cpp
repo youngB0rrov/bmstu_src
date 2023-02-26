@@ -3,14 +3,64 @@
 
 #include "Lab4PlayerController.h"
 
+#include "Lab4Character.h"
+#include "Lab4GameMode.h"
 #include "Lab4HUD.h"
 #include "Lab4PlayerState.h"
+#include "Kismet/GameplayStatics.h"
+#include "UserWidgets/MyUserWidget.h"
 #include "UserWidgets/PlayerHealthBar.h"
 
 void ALab4PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	Lab4HUD = Cast<ALab4HUD>(GetHUD());
+	ResetCountdownTime = 6;
+}
+
+void ALab4PlayerController::SetRestartCountdownTime(int32 CountdownTime)
+{
+	Lab4HUD = Lab4HUD == nullptr ? Cast<ALab4HUD>(GetHUD()) : Lab4HUD;
+
+	if (Lab4HUD &&
+		Lab4HUD->GameOverWidget
+		)
+	{
+		Lab4HUD->GameOverWidget->SetRestartTimer(CountdownTime);
+	}
+}
+
+void ALab4PlayerController::SetRestartCountdownTimer()
+{
+	FTimerDelegate TimerDelegate;
+	TimerDelegate.BindUFunction(this, FName("DecreaseCountdownTime"));
+	
+	GetWorldTimerManager().SetTimer(
+		CountdownTimer,
+		TimerDelegate,
+		1.0f,
+		true,
+		0.0f
+		);
+}
+
+void ALab4PlayerController::DecreaseCountdownTime()
+{
+	SetRestartCountdownTime(--ResetCountdownTime);
+
+	if (ResetCountdownTime <= 0)
+	{
+		Lab4HUD = Lab4HUD == nullptr ? Cast<ALab4HUD>(GetHUD()) : Lab4HUD;
+		GetWorldTimerManager().ClearTimer(CountdownTimer);
+		ResetCountdownTime = 6;
+
+		if (Lab4HUD &&
+			Lab4HUD->GameOverWidget
+			)
+		{
+			Lab4HUD->GameOverWidget->HideWinnerWidget();
+		}
+	}
 }
 
 void ALab4PlayerController::SetHUDHealth(float Health, float MaxHealth)
@@ -47,8 +97,28 @@ void ALab4PlayerController::BroadcastAnnouncement(APlayerState* AttackerPlayerSt
 	ClientElimAnnouncement(AttackerPlayerState, VictimPlayerState);
 }
 
+void ALab4PlayerController::BroadcastGameOverAnnouncement(ALab4PlayerState* WinnerPlayerState)
+{
+	if (WinnerPlayerState)
+	{
+		ClientGameOverToggle(WinnerPlayerState);
+	}
+}
+
+void ALab4PlayerController::ClientGameOverToggle_Implementation(ALab4PlayerState* WinnerPlayerState)
+{
+	Lab4HUD = Lab4HUD == nullptr ? Cast<ALab4HUD>(GetHUD()) : Lab4HUD;
+
+	if (Lab4HUD && WinnerPlayerState)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Show UI winner"))
+		Lab4HUD->ShowGameOverWidget(WinnerPlayerState);
+		SetRestartCountdownTimer();
+	}
+}
+
 void ALab4PlayerController::ClientElimAnnouncement_Implementation(APlayerState* AttackerPlayerState,
-	APlayerState* VictimPlayerState)
+                                                                  APlayerState* VictimPlayerState)
 {
 	Lab4HUD = Lab4HUD == nullptr ? Cast<ALab4HUD>(GetHUD()) : Lab4HUD;
 	APlayerState* Self = GetPlayerState<APlayerState>();

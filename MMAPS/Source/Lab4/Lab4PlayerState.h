@@ -22,6 +22,7 @@ public:
 	FORCEINLINE float GetPlayerScore() const { return GetScore(); };
 	
 private:
+	UPROPERTY()
 	class ALab4Character* Character;
 
 	UPROPERTY()

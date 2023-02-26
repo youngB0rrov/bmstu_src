@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameFramework/GameMode.h"
 #include "GameFramework/GameModeBase.h"
 #include "Lab4GameMode.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerDiedSignature, ACharacter*, Character);
 
 UCLASS(minimalapi)
-class ALab4GameMode : public AGameModeBase
+class ALab4GameMode : public AGameMode
 {
 	GENERATED_BODY()
 	
@@ -34,6 +35,9 @@ protected:
 	
 	UPROPERTY()
 	FOnPlayerDiedSignature OnPlayerDied;
+	
+private:
+	int32 TotalFrags;
 };
 
 
