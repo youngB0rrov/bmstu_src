@@ -54,9 +54,6 @@ void UWinnerWiddget::OnNewGameButtonClicked()
 	RemoveWinnerWidget();
 	
 	if (MyGameMode == nullptr) return;
-	
-	MyGameMode->Pause(FString(TEXT("New Game")));
-	GetGameInstance<ULab4GameInstance>()->RefreshGameState();
 }
 
 void UWinnerWiddget::OnMainMenuButtonClicked()

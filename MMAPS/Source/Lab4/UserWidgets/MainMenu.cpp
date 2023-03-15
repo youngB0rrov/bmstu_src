@@ -153,6 +153,7 @@ void UMainMenu::OnClickedPlayerNameAtCreation()
 	else
 	{
 		// Запомнить введенное имя комнаты
+		UE_LOG(LogTemp, Warning, TEXT("Clicked online"));
 		m_pMainMenu->OnWidgetToPlayerNameAtCreation(SessionNameEnterText->GetText().ToString());
 		m_pMainMenu->OnWidgetToStartGame(FString(""), m_bIsCreateGame);
 	}
@@ -222,8 +223,9 @@ void UMainMenu::OnTogglePasswordButtonReleased()
 
 void UMainMenu::OnLogInButtonClicked()
 {
+	GetGameInstance<ULab4GameInstance>()->InitializePlatformInterface();
 	GetGameInstance<ULab4GameInstance>()->LogIn();
-
+	// GetGameInstance<ULab4GameInstance>()->LoginViaSDKAccountPortal();
 	bWasLoggedIn = true;
 }
 

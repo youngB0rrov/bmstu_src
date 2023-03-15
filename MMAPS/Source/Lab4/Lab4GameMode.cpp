@@ -33,23 +33,6 @@ ALab4GameMode::ALab4GameMode()
 	TotalFrags = 3;
 }
 
-void ALab4GameMode::Pause(const FString PlayerName)
-{
-	UWorld* World = GetWorld();
-
-	if (World == nullptr) return;
-
-	if (!IsPaused())
-	{
-		UGameplayStatics::SetGamePaused(World, true);
-		GetGameInstance<ULab4GameInstance>()->SetupWinnerWidget(PlayerName);
-	}
-	else
-	{
-		UGameplayStatics::SetGamePaused(World, false);
-	}
-}
-
 void ALab4GameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController)
 {
 	if (ElimmedCharacter)

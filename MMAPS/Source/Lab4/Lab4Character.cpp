@@ -213,8 +213,12 @@ void ALab4Character::PollInit()
 			// }
 			if (HasAuthority() && IsLocallyControlled() || GetLocalRole() == ROLE_AutonomousProxy)
 			{
-				m_PlayerName = GetGameInstance<ULab4GameInstance>()->GetPlayerName();
-				Lab4PlayerState->SetPlayerName(m_PlayerName);
+				GameInstance = GameInstance == nullptr ? GetGameInstance<ULab4GameInstance>() : GameInstance;
+				m_PlayerName = GameInstance->GetPlayerName();
+				if (GameInstance->GetIsLanGame() == true)
+				{
+					Lab4PlayerState->SetPlayerName(m_PlayerName);
+				}
 				Lab4PlayerState->AddToScore(0);
 			}
 		}
@@ -265,16 +269,6 @@ void ALab4Character::MoveRight(float Value)
 void ALab4Character::Destroyed()
 {
 	Super::Destroyed();
-
-	UWorld* World = GetWorld();
-
-	if (World == nullptr) return;
-
-	ALab4GameMode* GameMode = Cast<ALab4GameMode>(World->GetAuthGameMode());
-
-	if (GameMode == nullptr) return;
-
-	GameMode->GetOnPlayerDied().Broadcast(this);
 }
 
 void ALab4Character::BeginPlay()

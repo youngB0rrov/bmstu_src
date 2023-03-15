@@ -1,6 +1,8 @@
 #include "Lab4GameInstance.h"
 
 #include <eos_auth.h>
+#include <eos_leaderboards.h>
+#include <eos_stats.h>
 #include <string>
 
 #include "EOSSettings.h"
@@ -11,11 +13,11 @@
 #include "Lab4/Lab4Character.h"
 #include "Lab4/Actors/MainMenuInitializer.h"
 #include "Engine/Engine.h"
-#include "GameFramework/GameModeBase.h"
 #include "GameFramework/PlayerState.h"
-#include "Lab4/Lab4GameMode.h"
 #include "Lab4/UserWidgets/GameOverMenu.h"
-#include "Lab4/UserWidgets/WinnerWiddget.h"
+
+EOS_EpicAccountId ULab4GameInstance::Test = nullptr;
+AMainMenuInitializer* ULab4GameInstance::m_pMainMenu = m_pMainMenu != nullptr ? m_pMainMenu : nullptr;
 
 void ULab4GameInstance::Init()
 {
@@ -104,15 +106,6 @@ ULab4GameInstance::ULab4GameInstance()
 	
 }
 
-void ULab4GameInstance::SetupWinnerWidget(FString WinnerName)
-{
-	if (BPWinnerWidgetClass == nullptr) return;
-	
-	UWinnerWiddget* p_WinnerWidget = CreateWidget<UWinnerWiddget>(this, BPWinnerWidgetClass);
-	p_WinnerWidget->SetupWinnerWidget();
-	p_WinnerWidget->SetupWinnerName(WinnerName);
-}
-
 void ULab4GameInstance::SetPlayerName(const FString& Name)
 {
 	m_PlayerName = Name;
@@ -157,11 +150,12 @@ void ULab4GameInstance::RemoveCharacter(ALab4Character* const Character)
 void ULab4GameInstance::Host() const
 {
 	if (!SessionPtr.IsValid()) return;
-
-	if (!bIsLanGame)
+	
+	if (bIsLanGame)
 	{
-		if (!bWasLoggedIn) return;
+		return;
 	}
+	UE_LOG(LogTemp, Warning, TEXT("Here from SDK"));
 	
 	const FNamedOnlineSession *pOnlineSession = SessionPtr->GetNamedSession(SessionNameConst);
 
@@ -332,7 +326,7 @@ void ULab4GameInstance::LogIn()
 	IdentyPtr->Login(0, AccountCredentials);
 }
 
-void ULab4GameInstance::InitializeSDK()
+void ULab4GameInstance::InitializeSDKCredentials()
 {
 	EOS_InitializeOptions SDKOptions;
 	SDKOptions.ApiVersion = EOS_INITIALIZE_API_LATEST;
@@ -380,6 +374,8 @@ void ULab4GameInstance::InitializePlatformInterface()
 	if (PlatformInterface != nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlatformInterface's been created"));
+		InitializeStatsHandler();
+		InitializeLeaderboardsHandler();
 	}
 	else
 	{
@@ -387,9 +383,9 @@ void ULab4GameInstance::InitializePlatformInterface()
 	}
 }
 
-void ULab4GameInstance::InitializeAuthInterface()
+void ULab4GameInstance::InitializeAuthInterfaceViaCredentials()
 {
-	AuthInterface = EOS_Platform_GetAuthInterface(PlatformInterface);
+	AuthInterface =  AuthInterface == nullptr ? EOS_Platform_GetAuthInterface(PlatformInterface) : AuthInterface;
 	TArray<FText> UserCredentials = m_pMainMenu->GetCredentials();
 	const FString UserEmail = UserCredentials[0].ToString();
 	const FString UserPassword = UserCredentials[1].ToString();
@@ -452,11 +448,99 @@ void ULab4GameInstance::InitializeAuthInterfaceViaExchangeCode()
 	EOS_Auth_Login(AuthInterface, &LoginOptions, nullptr, &CompletionDelegate);
 }
 
-void ULab4GameInstance::LoginViaSDK()
+void ULab4GameInstance::InitializeAuthInterfaceViaAccountPortal()
 {
-	InitializeSDK();
-	InitializePlatformInterface();
-	InitializeAuthInterface();
+	AuthInterface =  AuthInterface == nullptr ? EOS_Platform_GetAuthInterface(PlatformInterface) : AuthInterface;
+	
+	if (AuthInterface == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("AuthInterface has not been initialized"));
+		return;
+	}
+	
+	EOS_Auth_LoginOptions LoginOptions;
+	EOS_Auth_Credentials AuthCredentials;
+	
+	LoginOptions.ApiVersion = EOS_AUTH_LOGIN_API_LATEST;
+	AuthCredentials.Id = "";
+	AuthCredentials.Token = "";
+	AuthCredentials.ApiVersion = EOS_AUTH_CREDENTIALS_API_LATEST;
+	AuthCredentials.Type = EOS_ELoginCredentialType::EOS_LCT_AccountPortal;
+	AuthCredentials.SystemAuthCredentialsOptions = nullptr;
+	LoginOptions.Credentials = &AuthCredentials;
+
+	EOS_Auth_Login(AuthInterface, &LoginOptions, nullptr, &CompletionDelegate);
+}
+
+void ULab4GameInstance::InitializeStatsHandler()
+{
+	if (PlatformInterface == nullptr)
+		return;
+	
+	StatsInterfaceHandle = EOS_Platform_GetStatsInterface(PlatformInterface);
+	UE_LOG(LogTemp, Warning, TEXT("Stats Interface has been created"));
+}
+
+void ULab4GameInstance::InitializeLeaderboardsHandler()
+{
+	if (PlatformInterface == nullptr)
+		return;
+
+	LeaderboardsHandle = EOS_Platform_GetLeaderboardsInterface(PlatformInterface);
+	UE_LOG(LogTemp, Warning, TEXT("Leaderboards Interface has been created"));
+}
+
+void ULab4GameInstance::SubmitPlayerScores(const uint32 PlayerFrags)
+{
+	if (StatsInterfaceHandle == nullptr) return;
+
+	EOS_Stats_IngestStatOptions IngestStatOptions;
+	EOS_Stats_IngestData IngestData;
+
+	IngestData.ApiVersion = EOS_STATS_INGESTDATA_API_LATEST;
+	IngestData.StatName = TCHAR_TO_ANSI(*FString(TEXT("PlayerFragsHighScore")));
+	// TODO Реализовать функцию перевода заработанных фрагов в очки
+	IngestData.IngestAmount = PlayerFrags;
+	
+	IngestStatOptions.ApiVersion = EOS_STATS_INGESTSTAT_API_LATEST;
+	IngestStatOptions.StatsCount = 1;
+	IngestStatOptions.Stats = &IngestData;
+	IngestStatOptions.LocalUserId = LoggedInUserID;
+	IngestStatOptions.TargetUserId = LoggedInUserID;
+
+	EOS_Stats_IngestStat(
+		StatsInterfaceHandle,
+		&IngestStatOptions,
+		nullptr,
+		&CompletionDelegateIngestPlayerData
+		);
+}
+
+void ULab4GameInstance::GetLeaderboardData()
+{
+	if (LeaderboardsHandle == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Leaderboards handler is invalid"));
+		return;
+	}
+
+	EOS_Leaderboards_QueryLeaderboardRanksOptions LeaderboardRanksOptions;
+	LeaderboardRanksOptions.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDRANKS_API_LATEST;
+	LeaderboardRanksOptions.LeaderboardId = TCHAR_TO_ANSI(*FString(TEXT("PlayersFragsLeaderboard")));
+	LeaderboardRanksOptions.LocalUserId = LoggedInUserID;
+	EOS_Leaderboards_QueryLeaderboardRanks(LeaderboardsHandle, &LeaderboardRanksOptions, nullptr, &CompletionDelegateLeaderboards);
+}
+
+void EOS_CALL ULab4GameInstance::CompletionDelegateLeaderboards(const EOS_Leaderboards_OnQueryLeaderboardRanksCompleteCallbackInfo* Data)
+{
+	if (Data->ResultCode == EOS_EResult::EOS_Success)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Accessed to leaderboard data"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Error while accessing leaderboard data: %hs"), EOS_EResult_ToString(Data->ResultCode));
+	}
 }
 
 void EOS_CALL ULab4GameInstance::CompletionDelegate(const EOS_Auth_LoginCallbackInfo* Data)
@@ -481,8 +565,8 @@ void EOS_CALL ULab4GameInstance::CompletionDelegate(const EOS_Auth_LoginCallback
 		true,
 		FVector2D(3.f)
 		);
-		// m_pMainMenu->SetWidgetOnLoginComplete();
-		// EOS_ProductUserId(Data->LocalUserId);
+		m_pMainMenu->SetWidgetOnLoginComplete();
+		Test = Data->LocalUserId;
 		return;
 	}
 	
@@ -496,16 +580,39 @@ void EOS_CALL ULab4GameInstance::CompletionDelegate(const EOS_Auth_LoginCallback
 		);	
 }
 
+void ULab4GameInstance::CompletionDelegateIngestPlayerData(const EOS_Stats_IngestStatCompleteCallbackInfo* Data)
+{
+	if (Data->ResultCode == EOS_EResult::EOS_Success)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("User data was submitted successfully"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Error, while submitting user data %hs"), EOS_EResult_ToString(Data->ResultCode));
+	}
+}
 
 void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId,
                                         const FString& Error)
 {
-	
 	UE_LOG(LogTemp, Warning, TEXT("Logged In: %d"), bWasSuccessful);
 	
 	bWasLoggedIn = bWasSuccessful;
 	
 	if (OnlineSubsystem == nullptr) return;
+
+	const FString StringUserId = UserId.ToString();
+	UE_LOG(LogTemp, Warning, TEXT("User string user ID: %s"), *StringUserId);
+	LoggedInUserID = EOS_ProductUserId_FromString(TCHAR_TO_ANSI(*StringUserId));
+
+	if (EOS_ProductUserId_IsValid(LoggedInUserID) == EOS_TRUE)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UserProductId is valid"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("UserProductId is invalid"));
+	}
 
 	IOnlineIdentityPtr IdentyPtr = OnlineSubsystem->GetIdentityInterface();
 
@@ -517,10 +624,25 @@ void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful,
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Green, FString::Printf(TEXT("Logged In Successfuly!")));
 		m_pMainMenu->SetWidgetOnLoginComplete();
+		GetLeaderboardData();
 	} else
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Red, FString::Printf(TEXT("Connetcion Error!")));
 	}
+}
+
+void ULab4GameInstance::LoginViaSDK()
+{
+	InitializeSDKCredentials();
+	InitializePlatformInterface();
+	InitializeAuthInterfaceViaCredentials();
+}
+
+void ULab4GameInstance::LoginViaSDKAccountPortal()
+{
+	InitializeSDKCredentials();
+	InitializePlatformInterface();
+	InitializeAuthInterfaceViaAccountPortal();
 }
 
 void ULab4GameInstance::FindSessions()
@@ -576,11 +698,6 @@ void ULab4GameInstance::OnFindOnlineSessionsComplete(const bool bWasSuccessful)
 	SessionPtr->ClearOnFindSessionsCompleteDelegates(this);
 }
 
-void ULab4GameInstance::OnJoinOnlineSessionComplete(const FName SessionName, EOnJoinSessionCompleteResult::Type Result)
-{
-	
-}
-
 void ULab4GameInstance::DestroySession()
 {
 	if (OnlineSubsystem == nullptr) return;
@@ -624,38 +741,6 @@ void ULab4GameInstance::ShowGameOverMenu()
 	if (GameOverWidget == nullptr) return;
 
 	GameOverWidget->SetupGameOverMenu();
-}
-
-void ULab4GameInstance::CheckGameState()
-{
-	for (int32 i = 0; i < m_Characters.Num(); ++i)
-	{
-		ALab4GameMode* MyGameMode = static_cast<ALab4GameMode*>(GetWorld()->GetAuthGameMode());
-		if (MyGameMode == nullptr) return;
-		
-		if (static_cast<int32>(m_Characters[i]->GetPlayerState()->GetScore()) >= FragsToWin)
-		{
-			bShouldBePaused = true;
-			MyGameMode->Pause(m_Characters[i]->GetPlayerName());
-		}
-	}
-}
-
-void ULab4GameInstance::RefreshGameState()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Refreshing..."));
-	bShouldBePaused = false;
-
-	for (int i = 0; i < m_Characters.Num(); ++i)
-	{
-		m_Characters[i]->GetPlayerState()->SetScore(0.0f);
-		m_Characters[i]->SetCurrentHealth(m_Characters[i]->GetPlayerMaxHealth());
-	}
-}
-
-void ULab4GameInstance::ChangeHealthBarState(float Persantage)
-{
-	// PlayerHealthBar->SetPersantage(Persantage);
 }
 
 void ULab4GameInstance::SetIsLanGame(const bool bIsLan)

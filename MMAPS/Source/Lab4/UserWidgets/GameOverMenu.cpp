@@ -35,8 +35,6 @@ void UGameOverMenu::OnRetryButtonClicked()
 
 	//PlayerCharacter->CallRestartPlayer();
 	PlayerCharacter->SetCurrentHealth(PlayerCharacter->GetMaxHealth());
-
-	GetGameInstance<ULab4GameInstance>()->ChangeHealthBarState(1.0f);
 }
 
 void UGameOverMenu::OnExitButtonClicked()

@@ -7,8 +7,6 @@
 #include "GameFramework/GameModeBase.h"
 #include "Lab4GameMode.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerDiedSignature, ACharacter*, Character);
-
 UCLASS(minimalapi)
 class ALab4GameMode : public AGameMode
 {
@@ -16,14 +14,8 @@ class ALab4GameMode : public AGameMode
 	
 public:
 	ALab4GameMode();
-
-	const FOnPlayerDiedSignature& GetOnPlayerDied() const { return OnPlayerDied; }
-
-	UFUNCTION(Exec)
-	void Pause(const FString PlayerName);
-
+	
 	virtual void RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController);
-
 	virtual void PlayerEliminated(
 		class ALab4Character* ElimmedCharacter,
 		class ALab4PlayerController* VictimController,
@@ -32,9 +24,6 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
-	
-	UPROPERTY()
-	FOnPlayerDiedSignature OnPlayerDied;
 	
 private:
 	int32 TotalFrags;

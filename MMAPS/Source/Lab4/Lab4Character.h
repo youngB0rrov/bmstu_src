@@ -154,7 +154,6 @@ public:
 
 	// функция для возрождения игрока, выполняемая на сервере
 	void Elim();
-
 	void UpdateHUDHealth();
 	
 	UFUNCTION()
@@ -168,15 +167,11 @@ public:
 	
 	UFUNCTION(Reliable, Server, WithValidation)
 	void RemovePlayerName();
-
 	void SetPlayerNames(const TArray<FString>& Names);
-
 	void ShowInGameMenu();
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	float GetPlayerMaxHealth() const { return MaxHealth; }
 	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	float GetPlayerMaxHealth() const { return MaxHealth; }
 	FString GetPlayerName() const;
 
 protected:

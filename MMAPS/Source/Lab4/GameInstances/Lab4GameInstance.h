@@ -54,21 +54,28 @@ public:
 	void OnFindSessionsComplete(bool Success);
 	void OnJoinSessionComplete(FName Name, EOnJoinSessionCompleteResult::Type Result);
 	void OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
+	
 	void LogIn();
-	void InitializeSDK();
+	void InitializeSDKCredentials();
+	void LoginViaSDKAccountPortal();
 	void InitializePlatformInterface();
-	void InitializeAuthInterface();
+	void InitializeAuthInterfaceViaCredentials();
 	void InitializeAuthInterfaceViaExchangeCode();
-	void InitializeConnectInterface();
+	void InitializeAuthInterfaceViaAccountPortal();
+	void InitializeStatsHandler();
+	void InitializeLeaderboardsHandler();
+	void SubmitPlayerScores(const uint32 PlayerFrags);
+	UFUNCTION(Exec)
+	void GetLeaderboardData();
 	void LoginViaSDK();
 	static void EOS_CALL CompletionDelegate(const EOS_Auth_LoginCallbackInfo* Data);
+	static void EOS_CALL CompletionDelegateLeaderboards(const EOS_Leaderboards_OnQueryLeaderboardRanksCompleteCallbackInfo* Data);
+	static void EOS_CALL CompletionDelegateIngestPlayerData(const EOS_Stats_IngestStatCompleteCallbackInfo* Data);
 	void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId &UserId, const FString &Error);
 
 	UFUNCTION(Exec)
 	void FindSessions();
 	void OnFindOnlineSessionsComplete(const bool bWasSuccessful);
-
-	void OnJoinOnlineSessionComplete(const FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
 	void DestroySession();
 	
@@ -76,18 +83,11 @@ public:
 	
 	UFUNCTION(Exec)
 	void ShowInGameMenu();
-
-	UFUNCTION()
-	void SetupWinnerWidget(FString WinnerName);
 	
 	UFUNCTION(Exec)
 	void ShowGameOverMenu();
-	
-	void CheckGameState();
 
-	void RefreshGameState();
 	
-	void ChangeHealthBarState(float Persantage);
 	void SetIsLanGame(const bool bIsLan);
 	void SetIsOnlineGame(const bool bIsLan);
 	bool GetIsLanGame() const;
@@ -96,14 +96,15 @@ public:
 
 	UFUNCTION(Exec)
 	void HideGameOverMenu();
+
+	static EOS_EpicAccountId LoggedInUserId;
 	
 private:
 	void CreateSession() const;
 	void LoadMainMenu() const;
 	bool bShouldBePaused;
 	
-	UPROPERTY()
-	AMainMenuInitializer *m_pMainMenu;
+	static AMainMenuInitializer *m_pMainMenu;
 	
 	UPROPERTY()
 	UPlayerHealthBar* PlayerHealthBar;
@@ -119,6 +120,11 @@ private:
 	EOS_HConnect ConnectInterface;
 	EOS_ProductUserId LocalUserId;
 	EOS_ContinuanceToken ContinuanceToken;
+	EOS_HStats StatsInterfaceHandle;
+	EOS_HLeaderboards LeaderboardsHandle;
+	EOS_HSessions SessionsHandle;
+	EOS_ProductUserId LoggedInUserID;
+	static EOS_EpicAccountId Test;
 	
 	bool bWasLoggedIn;
 	bool bIsLanGame;
@@ -146,7 +152,4 @@ private:
 	const FName SessionNameConst = "Session";
 	const FString TravelGamePath = TEXT("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap?listen");
 	const FString TravelMainMenuPath = TEXT("/Game/MainMenu/MainMenuMap");
-	
-	UPROPERTY()
-	int32 FragsToWin = 3;
 };
