@@ -10,6 +10,7 @@
 #include "eos_auth_types.h"
 #include "eos_common.h"
 #include "eos_connect_types.h"
+#include "eos_sessions_types.h"
 #include "eos_sdk.h"
 #include "Lab4GameInstance.generated.h"
 
@@ -64,13 +65,28 @@ public:
 	void InitializeAuthInterfaceViaAccountPortal();
 	void InitializeStatsHandler();
 	void InitializeLeaderboardsHandler();
-	void SubmitPlayerScores(const uint32 PlayerFrags);
+	void InitializeConnectHandler();
+	void InitializeSessionsHandler();
+	
 	UFUNCTION(Exec)
-	void GetLeaderboardData();
-	void LoginViaSDK();
+	void SubmitPlayerScores() const;
+	
+	UFUNCTION(Exec)
+	void QueryRanks() const;
+	
+	void LoginViaCredentials();
+	static void ConnectViaSDK();
+	void CreateSessionViaSDK() const;
+
+	UFUNCTION(Exec)
+	void DestroySessionViaSDK();
+	
 	static void EOS_CALL CompletionDelegate(const EOS_Auth_LoginCallbackInfo* Data);
 	static void EOS_CALL CompletionDelegateLeaderboards(const EOS_Leaderboards_OnQueryLeaderboardRanksCompleteCallbackInfo* Data);
 	static void EOS_CALL CompletionDelegateIngestPlayerData(const EOS_Stats_IngestStatCompleteCallbackInfo* Data);
+	static void EOS_CALL CompletionDelegateConnect(const EOS_Connect_LoginCallbackInfo* Data);
+	static void EOS_CALL CompletionDelegateSessionCreate(const EOS_Sessions_UpdateSessionCallbackInfo* Data);
+	static void EOS_CALL CompletionDelegateSessionDestroy(const EOS_Sessions_DestroySessionCallbackInfo* Data);
 	void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId &UserId, const FString &Error);
 
 	UFUNCTION(Exec)
@@ -97,7 +113,10 @@ public:
 	UFUNCTION(Exec)
 	void HideGameOverMenu();
 
-	static EOS_EpicAccountId LoggedInUserId;
+	static char const* EpicAccountIDToString(EOS_EpicAccountId InAccountId);
+	static char const* ProductUserIDToString(EOS_ProductUserId InAccountId);
+	static EOS_EpicAccountId EpicAccountIdFromString(const char* AccountString);
+	static EOS_ProductUserId ProductUserIdFromString(const char* AccountString);
 	
 private:
 	void CreateSession() const;
@@ -116,15 +135,15 @@ private:
 	class UGameMenu* InGameMenu;
 	
 	EOS_HPlatform PlatformInterface;
-	EOS_HAuth AuthInterface;
-	EOS_HConnect ConnectInterface;
-	EOS_ProductUserId LocalUserId;
+	static EOS_HAuth AuthInterface;
 	EOS_ContinuanceToken ContinuanceToken;
 	EOS_HStats StatsInterfaceHandle;
 	EOS_HLeaderboards LeaderboardsHandle;
 	EOS_HSessions SessionsHandle;
-	EOS_ProductUserId LoggedInUserID;
-	static EOS_EpicAccountId Test;
+	static EOS_HConnect ConnectHandle;
+	static EOS_EpicAccountId LoggedInUserID;
+	static EOS_ProductUserId Eos_ProductUserId;
+	static const char* CurrentSessionId;
 	
 	bool bWasLoggedIn;
 	bool bIsLanGame;
@@ -150,6 +169,7 @@ private:
 	
 	const FName ServerNameKey = "ServerName";
 	const FName SessionNameConst = "Session";
-	const FString TravelGamePath = TEXT("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap?listen");
+	static const FString TravelGamePath;
 	const FString TravelMainMenuPath = TEXT("/Game/MainMenu/MainMenuMap");
+	const uint32 ScoreCoeff = 25;
 };

@@ -269,7 +269,7 @@ void UMainMenu::OnConfirmCredentialsClicked()
 				FVector2D(2.f));
 			return;
 		}
-		GameInstance->LoginViaSDK();
+		GameInstance->LoginViaCredentials();
 	}
 }
 
