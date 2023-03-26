@@ -45,6 +45,7 @@ bool UMainMenu::Initialize()
 	ConfirmCredentials->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnConfirmCredentialsClicked);
 	TogglePassword->OnPressed.AddDynamic(this, &UMainMenu::UMainMenu::OnTogglePasswordButtonPressed);
 	TogglePassword->OnReleased.AddDynamic(this, &UMainMenu::UMainMenu::OnTogglePasswordButtonReleased);
+	LeaderboardsButton->OnClicked.AddDynamic(this, &UMainMenu::OnLeaderboardsButtonClicked);
 	return true;
 }
 
@@ -225,7 +226,7 @@ void UMainMenu::OnLogInButtonClicked()
 {
 	GetGameInstance<ULab4GameInstance>()->InitializePlatformInterface();
 	GetGameInstance<ULab4GameInstance>()->LogIn();
-	// GetGameInstance<ULab4GameInstance>()->LoginViaSDKAccountPortal();
+	GetGameInstance<ULab4GameInstance>()->LoginViaSDKAccountPortal();
 	bWasLoggedIn = true;
 }
 
@@ -270,6 +271,21 @@ void UMainMenu::OnConfirmCredentialsClicked()
 			return;
 		}
 		GameInstance->LoginViaCredentials();
+	}
+}
+
+void UMainMenu::OnLeaderboardsButtonClicked()
+{
+	if (Leaderboard != nullptr)
+	{
+		MenuSwitcher->SetActiveWidget(Leaderboard);
+		ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
+
+		if (GameInstance)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Calling query global ranks"));
+			GameInstance->QueryGlobalRanks();
+		}
 	}
 }
 

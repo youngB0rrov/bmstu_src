@@ -70,6 +70,9 @@ public:
 	UFUNCTION()
 	void OnConfirmCredentialsClicked();
 
+	UFUNCTION()
+	void OnLeaderboardsButtonClicked();
+	
 	TArray<FText> GetCredentials();
 	
 	void Setup();
@@ -136,6 +139,9 @@ private:
 	UButton* ConfirmCredentials;
 
 	UPROPERTY(meta=(BindWidget))
+	UButton* LeaderboardsButton;
+
+	UPROPERTY(meta=(BindWidget))
 	UButton* TogglePassword;
 
 	UPROPERTY(meta=(BindWidget))
@@ -167,6 +173,9 @@ private:
 
 	UPROPERTY(meta=(BindWidget))
 	UWidget* Credentials;
+
+	UPROPERTY(meta=(BindWidget))
+	UWidget* Leaderboard;
 
 	UPROPERTY(meta=(BindWidget))
 	class UPanelWidget *ServersList;

@@ -12,6 +12,7 @@
 #include "eos_connect_types.h"
 #include "eos_sessions_types.h"
 #include "eos_sdk.h"
+#include "Interfaces/OnlineLeaderboardInterface.h"
 #include "Lab4GameInstance.generated.h"
 
 UCLASS(Config=Engine)
@@ -73,6 +74,9 @@ public:
 	
 	UFUNCTION(Exec)
 	void QueryRanks() const;
+
+	UFUNCTION(Exec)
+	void QueryGlobalRanks();
 	
 	void LoginViaCredentials();
 	static void ConnectViaSDK();
@@ -88,6 +92,7 @@ public:
 	static void EOS_CALL CompletionDelegateSessionCreate(const EOS_Sessions_UpdateSessionCallbackInfo* Data);
 	static void EOS_CALL CompletionDelegateSessionDestroy(const EOS_Sessions_DestroySessionCallbackInfo* Data);
 	void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId &UserId, const FString &Error);
+	void HandleQueryGlobalRanksResult(const bool bWasSuccessful, FOnlineLeaderboardReadRef LeaderboardRef);
 
 	UFUNCTION(Exec)
 	void FindSessions();
@@ -141,9 +146,10 @@ private:
 	EOS_HLeaderboards LeaderboardsHandle;
 	EOS_HSessions SessionsHandle;
 	static EOS_HConnect ConnectHandle;
-	static EOS_EpicAccountId LoggedInUserID;
-	static EOS_ProductUserId Eos_ProductUserId;
+	EOS_EpicAccountId LoggedInUserID;
+	EOS_ProductUserId Eos_ProductUserId;
 	static const char* CurrentSessionId;
+	FDelegateHandle QueryGlobalRanksDelegateHandle;
 	
 	bool bWasLoggedIn;
 	bool bIsLanGame;
@@ -152,6 +158,7 @@ private:
 	TSharedPtr<FOnlineSessionSearch> SearchSettings;
 	IOnlineSubsystem *OnlineSubsystem;
 	IOnlineSessionPtr SessionPtr;
+	IOnlineLeaderboardsPtr LeaderboardsPtr;
 	TSharedPtr<FOnlineSessionSearch> m_pSessionSearch;
 
 	FString m_PlayerName;
