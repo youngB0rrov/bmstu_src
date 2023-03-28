@@ -2,10 +2,13 @@
 #include "UObject/ConstructorHelpers.h"
 #include "ServerRow.h"
 #include "Components/EditableText.h"
+#include "Components/ScrollBox.h"
 #include "Components/WidgetSwitcher.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Lab4/Actors/MainMenuInitializer.h"
 #include "Lab4/GameInstances/Lab4GameInstance.h"
+
+#define WITH_SDK 0
 
 UMainMenu::UMainMenu(const FObjectInitializer& ObjectInitializer) : UUserWidget(ObjectInitializer)
 {
@@ -46,6 +49,7 @@ bool UMainMenu::Initialize()
 	TogglePassword->OnPressed.AddDynamic(this, &UMainMenu::UMainMenu::OnTogglePasswordButtonPressed);
 	TogglePassword->OnReleased.AddDynamic(this, &UMainMenu::UMainMenu::OnTogglePasswordButtonReleased);
 	LeaderboardsButton->OnClicked.AddDynamic(this, &UMainMenu::OnLeaderboardsButtonClicked);
+	LeaderboardBackButton->OnClicked.AddDynamic(this, &UMainMenu::OnLeaderboardBackButtonClicked);
 	return true;
 }
 
@@ -225,7 +229,9 @@ void UMainMenu::OnTogglePasswordButtonReleased()
 void UMainMenu::OnLogInButtonClicked()
 {
 	GetGameInstance<ULab4GameInstance>()->InitializePlatformInterface();
+	#if WITH_SDK != 1
 	GetGameInstance<ULab4GameInstance>()->LogIn();
+	#endif
 	GetGameInstance<ULab4GameInstance>()->LoginViaSDKAccountPortal();
 	bWasLoggedIn = true;
 }
@@ -276,7 +282,7 @@ void UMainMenu::OnConfirmCredentialsClicked()
 
 void UMainMenu::OnLeaderboardsButtonClicked()
 {
-	if (Leaderboard != nullptr)
+	if (Leaderboard != nullptr && !GetGameInstance<ULab4GameInstance>()->GetIsLanGame())
 	{
 		MenuSwitcher->SetActiveWidget(Leaderboard);
 		ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
@@ -286,6 +292,15 @@ void UMainMenu::OnLeaderboardsButtonClicked()
 			UE_LOG(LogTemp, Warning, TEXT("Calling query global ranks"));
 			GameInstance->QueryGlobalRanks();
 		}
+	}
+}
+
+void UMainMenu::OnLeaderboardBackButtonClicked()
+{
+	if (MenuSwitcher != nullptr)
+	{
+		MenuSwitcher->SetActiveWidget(MainMenu);
+		ClearRankedLeaderboardList();
 	}
 }
 
@@ -337,6 +352,27 @@ void UMainMenu::SetWidgetOnLoginComplete()
 	if (MenuSwitcher == nullptr || MainMenu == nullptr) return;
 	
 	MenuSwitcher->SetActiveWidget(MainMenu);
+}
+
+void UMainMenu::AddRankedLeaderBoardRow(UPlayerTableRow* PlayerTableRow)
+{
+	if (RankedPlayersList == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("PlayerTableRow pointer is NULL"));
+		return;
+	}
+
+	RankedPlayersList->AddChild(PlayerTableRow);
+}
+
+void UMainMenu::ClearRankedLeaderboardList()
+{
+	if (RankedPlayersList == nullptr)
+	{
+		return;
+	}
+
+	RankedPlayersList->ClearChildren();
 }
 
 void UMainMenu::SelectIndex(uint32 Index)

@@ -1,10 +1,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PlayerTableRow.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/EditableText.h"
 #include "MainMenu.generated.h"
 
+class UScrollBox;
 UCLASS()
 class LAB4_API UMainMenu : public UUserWidget
 {
@@ -72,12 +74,17 @@ public:
 
 	UFUNCTION()
 	void OnLeaderboardsButtonClicked();
+
+	UFUNCTION()
+	void OnLeaderboardBackButtonClicked();
 	
 	TArray<FText> GetCredentials();
 	
 	void Setup();
 	void Teardown();
 	void SetWidgetOnLoginComplete();
+	void AddRankedLeaderBoardRow(UPlayerTableRow* PlayerTableRow);
+	void ClearRankedLeaderboardList();
 	
 	void SelectIndex(uint32 Index);
 
@@ -142,7 +149,13 @@ private:
 	UButton* LeaderboardsButton;
 
 	UPROPERTY(meta=(BindWidget))
+	UButton* LeaderboardBackButton;
+
+	UPROPERTY(meta=(BindWidget))
 	UButton* TogglePassword;
+
+	UPROPERTY(meta=(BindWidget))
+	UScrollBox* RankedPlayersList;
 
 	UPROPERTY(meta=(BindWidget))
 	UEditableText* UserEmail;

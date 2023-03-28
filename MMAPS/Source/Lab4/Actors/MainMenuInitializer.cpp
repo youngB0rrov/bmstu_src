@@ -130,6 +130,22 @@ void AMainMenuInitializer::SetWidgetOnLoginComplete()
 	m_pMainMenu->SetWidgetOnLoginComplete();
 }
 
+void AMainMenuInitializer::AddRankedLeaderboardRow(UPlayerTableRow* PlayerRow)
+{
+	if (m_pMainMenu && PlayerRow)
+	{
+		m_pMainMenu->AddRankedLeaderBoardRow(PlayerRow);
+	}
+}
+
+void AMainMenuInitializer::ClearRankedLeaderboardList()
+{
+	if (m_pMainMenu)
+	{
+		m_pMainMenu->ClearRankedLeaderboardList();
+	}
+}
+
 TArray<FText> AMainMenuInitializer::GetCredentials()
 {
 	return m_pMainMenu->GetCredentials();

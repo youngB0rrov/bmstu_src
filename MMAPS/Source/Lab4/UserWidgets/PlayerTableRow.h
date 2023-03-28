@@ -29,4 +29,5 @@ private:
 
 public:
 	void SetPlayerRowText(ALab4PlayerState* PlayerState, uint32 PlayerIndex);
+	void SetRankedRowText(int32 Rank, FString NickName, int32 Score);
 };

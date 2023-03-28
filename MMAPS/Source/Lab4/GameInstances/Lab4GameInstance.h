@@ -146,8 +146,8 @@ private:
 	EOS_HLeaderboards LeaderboardsHandle;
 	EOS_HSessions SessionsHandle;
 	static EOS_HConnect ConnectHandle;
-	EOS_EpicAccountId LoggedInUserID;
-	EOS_ProductUserId Eos_ProductUserId;
+	static EOS_EpicAccountId LoggedInUserID;
+	static EOS_ProductUserId Eos_ProductUserId;
 	static const char* CurrentSessionId;
 	FDelegateHandle QueryGlobalRanksDelegateHandle;
 	
@@ -173,6 +173,7 @@ private:
 	TSubclassOf<UUserWidget> BPGameOverMenu;
 	TSubclassOf<UUserWidget> BPHealthBarClass;
 	TSubclassOf<UUserWidget> BPWinnerWidgetClass;
+	TSubclassOf<UUserWidget> BPRankedLeaderboardRowClass;
 	
 	const FName ServerNameKey = "ServerName";
 	const FName SessionNameConst = "Session";
