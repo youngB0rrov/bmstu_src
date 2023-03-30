@@ -97,22 +97,22 @@ void ALab4PlayerController::BroadcastAnnouncement(APlayerState* AttackerPlayerSt
 	ClientElimAnnouncement(AttackerPlayerState, VictimPlayerState);
 }
 
-void ALab4PlayerController::BroadcastGameOverAnnouncement(ALab4PlayerState* WinnerPlayerState)
+void ALab4PlayerController::BroadcastGameOverAnnouncement(ALab4PlayerState* WinnerPlayerState, float NormalizedPlayerScores)
 {
 	if (WinnerPlayerState)
 	{
-		ClientGameOverToggle(WinnerPlayerState);
+		ClientGameOverToggle(WinnerPlayerState, NormalizedPlayerScores);
 	}
 }
 
-void ALab4PlayerController::ClientGameOverToggle_Implementation(ALab4PlayerState* WinnerPlayerState)
+void ALab4PlayerController::ClientGameOverToggle_Implementation(ALab4PlayerState* WinnerPlayerState, float NormalizedPlayerScore)
 {
 	Lab4HUD = Lab4HUD == nullptr ? Cast<ALab4HUD>(GetHUD()) : Lab4HUD;
 
 	if (Lab4HUD && WinnerPlayerState)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Show UI winner"))
-		Lab4HUD->ShowGameOverWidget(WinnerPlayerState);
+		Lab4HUD->ShowGameOverWidget(WinnerPlayerState, NormalizedPlayerScore);
 		SetRestartCountdownTimer();
 	}
 }

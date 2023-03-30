@@ -16,7 +16,7 @@ class LAB4_API UMyUserWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	void SetWinnerText(const ALab4PlayerState* WinnerPlayerState);
+	void SetWinnerText(const ALab4PlayerState* WinnerPlayerState, float NormalizedPlayerScore);
 	void SetRestartTimer(int32 CountdownTime);
 	void HideWinnerWidget();
 	
@@ -29,4 +29,9 @@ private:
 
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* RestartDigitsTextBlock;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* TotalPlayerScoreText;
+
+	const uint32 ScoreCoefficient = 25;
 };

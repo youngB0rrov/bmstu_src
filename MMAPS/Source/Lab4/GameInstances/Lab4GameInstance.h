@@ -77,7 +77,9 @@ public:
 
 	UFUNCTION(Exec)
 	void QueryGlobalRanks();
-	
+
+	UFUNCTION(Exec)
+	void IngestMatchData();
 	void LoginViaCredentials();
 	static void ConnectViaSDK();
 	void CreateSessionViaSDK() const;
@@ -159,6 +161,8 @@ private:
 	IOnlineSubsystem *OnlineSubsystem;
 	IOnlineSessionPtr SessionPtr;
 	IOnlineLeaderboardsPtr LeaderboardsPtr;
+	IOnlineIdentityPtr IdentityPtr;
+	IOnlineStatsPtr StatsPtr;
 	TSharedPtr<FOnlineSessionSearch> m_pSessionSearch;
 
 	FString m_PlayerName;
@@ -177,7 +181,9 @@ private:
 	
 	const FName ServerNameKey = "ServerName";
 	const FName SessionNameConst = "Session";
+	const FName RankedLeaderboardName = TEXT("PlayersFragsLeaderboard");
+	const FName RankedStatName = TEXT("PlayerFragsHighScore");
 	static const FString TravelGamePath;
 	const FString TravelMainMenuPath = TEXT("/Game/MainMenu/MainMenuMap");
-	const uint32 ScoreCoeff = 25;
+	const uint32 ScoreCoefficient = 25;
 };

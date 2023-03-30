@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Lab4PlayerState.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/Character.h"
 #include "GameInstances/Lab4GameInstance.h"
@@ -164,6 +165,9 @@ public:
 
 	UFUNCTION(Reliable, Server, WithValidation)
 	void AddPlayerName(const FString& Name);
+
+	UFUNCTION(Reliable, Server)
+	void AddPlayerNameOnServer(const FString& PlayerName);
 	
 	UFUNCTION(Reliable, Server, WithValidation)
 	void RemovePlayerName();
@@ -173,7 +177,13 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	float GetPlayerMaxHealth() const { return MaxHealth; }
 	FString GetPlayerName() const;
+	static void GetNormalizedMatchData(float& NormalizedPlayerScore, TArray<float> PlayersFrags, float PlayerFrags);
 
+	UFUNCTION(Exec)
+	void IngestMatchData(float& TotalNormalizedPlayerScores);
+
+	void SubmitPlayerScores(float TotalNormalizedPlayerScores);
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -207,5 +217,7 @@ private:
 
 	UPROPERTY()
 	bool bIsInGameMenu;
+
+	const FString RankedStatName = TEXT("PlayerFragsHighScore");
 };
 

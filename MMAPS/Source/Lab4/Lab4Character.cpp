@@ -19,6 +19,7 @@
 #include "Lab4HUD.h"
 #include "Lab4PlayerController.h"
 #include "Lab4PlayerState.h"
+#include "OnlineSubsystemUtils.h"
 #include "Engine/Engine.h"
 #include "Net/UnrealNetwork.h"
 #include "UserWidgets/WidgetPlayers.h"
@@ -204,6 +205,8 @@ void ALab4Character::PollInit()
 	if (Lab4PlayerState == nullptr)
 	{
 		Lab4PlayerState = GetPlayerState<ALab4PlayerState>();
+		GameInstance = GameInstance == nullptr ? GetGameInstance<ULab4GameInstance>() : GameInstance;
+		
 		if (Lab4PlayerState)
 		{
 			// if (m_PlayerName.IsEmpty())
@@ -211,14 +214,22 @@ void ALab4Character::PollInit()
 			// 	Lab4PlayerState->SetPlayerName(m_PlayerName);
 			// 	UE_LOG(LogTemp, Warning, TEXT("PlayerName: %s"), *Lab4PlayerState->GetPlayerName());
 			// }
+			
+			if (GameInstance->GetIsLanGame())
+			{
+				m_PlayerName = GameInstance->GetPlayerName();
+			
+				// if (GameInstance->GetIsLanGame() == true)
+				// {
+				// 	Lab4PlayerState->SetPlayerName(m_PlayerName);
+				// }
+			
+				AddPlayerNameOnServer(m_PlayerName);
+			}
+			
 			if (HasAuthority() && IsLocallyControlled() || GetLocalRole() == ROLE_AutonomousProxy)
 			{
-				GameInstance = GameInstance == nullptr ? GetGameInstance<ULab4GameInstance>() : GameInstance;
-				m_PlayerName = GameInstance->GetPlayerName();
-				if (GameInstance->GetIsLanGame() == true)
-				{
-					Lab4PlayerState->SetPlayerName(m_PlayerName);
-				}
+
 				Lab4PlayerState->AddToScore(0);
 			}
 		}
@@ -400,6 +411,14 @@ void ALab4Character::OnReleasedPlayersList()
 	}
 }
 
+void ALab4Character::AddPlayerNameOnServer_Implementation(const FString& PlayerName)
+{
+	if (GameInstance->GetIsLanGame() == true)
+	{
+		Lab4PlayerState->SetPlayerName(PlayerName);
+	}
+}
+
 void ALab4Character::AddPlayerName_Implementation(const FString& Name)
 {
 	GetGameInstance<ULab4GameInstance>()->AddCharacter(this, Name);
@@ -435,6 +454,66 @@ FString ALab4Character::GetPlayerName() const
 {
 	return this->GetPlayerState()->GetPlayerName();
 	// return m_PlayerName;
+}
+
+void ALab4Character::GetNormalizedMatchData(float& NormalizedPlayerScore, TArray<float> PlayersFrags, const float PlayerFrags)
+{
+	const float MinFragsValue = FMath::Min<float>(PlayersFrags);
+	const float MaxFragsValue = FMath::Max<float>(PlayersFrags);
+
+	const float NormalizedPlayerFrags = (2 * PlayerFrags - MinFragsValue - MaxFragsValue) / (MaxFragsValue - MinFragsValue);
+
+	NormalizedPlayerScore = .4849 * FMath::Pow(NormalizedPlayerFrags, 3) - 1E-14 * FMath::Pow(NormalizedPlayerFrags, 2) + .4674 * NormalizedPlayerFrags + 3E-14;
+
+	UE_LOG(LogTemp, Warning, TEXT("NormalizedPlayerFrags: %f, NormalizedPlayerScore: %f"), NormalizedPlayerFrags, NormalizedPlayerScore);
+}
+
+void ALab4Character::IngestMatchData(float& TotalNormalizedPlayerScores)
+{
+	float NormalizedPlayerScore;
+	TArray<float> AllPlayerFrags;
+	
+	for (FConstPlayerControllerIterator Item = GetWorld()->GetPlayerControllerIterator(); Item; ++Item)
+	{
+		const APlayerController* PlayerController = Cast<APlayerController>(*Item);
+		AllPlayerFrags.Add(Cast<ALab4PlayerState>(PlayerController->PlayerState)->GetPlayerScore());
+	}
+
+	GetNormalizedMatchData(NormalizedPlayerScore, AllPlayerFrags, GetPlayerState<ALab4PlayerState>()->GetPlayerScore());
+	TotalNormalizedPlayerScores = NormalizedPlayerScore;
+}
+
+void ALab4Character::SubmitPlayerScores(float TotalNormalizedPlayerScores)
+{
+	IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
+
+	if (OnlineSubsystem == nullptr)
+	{
+		return;
+	}
+	
+	IOnlineIdentityPtr IdentityPtr = OnlineSubsystem->GetIdentityInterface();
+	IOnlineStatsPtr StatsPtr = OnlineSubsystem->GetStatsInterface();
+
+	FOnlineStatsUserUpdatedStats Stat = FOnlineStatsUserUpdatedStats(IdentityPtr->GetUniquePlayerId(0).ToSharedRef());
+
+	Stat.Stats.Add(RankedStatName, FOnlineStatUpdate(25, FOnlineStatUpdate::EOnlineStatModificationType::Unknown));
+
+	TArray<FOnlineStatsUserUpdatedStats> Stats;
+	Stats.Add(Stat);
+
+	StatsPtr->UpdateStats(
+		IdentityPtr->GetUniquePlayerId(0).ToSharedRef(),
+		Stats,
+		FOnlineStatsUpdateStatsComplete::CreateLambda([](const FOnlineError &ResultState)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Total score submit result: %d"), ResultState.bSucceeded);
+
+			if (!ResultState.bSucceeded)
+			{
+				UE_LOG(LogTemp, Error, TEXT("%s"), *ResultState.ErrorMessage.ToString());
+			}
+		}));
 }
 
 void ALab4Character::GetLifetimeReplicatedProps(

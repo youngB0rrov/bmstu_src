@@ -16,6 +16,7 @@
 #include "Engine/Engine.h"
 #include "GameFramework/PlayerState.h"
 #include "Interfaces/OnlineLeaderboardInterface.h"
+#include "Interfaces/OnlineStatsInterface.h"
 #include "Lab4/UserWidgets/GameOverMenu.h"
 #include "Lab4/UserWidgets/PlayerTableRow.h"
 
@@ -45,6 +46,8 @@ void ULab4GameInstance::Init()
 	// Получить адрес API сессий
 	SessionPtr = OnlineSubsystem->GetSessionInterface();
 	LeaderboardsPtr = OnlineSubsystem->GetLeaderboardsInterface();
+	StatsPtr = OnlineSubsystem->GetStatsInterface();
+	IdentityPtr = OnlineSubsystem->GetIdentityInterface();
 	
 	if(!SessionPtr.IsValid()) return;
 	
@@ -608,7 +611,7 @@ void ULab4GameInstance::QueryGlobalRanks()
 	}
 
 	FOnlineLeaderboardReadRef ReadRef = MakeShared<FOnlineLeaderboardRead, ESPMode::ThreadSafe>();
-	ReadRef->LeaderboardName = FName(TEXT("PlayersFragsLeaderboard"));
+	ReadRef->LeaderboardName = RankedLeaderboardName;
 	ReadRef->ColumnMetadata.Add(FColumnMetaData(FName(TEXT("PlayerFragsHighScore")), EOnlineKeyValuePairDataType::Int32));
 	ReadRef->SortedColumn = FName(TEXT("Score"));
 	QueryGlobalRanksDelegateHandle = LeaderboardsPtr->AddOnLeaderboardReadCompleteDelegate_Handle(
@@ -630,8 +633,19 @@ void ULab4GameInstance::QueryGlobalRanks()
 	}
 }
 
+void ULab4GameInstance::IngestMatchData()
+{
+	IOnlineIdentityPtr Identity = IdentityPtr == nullptr ? OnlineSubsystem->GetIdentityInterface() : IdentityPtr;
+	IOnlineStatsPtr Stats = StatsPtr == nullptr ? OnlineSubsystem->GetStatsInterface() : StatsPtr;
+
+	FOnlineStatsUserUpdatedStats Stat = FOnlineStatsUserUpdatedStats(Identity->GetUniquePlayerId(0).ToSharedRef());
+
+	APlayerController* CurrentPC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+}
+
 void EOS_CALL ULab4GameInstance::CompletionDelegateLeaderboards(const EOS_Leaderboards_OnQueryLeaderboardRanksCompleteCallbackInfo* Data)
 {
+	UE_LOG(LogTemp, Warning, TEXT("ProductUserId in QueryRanks: %hs"), ProductUserIDToString(Eos_ProductUserId));
 	if (Data->ResultCode == EOS_EResult::EOS_Success)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Accessed to leaderboard data"));
@@ -744,8 +758,7 @@ void ULab4GameInstance::CompletionDelegateSessionDestroy(const EOS_Sessions_Dest
 	UE_LOG(LogTemp, Error, TEXT("Error, while destroying session %s: %hs"), **DestroyedSessionName, EOS_EResult_ToString(Data->ResultCode));
 }
 
-void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId,
-                                        const FString& Error)
+void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Logged In: %d"), bWasSuccessful);
 	bWasLoggedIn = bWasSuccessful;
@@ -754,8 +767,8 @@ void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful,
 	
 	const FUniqueNetIdString UniqueNetIdString = static_cast<FUniqueNetIdString>(UserId);
 	TArray<FString> AccountIds;
-	UniqueNetIdString.ToString().ParseIntoArray(AccountIds, EOS_ID_SEPARATOR, false);
-	
+	UniqueNetIdString.UniqueNetIdStr.ParseIntoArray(AccountIds, EOS_ID_SEPARATOR, false);
+
 	FString EpicAccountIdString;
 	FString ProductUserIdSting;
 	
@@ -771,7 +784,7 @@ void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful,
 	
 	Eos_ProductUserId = EOS_ProductUserId_FromString(TCHAR_TO_UTF8(*ProductUserIdSting));
 	LoggedInUserID = EpicAccountIdFromString(TCHAR_TO_UTF8(*EpicAccountIdString));
-	
+	UE_LOG(LogTemp, Warning, TEXT("ProductUserId in Login callback: %hs"), ProductUserIDToString(Eos_ProductUserId));
 	IOnlineIdentityPtr IdentyPtr = OnlineSubsystem->GetIdentityInterface();
 
 	if (IdentyPtr == nullptr) return;
@@ -832,7 +845,7 @@ void ULab4GameInstance::ConnectViaSDK()
 	{
 		return;
 	}
-	
+
 	EOS_Auth_Token* UserAuthToken;
 	EOS_Auth_CopyUserAuthTokenOptions CopyTokenOptions = {0};
 	CopyTokenOptions.ApiVersion = EOS_AUTH_COPYUSERAUTHTOKEN_API_LATEST;

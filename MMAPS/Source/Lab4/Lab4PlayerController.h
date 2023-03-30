@@ -25,13 +25,13 @@ public:
 	void SetHUDHealth(float Health, float MaxHealth);
 	void SetHUDScore(float Score);
 	void BroadcastAnnouncement(APlayerState* AttackerPlayerState, APlayerState* VictimPlayerState);
-	void BroadcastGameOverAnnouncement(class ALab4PlayerState* WinnerPlayerState);
+	void BroadcastGameOverAnnouncement(class ALab4PlayerState* WinnerPlayerState, float NormalizedPlayerScores);
 
 	UFUNCTION(Client, Reliable)
 	void ClientElimAnnouncement(APlayerState* AttackerPlayerState, APlayerState* VictimPlayerState);
 
 	UFUNCTION(Client, Reliable)
-	void ClientGameOverToggle(ALab4PlayerState* WinnerPlayerState);
+	void ClientGameOverToggle(ALab4PlayerState* WinnerPlayerState, float NormalizedPlayerScores);
 	
 	FORCEINLINE ALab4HUD* GetLab4HUD () const { return Lab4HUD; }
 	

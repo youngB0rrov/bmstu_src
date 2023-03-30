@@ -46,7 +46,7 @@ public:
 
 	void AddElimOverlay(FString Attacker, FString Victim);
 
-	void ShowGameOverWidget(const class ALab4PlayerState* WinnerPlayerState);
+	void ShowGameOverWidget(const class ALab4PlayerState* WinnerPlayerState, float NormalizedPlayerScore);
 
 	UFUNCTION(Exec)
 	void AddPlayerList();

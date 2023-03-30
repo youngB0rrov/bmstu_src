@@ -131,7 +131,7 @@ void ALab4HUD::AddElimOverlay(FString Attacker, FString Victim)
 	}
 }
 
-void ALab4HUD::ShowGameOverWidget(const ALab4PlayerState* WinnerPlayerState)
+void ALab4HUD::ShowGameOverWidget(const ALab4PlayerState* WinnerPlayerState, float NormalizedPlayerScore)
 {
 	APlayerController* 	PlayerController = GetOwningPlayerController();
 
@@ -142,7 +142,7 @@ void ALab4HUD::ShowGameOverWidget(const ALab4PlayerState* WinnerPlayerState)
 
 	if (GameOverWidget && WinnerPlayerState)
 	{
-		GameOverWidget->SetWinnerText(WinnerPlayerState);
+		GameOverWidget->SetWinnerText(WinnerPlayerState, NormalizedPlayerScore);
 		GameOverWidget->AddToViewport();
 	}
 }

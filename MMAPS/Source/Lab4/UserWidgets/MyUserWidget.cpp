@@ -5,7 +5,7 @@
 
 #include "Components/TextBlock.h"
 
-void UMyUserWidget::SetWinnerText(const ALab4PlayerState* WinnerPlayerState)
+void UMyUserWidget::SetWinnerText(const ALab4PlayerState* WinnerPlayerState, float NormalizedPlayerScore)
 {
 	if (WinnerPlayerState &&
 		GameOverTitle &&
@@ -18,6 +18,11 @@ void UMyUserWidget::SetWinnerText(const ALab4PlayerState* WinnerPlayerState)
 		
 		GameOverTitle->SetText(FText::FromString(TitleMessage));
 		WinnerNameTextBox->SetText(FText::FromString(WinnerPlayerState->GetPlayerName()));
+	}
+
+	if (TotalPlayerScoreText)
+	{
+		TotalPlayerScoreText->SetText(FText::FromString(FString::Printf(TEXT("%d"), FMath::FloorToInt(NormalizedPlayerScore * ScoreCoefficient))));
 	}
 }
 

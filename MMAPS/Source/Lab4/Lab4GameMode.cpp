@@ -30,7 +30,7 @@ ALab4GameMode::ALab4GameMode()
 
 	PlayerControllerClass = ALab4PlayerController::StaticClass();
 
-	TotalFrags = 3;
+	TotalFrags = 5;
 }
 
 void ALab4GameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController)
@@ -78,6 +78,7 @@ void ALab4GameMode::PlayerEliminated(ALab4Character* ElimmedCharacter,
 		for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
 		{
 			ALab4PlayerController* Lab4PlayerController = Cast<ALab4PlayerController>(*It);
+			
 			if (VictimPlayerState && AttackerPlayerState && Lab4PlayerController)
 			{
 				Lab4PlayerController->BroadcastAnnouncement(AttackerPlayerState, VictimPlayerState);
@@ -85,13 +86,21 @@ void ALab4GameMode::PlayerEliminated(ALab4Character* ElimmedCharacter,
 
 			if (FMath::FloorToInt(Cast<ALab4PlayerState>(Lab4PlayerController->PlayerState)->GetScore()) >= TotalFrags)
 			{
+				
 				for (FConstPlayerControllerIterator It2 = World->GetPlayerControllerIterator(); It2; ++It2)
 				{
 					ALab4PlayerController* CharacterPlayerController = Cast<ALab4PlayerController>(*It2);
-
+					ALab4Character* Character = Cast<ALab4Character>(CharacterPlayerController->GetCharacter());
+					float PlayerNormalizedScores;
+					
+					if (Character)
+					{
+						Character->IngestMatchData(PlayerNormalizedScores);
+					}
+					
 					if (CharacterPlayerController)
 					{
-						CharacterPlayerController->BroadcastGameOverAnnouncement(Lab4PlayerController->GetPlayerState<ALab4PlayerState>());
+						CharacterPlayerController->BroadcastGameOverAnnouncement(Lab4PlayerController->GetPlayerState<ALab4PlayerState>(), PlayerNormalizedScores);
 					}
 				}
 				RestartGame();
