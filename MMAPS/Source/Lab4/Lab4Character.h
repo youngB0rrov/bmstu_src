@@ -182,7 +182,8 @@ public:
 	UFUNCTION(Exec)
 	void IngestMatchData(float& TotalNormalizedPlayerScores);
 
-	void SubmitPlayerScores(float TotalNormalizedPlayerScores);
+	UFUNCTION(Exec)
+	void SubmitPlayerRankedScores(float TotalNormalizedPlayerScores);
 	
 protected:
 	virtual void BeginPlay() override;
@@ -219,5 +220,7 @@ private:
 	bool bIsInGameMenu;
 
 	const FString RankedStatName = TEXT("PlayerFragsHighScore");
+
+	const uint32 RankedCoefficient = 25;
 };
 

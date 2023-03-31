@@ -184,23 +184,23 @@ void UMainMenu::OnLanButtonClicked()
 
 void UMainMenu::OnInternetButtonClicked()
 {
-	GetGameInstance<ULab4GameInstance>()->SetIsOnlineGame(false);
+	ULab4GameInstance* Lab4GameInstance = GetGameInstance<ULab4GameInstance>();
+
+	if (Lab4GameInstance != nullptr)
+	{
+		Lab4GameInstance->SetIsOnlineGame(false);
+	}
 	
 	if (MainMenu == nullptr || AuthMenu == nullptr) return;
 
-	if (!bWasLoggedIn)
+	if (Lab4GameInstance && !Lab4GameInstance->GetLoginStatus())
 	{
-		if (GetGameInstance<ULab4GameInstance>()->ChangeConfigToLan())
-		{
-			MenuSwitcher->SetActiveWidget(AuthMenu);
-			return;
-		}
+		MenuSwitcher->SetActiveWidget(AuthMenu);
+		return;
 	}
-
-	if (GetGameInstance<ULab4GameInstance>()->ChangeConfigToOnline())
-	{
-		MenuSwitcher->SetActiveWidget(MainMenu);	
-	}
+	
+	MenuSwitcher->SetActiveWidget(MainMenu);	
+	
 }
 
 void UMainMenu::OnToSelectModeButtonClicked()

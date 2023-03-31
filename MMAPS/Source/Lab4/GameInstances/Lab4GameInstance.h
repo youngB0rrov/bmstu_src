@@ -103,6 +103,7 @@ public:
 	void DestroySession();
 	
 	FString GetPlayerName() const { return m_PlayerName; }
+	FORCEINLINE bool GetLoginStatus() const { return bWasLoggedIn;}
 	
 	UFUNCTION(Exec)
 	void ShowInGameMenu();

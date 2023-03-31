@@ -483,12 +483,18 @@ void ALab4Character::IngestMatchData(float& TotalNormalizedPlayerScores)
 	TotalNormalizedPlayerScores = NormalizedPlayerScore;
 }
 
-void ALab4Character::SubmitPlayerScores(float TotalNormalizedPlayerScores)
+void ALab4Character::SubmitPlayerRankedScores(float TotalNormalizedPlayerScores)
 {
 	IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
 
 	if (OnlineSubsystem == nullptr)
 	{
+		return;
+	}
+
+	if (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL")
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Online subsystem is NULL, this is a LAN game"));
 		return;
 	}
 	
@@ -497,7 +503,7 @@ void ALab4Character::SubmitPlayerScores(float TotalNormalizedPlayerScores)
 
 	FOnlineStatsUserUpdatedStats Stat = FOnlineStatsUserUpdatedStats(IdentityPtr->GetUniquePlayerId(0).ToSharedRef());
 
-	Stat.Stats.Add(RankedStatName, FOnlineStatUpdate(25, FOnlineStatUpdate::EOnlineStatModificationType::Unknown));
+	Stat.Stats.Add(RankedStatName, FOnlineStatUpdate(FMath::FloorToInt(RankedCoefficient * TotalNormalizedPlayerScores), FOnlineStatUpdate::EOnlineStatModificationType::Sum));
 
 	TArray<FOnlineStatsUserUpdatedStats> Stats;
 	Stats.Add(Stat);
