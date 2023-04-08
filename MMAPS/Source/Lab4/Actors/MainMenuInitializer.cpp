@@ -4,7 +4,6 @@
 #include "JoinGameUpdater.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
-#include "Lab4/Lab4PlayerController.h"
 #include "Lab4/Lab4PlayerState.h"
 #include "Lab4/GameInstances/Lab4GameInstance.h"
 #include "Lab4/UserWidgets/MainMenu.h"
@@ -130,7 +129,7 @@ void AMainMenuInitializer::SetWidgetOnLoginComplete()
 	m_pMainMenu->SetWidgetOnLoginComplete();
 }
 
-void AMainMenuInitializer::AddRankedLeaderboardRow(UPlayerTableRow* PlayerRow)
+void AMainMenuInitializer::AddRankedLeaderboardRow(URankedLeaderboardRow* PlayerRow)
 {
 	if (m_pMainMenu && PlayerRow)
 	{

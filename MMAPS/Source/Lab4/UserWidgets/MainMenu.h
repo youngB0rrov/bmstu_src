@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "PlayerTableRow.h"
+#include "RankedLeaderboardRow.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/EditableText.h"
 #include "MainMenu.generated.h"
@@ -77,13 +78,25 @@ public:
 
 	UFUNCTION()
 	void OnLeaderboardBackButtonClicked();
+
+	UFUNCTION()
+	void OnRecruitsLeagueButtonClicked();
+
+	UFUNCTION()
+	void OnGuardiansLeagueButtonClicked();
+
+	UFUNCTION()
+	void OnCrusaidersLeagueButtonClicked();
+
+	UFUNCTION()
+	void OnLegendsLeagueButtonClicked();
 	
 	TArray<FText> GetCredentials();
 	
 	void Setup();
 	void Teardown();
 	void SetWidgetOnLoginComplete();
-	void AddRankedLeaderBoardRow(UPlayerTableRow* PlayerTableRow);
+	void AddRankedLeaderBoardRow(URankedLeaderboardRow* PlayerTableRow);
 	void ClearRankedLeaderboardList();
 	
 	void SelectIndex(uint32 Index);
@@ -155,6 +168,18 @@ private:
 	UButton* TogglePassword;
 
 	UPROPERTY(meta=(BindWidget))
+	UButton* RecruitsLeagueButton;
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* GuardiansLeagueButton;
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* CrusaidersLeagueButton;
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* LegendsLeagueButton;
+
+	UPROPERTY(meta=(BindWidget))
 	UScrollBox* RankedPlayersList;
 
 	UPROPERTY(meta=(BindWidget))
@@ -198,6 +223,9 @@ private:
 	
 	UPROPERTY(meta=(BindWidget))
 	class UEditableText *NameEnterText;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* LeagueNameText;
 	
 	UPROPERTY()
 	class AMainMenuInitializer *m_pMainMenu;

@@ -50,6 +50,10 @@ bool UMainMenu::Initialize()
 	TogglePassword->OnReleased.AddDynamic(this, &UMainMenu::UMainMenu::OnTogglePasswordButtonReleased);
 	LeaderboardsButton->OnClicked.AddDynamic(this, &UMainMenu::OnLeaderboardsButtonClicked);
 	LeaderboardBackButton->OnClicked.AddDynamic(this, &UMainMenu::OnLeaderboardBackButtonClicked);
+	RecruitsLeagueButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnRecruitsLeagueButtonClicked);
+	GuardiansLeagueButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnGuardiansLeagueButtonClicked);
+	CrusaidersLeagueButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnCrusaidersLeagueButtonClicked);
+	LegendsLeagueButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnLegendsLeagueButtonClicked);
 	return true;
 }
 
@@ -290,7 +294,7 @@ void UMainMenu::OnLeaderboardsButtonClicked()
 		if (GameInstance)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Calling query global ranks"));
-			GameInstance->QueryGlobalRanks();
+			GameInstance->QueryGlobalRanks(-1000, 30);
 		}
 	}
 }
@@ -301,7 +305,92 @@ void UMainMenu::OnLeaderboardBackButtonClicked()
 	{
 		MenuSwitcher->SetActiveWidget(MainMenu);
 		ClearRankedLeaderboardList();
+
+		if (LeagueNameText != nullptr)
+		{
+			LeagueNameText->SetText(FText::FromString(FString::Printf(TEXT("Recruits"))));
+		}
 	}
+}
+
+void UMainMenu::OnRecruitsLeagueButtonClicked()
+{
+	UE_LOG(LogTemp, Warning, TEXT("League button clicked"));
+	
+	if (LeagueNameText == nullptr)
+	{
+		return;
+	}
+	
+	LeagueNameText->SetText(FText::FromString(FString::Printf(TEXT("Recruits"))));
+	ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
+
+	if (GameInstance == nullptr)
+	{
+		return;
+	}
+
+	GameInstance->QueryGlobalRanks(-1000, 30);
+}
+
+void UMainMenu::OnGuardiansLeagueButtonClicked()
+{
+	UE_LOG(LogTemp, Warning, TEXT("League button clicked"));
+	
+	if (LeagueNameText == nullptr)
+	{
+		return;
+	}
+
+	LeagueNameText->SetText(FText::FromString(FString::Printf(TEXT("Guardians"))));
+	ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
+
+	if (GameInstance == nullptr)
+	{
+		return;
+	}
+
+	GameInstance->QueryGlobalRanks(1, 1000);
+}
+
+void UMainMenu::OnCrusaidersLeagueButtonClicked()
+{
+	UE_LOG(LogTemp, Warning, TEXT("League button clicked"));
+	
+	if (LeagueNameText == nullptr)
+	{
+		return;
+	}
+
+	LeagueNameText->SetText(FText::FromString(FString::Printf(TEXT("Crusaiders"))));
+	ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
+
+	if (GameInstance == nullptr)
+	{
+		return;
+	}
+
+	GameInstance->QueryGlobalRanks(1001, 2000);
+}
+
+void UMainMenu::OnLegendsLeagueButtonClicked()
+{
+	UE_LOG(LogTemp, Warning, TEXT("League button clicked"));
+	
+	if (LeagueNameText == nullptr)
+	{
+		return;
+	}
+
+	LeagueNameText->SetText(FText::FromString(FString::Printf(TEXT("Legends"))));
+	ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
+	
+	if (GameInstance == nullptr)
+	{
+		return;
+	}
+
+	GameInstance->QueryGlobalRanks(2001, 3000);
 }
 
 TArray<FText> UMainMenu::GetCredentials()
@@ -354,7 +443,7 @@ void UMainMenu::SetWidgetOnLoginComplete()
 	MenuSwitcher->SetActiveWidget(MainMenu);
 }
 
-void UMainMenu::AddRankedLeaderBoardRow(UPlayerTableRow* PlayerTableRow)
+void UMainMenu::AddRankedLeaderBoardRow(URankedLeaderboardRow* PlayerTableRow)
 {
 	if (RankedPlayersList == nullptr)
 	{

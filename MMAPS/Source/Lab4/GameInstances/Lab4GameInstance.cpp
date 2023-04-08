@@ -19,6 +19,7 @@
 #include "Interfaces/OnlineStatsInterface.h"
 #include "Lab4/UserWidgets/GameOverMenu.h"
 #include "Lab4/UserWidgets/PlayerTableRow.h"
+#include "Lab4/UserWidgets/RankedLeaderboardRow.h"
 
 #define EOS_ID_SEPARATOR TEXT("|")
 #define WITH_SDK 0
@@ -113,7 +114,7 @@ ULab4GameInstance::ULab4GameInstance()
 		BPHealthBarClass = BPHealthBar.Class;
 	}
 
-	static ConstructorHelpers::FClassFinder<UUserWidget> BPRankedLeaderboardRow(TEXT("/Game/GameUI/WBP_Player_Table_Row"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> BPRankedLeaderboardRow(TEXT("/Game/MainMenu/WBP_RankedPlayerRow"));
 
 	if (BPRankedLeaderboardRow.Succeeded())
 	{
@@ -601,8 +602,11 @@ void ULab4GameInstance::QueryRanks() const
 	EOS_Leaderboards_QueryLeaderboardRanks(LeaderboardsHandle, &LeaderboardRanksOptions, nullptr, &CompletionDelegateLeaderboards);
 }
 
-void ULab4GameInstance::QueryGlobalRanks()
+void ULab4GameInstance::QueryGlobalRanks(const int32 LeftBoundry, const int32 RightBoundry)
 {
+	LeftScoreBoundary = LeftBoundry;
+	RightScoreBoundary = RightBoundry;
+	UE_LOG(LogTemp, Warning, TEXT("Left boudry: %d, right boundry: %d"), LeftScoreBoundary, RightScoreBoundary);
 	LeaderboardsPtr = LeaderboardsPtr == nullptr ? OnlineSubsystem->GetLeaderboardsInterface() : LeaderboardsPtr;
 
 	if (!LeaderboardsPtr.IsValid())
@@ -621,10 +625,10 @@ void ULab4GameInstance::QueryGlobalRanks()
 				ReadRef
 				)
 		);
-
+	
 	if (!LeaderboardsPtr->ReadLeaderboardsAroundRank(
 		0,
-		1000,
+		100,
 		ReadRef
 		))
 	{
@@ -807,6 +811,7 @@ void ULab4GameInstance::HandleQueryGlobalRanksResult(const bool bWasSuccessful,
 	LeaderboardsPtr = LeaderboardsPtr == nullptr ? OnlineSubsystem->GetLeaderboardsInterface() : LeaderboardsPtr;
 	LeaderboardsPtr->ClearOnLeaderboardReadCompleteDelegate_Handle(QueryGlobalRanksDelegateHandle);
 	QueryGlobalRanksDelegateHandle.Reset();
+	uint32 LocalRank = 0;
 	UE_LOG(LogTemp, Warning, TEXT("QueryGlobalRanksResult: %d"), bWasSuccessful);
 	
 	if (!bWasSuccessful)
@@ -822,18 +827,22 @@ void ULab4GameInstance::HandleQueryGlobalRanksResult(const bool bWasSuccessful,
 		UE_LOG(LogTemp, Warning, TEXT("Get global leaderboard user entity: PlayerId: %s, Player Nickname: %s, PlayerRank: %d"), *Row.PlayerId->ToString(), *Row.NickName, Row.Rank);
 		int32 Score;
 		Row.Columns[TEXT("Score")].GetValue(Score);
-		UE_LOG(LogTemp, Warning, TEXT("User score: %d"), Score);
 
+		if (!(Score > LeftScoreBoundary && Score <= RightScoreBoundary))
+		{
+			continue;
+		}
+		
 		if (BPRankedLeaderboardRowClass == nullptr)
 		{
 			return;
 		}
 		
-		UPlayerTableRow* RankedLeaderboardRow = CreateWidget<UPlayerTableRow>(this, BPRankedLeaderboardRowClass);
+		URankedLeaderboardRow* RankedLeaderboardRow = CreateWidget<URankedLeaderboardRow>(this, BPRankedLeaderboardRowClass);
 
 		if (RankedLeaderboardRow)
 		{
-			RankedLeaderboardRow->SetRankedRowText(Row.Rank, Row.NickName, Score);
+			RankedLeaderboardRow->SetRankedRowText(++LocalRank, Row.NickName, Score, Row.Rank);
 			m_pMainMenu->AddRankedLeaderboardRow(RankedLeaderboardRow);
 		}
 	}

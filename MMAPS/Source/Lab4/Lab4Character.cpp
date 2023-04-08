@@ -461,10 +461,10 @@ void ALab4Character::GetNormalizedMatchData(float& NormalizedPlayerScore, TArray
 	const float MinFragsValue = FMath::Min<float>(PlayersFrags);
 	const float MaxFragsValue = FMath::Max<float>(PlayersFrags);
 
-	const float NormalizedPlayerFrags = (2 * PlayerFrags - MinFragsValue - MaxFragsValue) / (MaxFragsValue - MinFragsValue);
+	const float NormalizedPlayerFrags = (2.06 * PlayerFrags - 1.03 * MinFragsValue - 1.03 * MaxFragsValue) / (MaxFragsValue - MinFragsValue);
 
 	NormalizedPlayerScore = .4849 * FMath::Pow(NormalizedPlayerFrags, 3) - 1E-14 * FMath::Pow(NormalizedPlayerFrags, 2) + .4674 * NormalizedPlayerFrags + 3E-14;
-
+	NormalizedPlayerScore = FMath::Clamp(NormalizedPlayerScore, -1.f, 1.f);
 	UE_LOG(LogTemp, Warning, TEXT("NormalizedPlayerFrags: %f, NormalizedPlayerScore: %f"), NormalizedPlayerFrags, NormalizedPlayerScore);
 }
 

@@ -76,7 +76,7 @@ public:
 	void QueryRanks() const;
 
 	UFUNCTION(Exec)
-	void QueryGlobalRanks();
+	void QueryGlobalRanks(const int32 LeftBoundry, const int32 RightBoundry);
 
 	UFUNCTION(Exec)
 	void IngestMatchData();
@@ -187,4 +187,5 @@ private:
 	static const FString TravelGamePath;
 	const FString TravelMainMenuPath = TEXT("/Game/MainMenu/MainMenuMap");
 	const uint32 ScoreCoefficient = 25;
+	int32 LeftScoreBoundary, RightScoreBoundary; 
 };

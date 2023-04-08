@@ -20,7 +20,7 @@ public:
 	void OnWidgetToStartGame(const FString& PlayerName, bool bIsFromCreate) const;
 	void OnInstanceFoundServers(const TArray<FString>& ServerNames) const;
 	void SetWidgetOnLoginComplete();
-	void AddRankedLeaderboardRow(class UPlayerTableRow* PlayerRow);
+	void AddRankedLeaderboardRow(class URankedLeaderboardRow* PlayerRow);
 	void ClearRankedLeaderboardList();
 	TArray<FText> GetCredentials();
 	void OnUpdaterTimerRunOut() const;
