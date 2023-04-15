@@ -294,7 +294,7 @@ void UMainMenu::OnLeaderboardsButtonClicked()
 		if (GameInstance)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Calling query global ranks"));
-			GameInstance->QueryGlobalRanks(-1000, 30);
+			GameInstance->QueryGlobalRanks(-2000, -1000);
 		}
 	}
 }
@@ -330,7 +330,7 @@ void UMainMenu::OnRecruitsLeagueButtonClicked()
 		return;
 	}
 
-	GameInstance->QueryGlobalRanks(-1000, 30);
+	GameInstance->QueryGlobalRanks(-2000, -1000);
 }
 
 void UMainMenu::OnGuardiansLeagueButtonClicked()
@@ -350,7 +350,7 @@ void UMainMenu::OnGuardiansLeagueButtonClicked()
 		return;
 	}
 
-	GameInstance->QueryGlobalRanks(1, 1000);
+	GameInstance->QueryGlobalRanks(-999, 0);
 }
 
 void UMainMenu::OnCrusaidersLeagueButtonClicked()
@@ -370,7 +370,7 @@ void UMainMenu::OnCrusaidersLeagueButtonClicked()
 		return;
 	}
 
-	GameInstance->QueryGlobalRanks(1001, 2000);
+	GameInstance->QueryGlobalRanks(1, 1000);
 }
 
 void UMainMenu::OnLegendsLeagueButtonClicked()
@@ -390,7 +390,7 @@ void UMainMenu::OnLegendsLeagueButtonClicked()
 		return;
 	}
 
-	GameInstance->QueryGlobalRanks(2001, 3000);
+	GameInstance->QueryGlobalRanks(1001, 2000);
 }
 
 TArray<FText> UMainMenu::GetCredentials()

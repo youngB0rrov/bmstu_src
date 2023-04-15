@@ -182,8 +182,10 @@ public:
 	UFUNCTION(Exec)
 	void IngestMatchData(float& TotalNormalizedPlayerScores);
 
-	UFUNCTION(Exec)
-	void SubmitPlayerRankedScores(float TotalNormalizedPlayerScores);
+	UFUNCTION(Client, Reliable)
+	void SubmitRankedScores(float TotalNormalizedPlayerScores);
+	
+	void BroadcastSubmitPlayerRankedScores(float TotalNormalizedPlayerScores);
 	
 protected:
 	virtual void BeginPlay() override;

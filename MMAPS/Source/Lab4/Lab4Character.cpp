@@ -282,6 +282,11 @@ void ALab4Character::Destroyed()
 	Super::Destroyed();
 }
 
+void ALab4Character::BroadcastSubmitPlayerRankedScores(float TotalNormalizedPlayerScores)
+{
+	SubmitRankedScores(TotalNormalizedPlayerScores);
+}
+
 void ALab4Character::BeginPlay()
 {
 	Super::BeginPlay();
@@ -465,7 +470,6 @@ void ALab4Character::GetNormalizedMatchData(float& NormalizedPlayerScore, TArray
 
 	NormalizedPlayerScore = .4849 * FMath::Pow(NormalizedPlayerFrags, 3) - 1E-14 * FMath::Pow(NormalizedPlayerFrags, 2) + .4674 * NormalizedPlayerFrags + 3E-14;
 	NormalizedPlayerScore = FMath::Clamp(NormalizedPlayerScore, -1.f, 1.f);
-	UE_LOG(LogTemp, Warning, TEXT("NormalizedPlayerFrags: %f, NormalizedPlayerScore: %f"), NormalizedPlayerFrags, NormalizedPlayerScore);
 }
 
 void ALab4Character::IngestMatchData(float& TotalNormalizedPlayerScores)
@@ -483,7 +487,7 @@ void ALab4Character::IngestMatchData(float& TotalNormalizedPlayerScores)
 	TotalNormalizedPlayerScores = NormalizedPlayerScore;
 }
 
-void ALab4Character::SubmitPlayerRankedScores(float TotalNormalizedPlayerScores)
+void ALab4Character::SubmitRankedScores_Implementation(float TotalNormalizedPlayerScores)
 {
 	IOnlineSubsystem* OnlineSubsystem = Online::GetSubsystem(GetWorld());
 
@@ -491,6 +495,7 @@ void ALab4Character::SubmitPlayerRankedScores(float TotalNormalizedPlayerScores)
 	{
 		return;
 	}
+	UE_LOG(LogTemp, Warning, TEXT("Submited player score (for LAN): %d"), FMath::FloorToInt(RankedCoefficient * TotalNormalizedPlayerScores));
 
 	if (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL")
 	{

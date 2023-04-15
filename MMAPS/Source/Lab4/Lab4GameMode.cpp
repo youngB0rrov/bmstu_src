@@ -96,7 +96,7 @@ void ALab4GameMode::PlayerEliminated(ALab4Character* ElimmedCharacter,
 					if (Character)
 					{
 						Character->IngestMatchData(PlayerNormalizedScores);
-						Character->SubmitPlayerRankedScores(PlayerNormalizedScores);
+						Character->BroadcastSubmitPlayerRankedScores(PlayerNormalizedScores);
 					}
 					
 					if (CharacterPlayerController)
