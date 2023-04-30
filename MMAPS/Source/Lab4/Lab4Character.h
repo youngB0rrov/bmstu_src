@@ -34,6 +34,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
 
+	UPROPERTY(Replicated)
+	bool bDisableGameplay = false;
+
+	UPROPERTY(Replicated)
+	bool bDisableCharacterOverlay = true;
+
+	UPROPERTY(Replicated)
+	bool bDisableFire = false;
+
 protected:
 	/** Resets HMD orientation in VR. */
 	void OnResetVR();
@@ -186,6 +195,16 @@ public:
 	void SubmitRankedScores(float TotalNormalizedPlayerScores);
 	
 	void BroadcastSubmitPlayerRankedScores(float TotalNormalizedPlayerScores);
+
+	UFUNCTION(Client, Reliable)
+	void AddLogginMessageToHUD(const FString& NewPlayerName, uint32 CurrenPlayersNum, uint32 TotalPlayersNum);
+	
+	void BroadcastAddLoginMessageToHUD(const FString& NewPlayerName, uint32 CurrenPlayersNum, uint32 TotalPlayersNum);
+
+	UFUNCTION(Client, Reliable)
+	void RemoveLogginMessage();
+
+	void BroadcastRemoveLoginMessage();
 	
 protected:
 	virtual void BeginPlay() override;

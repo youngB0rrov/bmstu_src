@@ -217,7 +217,7 @@ void ULab4GameInstance::Join() const
 	if (!SessionPtr.IsValid()) return;
 	
 	if (!SearchSettings.IsValid()) return;
-
+	
 	SessionPtr->JoinSession(0, SessionNameConst, SearchSettings->SearchResults[m_JoinIndex]);
 	UE_LOG(LogTemp, Warning, TEXT("Joining session..."));
 }
@@ -894,7 +894,7 @@ void ULab4GameInstance::CreateSessionViaSDK() const
 	EOS_Sessions_CreateSessionModificationOptions SessionModificationOptions = {};
 	SessionModificationOptions.ApiVersion = EOS_SESSIONS_CREATESESSIONMODIFICATION_API_LATEST;
 	SessionModificationOptions.BucketId = BucketId;
-	SessionModificationOptions.MaxPlayers = 10;
+	SessionModificationOptions.MaxPlayers = 2;
 	SessionModificationOptions.SessionName = TCHAR_TO_ANSI(*m_ServerName.ToString());
 	SessionModificationOptions.LocalUserId = Eos_ProductUserId;
 	SessionModificationOptions.bPresenceEnabled = EOS_TRUE;
@@ -1175,7 +1175,7 @@ void ULab4GameInstance::CreateSession() const
 	}
 
 	SessionSettings.bShouldAdvertise = true;
-	SessionSettings.NumPublicConnections = 10;
+	SessionSettings.NumPublicConnections = 2;
 	SessionSettings.bAllowJoinInProgress = true;
 	
 

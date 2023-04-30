@@ -59,7 +59,7 @@ APersonProjectile::APersonProjectile()
 	}
 	
 	DamageType = UDamageType::StaticClass();
-	Damage = 100.0f;
+	Damage = 50.0f;
 }
 
 // Called when the game starts or when spawned

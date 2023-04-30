@@ -29,6 +29,9 @@ public:
 
 	UPROPERTY()
 	class UMyUserWidget* GameOverWidget;
+
+	UPROPERTY()
+	class UAnnouncement* AnnouncementWidget;
 	
 	UPROPERTY(EditAnywhere, Category="Player Stats")
 	TSubclassOf<UUserWidget> CharacterOverlayClass;
@@ -41,12 +44,17 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UUserWidget> GameOverWidgetClass;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UUserWidget> AnnouncementWidgetClass;
 	
 	void AddCharacterOverlay();
 
 	void AddElimOverlay(FString Attacker, FString Victim);
 
 	void ShowGameOverWidget(const class ALab4PlayerState* WinnerPlayerState, float NormalizedPlayerScore);
+
+	void AddAnnouncement();
 
 	UFUNCTION(Exec)
 	void AddPlayerList();

@@ -125,7 +125,8 @@ public:
 	static char const* ProductUserIDToString(EOS_ProductUserId InAccountId);
 	static EOS_EpicAccountId EpicAccountIdFromString(const char* AccountString);
 	static EOS_ProductUserId ProductUserIdFromString(const char* AccountString);
-	
+
+	FORCEINLINE FName GetSessionName() const { return SessionNameConst;}
 private:
 	void CreateSession() const;
 	void LoadMainMenu() const;

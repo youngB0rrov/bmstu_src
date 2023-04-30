@@ -158,6 +158,7 @@ void ALab4Character::TouchStopped(ETouchIndex::Type FingerIndex, FVector Locatio
 void ALab4Character::StartFire()
 {
 	if (bIsInGameMenu) return;
+	if (bDisableGameplay || bDisableFire) return;
 	
 	if (!bIsFiring)
 	{
@@ -209,21 +210,9 @@ void ALab4Character::PollInit()
 		
 		if (Lab4PlayerState)
 		{
-			// if (m_PlayerName.IsEmpty())
-			// {
-			// 	Lab4PlayerState->SetPlayerName(m_PlayerName);
-			// 	UE_LOG(LogTemp, Warning, TEXT("PlayerName: %s"), *Lab4PlayerState->GetPlayerName());
-			// }
-			
 			if (GameInstance->GetIsLanGame())
 			{
 				m_PlayerName = GameInstance->GetPlayerName();
-			
-				// if (GameInstance->GetIsLanGame() == true)
-				// {
-				// 	Lab4PlayerState->SetPlayerName(m_PlayerName);
-				// }
-			
 				AddPlayerNameOnServer(m_PlayerName);
 			}
 			
@@ -250,6 +239,8 @@ void ALab4Character::LookUpAtRate(float Rate)
 
 void ALab4Character::MoveForward(float Value)
 {
+	if (bDisableGameplay) return;
+	
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is forward
@@ -264,6 +255,8 @@ void ALab4Character::MoveForward(float Value)
 
 void ALab4Character::MoveRight(float Value)
 {
+	if (bDisableGameplay) return;
+	
 	if ((Controller != nullptr) && (Value != 0.0f))
 	{
 		// find out which way is right
@@ -287,6 +280,54 @@ void ALab4Character::BroadcastSubmitPlayerRankedScores(float TotalNormalizedPlay
 	SubmitRankedScores(TotalNormalizedPlayerScores);
 }
 
+void ALab4Character::AddLogginMessageToHUD_Implementation(const FString& NewPlayerName, uint32 CurrenPlayersNum,
+	uint32 TotalPlayersNum)
+{
+	if (GEngine)
+	{
+		const FVector2D TextSize = FVector2D(1.5f, 1.5f);
+		
+		GEngine->AddOnScreenDebugMessage(
+			1,
+			60.f,
+			FColor::Yellow,
+			FString::Printf(TEXT("Waiting for other players: %u/%u"), CurrenPlayersNum, TotalPlayersNum),
+			false,
+			TextSize
+			);
+
+
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			10.f,
+			FColor::Green,
+			FString::Printf(TEXT("Player %s has just joind the game!"), *NewPlayerName),
+			false,
+			TextSize
+			);
+	}
+}
+
+void ALab4Character::BroadcastAddLoginMessageToHUD(const FString& NewPlayerName, uint32 CurrenPlayersNum,
+                                                   uint32 TotalPlayersNum)
+{
+	AddLogginMessageToHUD(NewPlayerName, CurrenPlayersNum, TotalPlayersNum);
+}
+
+void ALab4Character::RemoveLogginMessage_Implementation()
+{
+	if(GEngine)
+	{
+		GEngine->RemoveOnScreenDebugMessage(1);
+		GEngine->RemoveOnScreenDebugMessage(-1);
+	}
+}
+
+void ALab4Character::BroadcastRemoveLoginMessage()
+{
+	RemoveLogginMessage();
+}
+
 void ALab4Character::BeginPlay()
 {
 	Super::BeginPlay();
@@ -303,15 +344,15 @@ void ALab4Character::BeginPlay()
 		m_pGameInitializer->ConnectCharacter(this);
 		m_pGameInitializer->SetPlayerName(m_PlayerName);
 
-		APlayerController* PlayerController = Cast<APlayerController>(Controller);
-		Lab4HUD = Lab4HUD == nullptr ? PlayerController->GetHUD<ALab4HUD>() : Lab4HUD;
-		if (Lab4HUD && !Lab4HUD->GetIsSet())
-		{
-			Lab4HUD->AddCharacterOverlay();
-		}
-
-		/* Update HUD health on initialized*/
+		
+		// APlayerController* PlayerController = Cast<APlayerController>(Controller);
+		// Lab4HUD = Lab4HUD == nullptr ? PlayerController->GetHUD<ALab4HUD>() : Lab4HUD;
+		// if (Lab4HUD && !Lab4HUD->GetIsSet())
+		// {
+		// 	Lab4HUD->AddCharacterOverlay();
+		// }
 		UpdateHUDHealth();
+		
 	}
 
 	if (HasAuthority())
@@ -535,6 +576,9 @@ void ALab4Character::GetLifetimeReplicatedProps(
 	DOREPLIFETIME(ALab4Character, m_PlayerNames);
 	DOREPLIFETIME(ALab4Character, CurrentHealth);
 	DOREPLIFETIME(ALab4Character, PlayerScore);
+	DOREPLIFETIME(ALab4Character, bDisableGameplay);
+	DOREPLIFETIME(ALab4Character, bDisableCharacterOverlay);
+	DOREPLIFETIME(ALab4Character, bDisableFire);
 }
 
 bool ALab4Character::IsServerPlayer() const

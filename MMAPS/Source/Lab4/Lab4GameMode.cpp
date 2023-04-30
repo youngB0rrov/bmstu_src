@@ -5,6 +5,7 @@
 #include "Lab4HUD.h"
 #include "Lab4PlayerController.h"
 #include "Lab4PlayerState.h"
+#include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
@@ -31,6 +32,7 @@ ALab4GameMode::ALab4GameMode()
 	PlayerControllerClass = ALab4PlayerController::StaticClass();
 
 	TotalFrags = 5;
+	bDelayedStart = true;
 }
 
 void ALab4GameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController)
@@ -97,6 +99,7 @@ void ALab4GameMode::PlayerEliminated(ALab4Character* ElimmedCharacter,
 					{
 						Character->IngestMatchData(PlayerNormalizedScores);
 						Character->BroadcastSubmitPlayerRankedScores(PlayerNormalizedScores);
+						Character->bDisableGameplay = true;
 					}
 					
 					if (CharacterPlayerController)
@@ -114,4 +117,46 @@ void ALab4GameMode::PlayerEliminated(ALab4Character* ElimmedCharacter,
 void ALab4GameMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	LevelStartTime = GetWorld()->GetTimeSeconds();
+}
+
+void ALab4GameMode::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		CountDownTime = StartMatchTime - GetWorld()->GetTimeSeconds() + LevelStartTime;
+
+		if (CountDownTime <= 0.f)
+		{
+			StartMatch();
+		}
+	}
+}
+
+void ALab4GameMode::OnMatchStateSet()
+{
+	Super::OnMatchStateSet();
+
+	for(FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		ALab4PlayerController* PC = Cast<ALab4PlayerController>(*It);
+
+		if (PC)
+		{
+			PC->OnMatchStateSet(MatchState);
+		}
+
+		if (MatchState == MatchState::InProgress)
+		{
+			ALab4Character* CurrentCharacter = Cast<ALab4Character>(PC->GetCharacter());
+
+			if (CurrentCharacter)
+			{
+				CurrentCharacter->bDisableFire = false;
+			}
+		}
+	}
 }

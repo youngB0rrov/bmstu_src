@@ -17,6 +17,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
+#include "UserWidgets/Announcement.h"
 #include "UserWidgets/MyUserWidget.h"
 #include "UserWidgets/PlayerTable.h"
 
@@ -46,8 +47,13 @@ ALab4HUD::ALab4HUD()
 		GameOverWidgetClass = BPGameOverWidget.Class;
 	}
 
+	static ConstructorHelpers::FClassFinder<UUserWidget> BPAnnouncementWidget(TEXT("/Game/GameUI/WBP_Announcement"));
+	if (BPAnnouncementWidget.Succeeded())
+	{
+		AnnouncementWidgetClass = BPAnnouncementWidget.Class;
+	}
+	
 	ElimAnnouncementDuration = 3.f;
-
 	bIsSet = false;
 }
 
@@ -144,6 +150,17 @@ void ALab4HUD::ShowGameOverWidget(const ALab4PlayerState* WinnerPlayerState, flo
 	{
 		GameOverWidget->SetWinnerText(WinnerPlayerState, NormalizedPlayerScore);
 		GameOverWidget->AddToViewport();
+	}
+}
+
+void ALab4HUD::AddAnnouncement()
+{
+	APlayerController* PC = GetOwningPlayerController();
+
+	if (PC && AnnouncementWidgetClass)
+	{
+		AnnouncementWidget = CreateWidget<UAnnouncement>(PC, AnnouncementWidgetClass);
+		AnnouncementWidget->AddToViewport();
 	}
 }
 

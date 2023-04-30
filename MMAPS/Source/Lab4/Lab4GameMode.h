@@ -14,19 +14,23 @@ class ALab4GameMode : public AGameMode
 	
 public:
 	ALab4GameMode();
-	
 	virtual void RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController);
 	virtual void PlayerEliminated(
 		class ALab4Character* ElimmedCharacter,
 		class ALab4PlayerController* VictimController,
 		ALab4PlayerController* AttackerController
 		);
+	float StartMatchTime = 15.f;
+	float LevelStartTime = 0.f;
 	
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
+	virtual void OnMatchStateSet() override;
 	
 private:
 	int32 TotalFrags;
+	float CountDownTime = 0.f;
 };
 
 
