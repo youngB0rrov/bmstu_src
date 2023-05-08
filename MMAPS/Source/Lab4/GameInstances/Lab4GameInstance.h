@@ -27,6 +27,9 @@ public:
 
 	UPROPERTY(Config)
 	FString bEnabled;
+
+	UPROPERTY()
+	class UGameMenu* InGameMenu;
 	
 	virtual void Init() override;
 	virtual void Shutdown() override;
@@ -55,7 +58,11 @@ public:
 	void OnDestroySessionComplete(FName SessionName, bool Success);
 	void OnFindSessionsComplete(bool Success);
 	void OnJoinSessionComplete(FName Name, EOnJoinSessionCompleteResult::Type Result);
-	void OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
+	void OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);\
+	void AddLobbyHostWidget();
+	
+	UPROPERTY()
+	class ULobbyHostWidget* LobbyHostWidget;
 	
 	void LogIn();
 	void InitializeSDKCredentials();
@@ -139,9 +146,6 @@ private:
 
 	UPROPERTY()
 	class UGameOverMenu* GameOverWidget;
-
-	UPROPERTY()
-	class UGameMenu* InGameMenu;
 	
 	EOS_HPlatform PlatformInterface;
 	static EOS_HAuth AuthInterface;
@@ -180,6 +184,7 @@ private:
 	TSubclassOf<UUserWidget> BPHealthBarClass;
 	TSubclassOf<UUserWidget> BPWinnerWidgetClass;
 	TSubclassOf<UUserWidget> BPRankedLeaderboardRowClass;
+	TSubclassOf<UUserWidget> BPLobbyHostButtonClass;
 	
 	const FName ServerNameKey = "ServerName";
 	const FName SessionNameConst = "Session";

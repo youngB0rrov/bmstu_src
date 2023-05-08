@@ -18,6 +18,7 @@
 #include "Interfaces/OnlineLeaderboardInterface.h"
 #include "Interfaces/OnlineStatsInterface.h"
 #include "Lab4/UserWidgets/GameOverMenu.h"
+#include "Lab4/UserWidgets/LobbyHostWidget.h"
 #include "Lab4/UserWidgets/PlayerTableRow.h"
 #include "Lab4/UserWidgets/RankedLeaderboardRow.h"
 
@@ -127,7 +128,12 @@ ULab4GameInstance::ULab4GameInstance()
 	{
 		BPWinnerWidgetClass = BPWinnerWidgetClassFinder.Class;
 	}
-	
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> BPLobbyHostClass(TEXT("/Game/GameUI/WBP_HostStartButton"));
+	if (BPLobbyHostClass.Succeeded())
+	{
+		BPLobbyHostButtonClass = BPLobbyHostClass.Class;
+	}
 }
 
 void ULab4GameInstance::SetPlayerName(const FString& Name)
@@ -336,6 +342,21 @@ void ULab4GameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, E
 {
 	UE_LOG(LogTemp, Error, TEXT("Ошибка запуска сессии/поключения к сессии"))
 	LoadMainMenu();
+}
+
+void ULab4GameInstance::AddLobbyHostWidget()
+{
+	APlayerController* LobbyHostPlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	
+	if (LobbyHostPlayerController)
+	{
+		LobbyHostWidget = CreateWidget<ULobbyHostWidget>(this, BPLobbyHostButtonClass);
+
+		if (LobbyHostWidget)
+		{
+			LobbyHostWidget->AddToViewport();
+		}
+	}
 }
 
 void ULab4GameInstance::LogIn()

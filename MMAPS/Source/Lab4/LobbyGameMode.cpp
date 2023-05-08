@@ -5,6 +5,8 @@
 
 #include "Lab4Character.h"
 #include "GameFramework/GameStateBase.h"
+#include "Kismet/GameplayStatics.h"
+#include "UserWidgets/LobbyHostWidget.h"
 
 ALobbyGameMode::ALobbyGameMode()
 {
@@ -68,17 +70,32 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 		GetWorldTimerManager().SetTimer(
 			MatchStartTimerHandle,
 			MatchStartDelegate,
-			5.0f,
+			1.0f,
 			false
 			);
 	}
 
 }
 
+void ALobbyGameMode::TeardownAll()
+{
+	ULab4GameInstance* ServerGameInstance = GetGameInstance<ULab4GameInstance>();
+
+	if (ServerGameInstance && ServerGameInstance->InGameMenu != nullptr)
+	{
+		// hide game menu
+		ServerGameInstance->ShowInGameMenu();
+	}
+	if (ServerGameInstance && ServerGameInstance->LobbyHostWidget)
+	{
+		ServerGameInstance->LobbyHostWidget->RemoveFromViewport();
+	}
+}
+
 void ALobbyGameMode::ServerTravelToGameMap()
 {
 	UWorld* World = GetWorld();
-
+	
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
 		APlayerController* CharacterPlayerController = Cast<APlayerController>(*It);
@@ -92,8 +109,31 @@ void ALobbyGameMode::ServerTravelToGameMap()
 
 	if (World)
 	{
+		TeardownAll();
 		bUseSeamlessTravel = true;
 		GEngine->RemoveOnScreenDebugMessage(1);
 		World->ServerTravel(FString("/Game/Maps/GamePlayMap?listen"));
+	}
+}
+
+void ALobbyGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+	APlayerController* ServerPlayerController = UGameplayStatics::GetPlayerController(this, 0);
+
+	if (ServerPlayerController != nullptr)
+	{
+		ALab4Character* ServerCharacter = Cast<ALab4Character>(ServerPlayerController->GetCharacter());
+
+		if (ServerCharacter)
+		{
+			ServerCharacter->bDisableFire = true;
+			ULab4GameInstance* Lab4GameInstance = ServerCharacter->GetGameInstance<ULab4GameInstance>();
+			
+			if (Lab4GameInstance != nullptr)
+			{
+				Lab4GameInstance->AddLobbyHostWidget();
+			}
+		}
 	}
 }

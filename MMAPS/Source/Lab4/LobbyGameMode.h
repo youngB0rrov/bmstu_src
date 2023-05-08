@@ -16,10 +16,13 @@ class LAB4_API ALobbyGameMode : public AGameMode
 public:
 	ALobbyGameMode();
 	
-private:
-	virtual void PostLogin(APlayerController* NewPlayer) override;
-
-protected:
 	UFUNCTION()
 	void ServerTravelToGameMap();
+	
+private:
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+	void TeardownAll();
+
+protected:
+	virtual void BeginPlay() override;
 };
