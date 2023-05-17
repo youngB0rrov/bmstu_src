@@ -68,7 +68,7 @@ float ALab4PlayerController::GetServerTime()
 {
 	if (HasAuthority()) return GetWorld()->GetTimeSeconds();
 
-	// Если на клиента, то прибавляем сетевые задержки
+	// Если на клиента, то прибавляем сетевые задержки и разницу в запуске приложения
 	return GetWorld()->GetTimeSeconds() + ClientServerDelta;
 }
 

@@ -24,6 +24,7 @@
 
 #define EOS_ID_SEPARATOR TEXT("|")
 #define WITH_SDK 0
+#define USE_EMPTY_LOBBY 1
 
 EOS_EpicAccountId ULab4GameInstance::LoggedInUserID = nullptr;
 EOS_ProductUserId ULab4GameInstance::Eos_ProductUserId = nullptr;
@@ -40,6 +41,12 @@ void ULab4GameInstance::Init()
 
 	bIsLanGame = false;
 
+	#if	USE_EMPTY_LOBBY == 1
+		TravelLobbyPath = TEXT("/Game/Maps/LobbyMap?listen");
+	#else
+		TravelLobbyPath = TEXT("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap?listen");
+	#endif
+	
 	// Получить адрес подсистемы
 	OnlineSubsystem = IOnlineSubsystem::Get();
 	
@@ -266,7 +273,7 @@ bool ULab4GameInstance::ChangeConfigToLan()
 void ULab4GameInstance::OnCreateSessionComplete(FName SessionName, bool Success)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Success: %d"), Success);
-	GetWorld()->ServerTravel(TravelGamePath);
+	GetWorld()->ServerTravel(TravelLobbyPath);
 	
 	if (!Success) return;
 	

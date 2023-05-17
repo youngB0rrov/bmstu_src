@@ -191,6 +191,7 @@ private:
 	const FName RankedLeaderboardName = TEXT("PlayersFragsLeaderboard");
 	const FName RankedStatName = TEXT("PlayerFragsHighScore");
 	static const FString TravelGamePath;
+	FString TravelLobbyPath;
 	const FString TravelMainMenuPath = TEXT("/Game/MainMenu/MainMenuMap");
 	const uint32 ScoreCoefficient = 25;
 	int32 LeftScoreBoundary, RightScoreBoundary; 
