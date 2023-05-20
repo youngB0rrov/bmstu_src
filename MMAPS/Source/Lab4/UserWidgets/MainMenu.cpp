@@ -64,7 +64,10 @@ void UMainMenu::SetMainMenu(AMainMenuInitializer* const pMainMenu)
 
 void UMainMenu::SetServersList(const TArray<FString>& List)
 {
-	ServersList->ClearChildren();
+	if (ServersList->HasAnyChildren())
+	{
+		ServersList->ClearChildren();
+	}
 	m_SelectedIndex.Reset();
 	
 	UWorld *pWorld = GetWorld();

@@ -21,10 +21,15 @@ public:
 	UFUNCTION()
 	void StartServerTravel();
 
+	void CheckPlayersStatuses();
+
 	float CountdownStartTime = 0.f;
 	float CountdownTime = 5.f;
 
 private:
 	FTimerHandle TravelTimer;
 	FTimerDelegate TravelTimerDelegate;
+
+protected:
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 };

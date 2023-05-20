@@ -6,7 +6,10 @@
 #include "EmptyLobbyPlayerController.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
+#include "GameFramework/GameStateBase.h"
+#include "Kismet/GameplayStatics.h"
 #include "WidgetsClasses/StatusControll.h"
+#include "WidgetsClasses/StatusGrid.h"
 
 AEmptyLobbyHUD::AEmptyLobbyHUD()
 {
@@ -14,6 +17,12 @@ AEmptyLobbyHUD::AEmptyLobbyHUD()
 	if (BP_StatusControllClass.Succeeded())
 	{
 		StatusControlWidgetClass = BP_StatusControllClass.Class;
+	}
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> BP_StatusGridClass(TEXT("/Game/EmptyLobby/WBP_PlayersStatusGridWidget"));
+	if (BP_StatusGridClass.Succeeded())
+	{
+		StatusGridWidgetClass = BP_StatusGridClass.Class;
 	}
 }
 
@@ -28,10 +37,26 @@ void AEmptyLobbyHUD::AddStatusControllOverlay()
 	}
 }
 
+void AEmptyLobbyHUD::AddStatusGrid()
+{
+	AEmptyLobbyPlayerController* EmptyLobbyPlayerController = Cast<AEmptyLobbyPlayerController>(GetOwningPlayerController());
+
+	if (EmptyLobbyPlayerController && StatusGridWidgetClass)
+	{
+		StatusGridWidget = CreateWidget<UStatusGrid>(EmptyLobbyPlayerController, StatusGridWidgetClass);
+		StatusGridWidget->AddToViewport();
+	}
+}
+
 void AEmptyLobbyHUD::RemoveControllOverlay()
 {
 	AEmptyLobbyPlayerController* EmptyLobbyPlayerController = Cast<AEmptyLobbyPlayerController>(GetOwningPlayerController());
 
+	if (StatusGridWidget)
+	{
+		StatusGridWidget->RemoveFromViewport();	
+	}
+	
 	if (EmptyLobbyPlayerController && StatusControllWidget)
 	{
 		StatusControllWidget->RemoveFromViewport();
@@ -49,5 +74,13 @@ void AEmptyLobbyHUD::SetTimerVisability()
 	{
 		StatusControllWidget->StartTimerText->SetVisibility(ESlateVisibility::Visible);
 		StatusControllWidget->StartTimerInfoText->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void AEmptyLobbyHUD::RefreshGrid()
+{
+	if (StatusGridWidget)
+	{
+		StatusGridWidget->SetPlayersList();
 	}
 }

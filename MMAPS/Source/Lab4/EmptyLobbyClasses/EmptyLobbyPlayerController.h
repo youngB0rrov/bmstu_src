@@ -18,7 +18,6 @@ protected:
 	virtual void ReceivedPlayer() override;
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 private:
 	UPROPERTY()
@@ -28,24 +27,28 @@ private:
 	void SetEmptyLobbyHUDTime();
 	void SetEmptyLobbyCountdownTimer(uint32 TimeLeft);
 	float GetClientServerDelta();
+	void CheckPlayersSync(float DeltaSeconds);
 
 	UFUNCTION(Server, Reliable)
 	void ServerRequestServerTime(float ClientRequestTime);
 
 	UFUNCTION(Client, Reliable)
 	void ClientReportServerTime(float TimeOfClientRequest, float ServerReceitTime);
+
+	UFUNCTION(Server, Reliable)
+	void SetLobbyPlayerName(const FString& PlayerName);
 	
 	bool bStartCountdownTimer = false;
 	uint32 CountdownInt = 0;
 	float CountdownTime = 0.f;
 	float CountdownStartTime = 0.f;
 	float ClientServerDelta = 0.f;
+	float TimeSyncRunning = 0.f;
+	float TimeSyncFrequency = 3.f;
+
+	bool bHUDIsBeingInitialized = false;
 	
 public:
-	
-	UPROPERTY(Replicated)
-	bool bIsReady;
-
 	UFUNCTION(Client, Reliable)
 	void DeleteEmptyLobbyHUD();
 
@@ -57,4 +60,7 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void ClientAddCountdownTimer(float CountdownServerStartTime);
+
+	UFUNCTION(Client, Reliable)
+	void ClientRefreshPlayersGrid();
 };

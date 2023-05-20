@@ -4,8 +4,11 @@
 #include "EmptyLobbyPlayerController.h"
 
 #include "EmptyLobbyGameMode.h"
+#include "EmptyLobbyPlayerState.h"
 #include "Components/TextBlock.h"
+#include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
+#include "Lab4/GameInstances/Lab4GameInstance.h"
 #include "Net/UnrealNetwork.h"
 #include "WidgetsClasses/StatusControll.h"
 
@@ -28,6 +31,13 @@ void AEmptyLobbyPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	ServerGetEmptyLobbySettings();
+
+	ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
+
+	if (GameInstance)
+	{
+		SetLobbyPlayerName(GameInstance->GetPlayerName());
+	}
 }
 
 void AEmptyLobbyPlayerController::Tick(float DeltaSeconds)
@@ -39,13 +49,8 @@ void AEmptyLobbyPlayerController::Tick(float DeltaSeconds)
 	{
 		SetEmptyLobbyHUDTime();
 	}
-}
 
-void AEmptyLobbyPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
-	DOREPLIFETIME(AEmptyLobbyPlayerController, bIsReady);
+	CheckPlayersSync(DeltaSeconds);
 }
 
 void AEmptyLobbyPlayerController::PollInit()
@@ -57,6 +62,13 @@ void AEmptyLobbyPlayerController::PollInit()
 		if (EmptyLobbyHUD)
 		{
 			EmptyLobbyHUD->AddStatusControllOverlay();
+			EmptyLobbyHUD->AddStatusGrid();
+
+			if (bHUDIsBeingInitialized)
+			{
+				EmptyLobbyHUD->RefreshGrid();
+				bHUDIsBeingInitialized = false;
+			}
 		}
 	}
 }
@@ -138,4 +150,44 @@ float AEmptyLobbyPlayerController::GetClientServerDelta()
 	}
 
 	return GetWorld()->GetTimeSeconds() + ClientServerDelta;
+}
+
+void AEmptyLobbyPlayerController::CheckPlayersSync(float DeltaSeconds)
+{
+	
+	TimeSyncRunning += DeltaSeconds;
+
+	if (TimeSyncRunning > TimeSyncFrequency)
+	{
+		if (EmptyLobbyHUD)
+		{
+			EmptyLobbyHUD->RefreshGrid();
+		}
+		TimeSyncRunning = 0.f;
+	}
+}
+
+void AEmptyLobbyPlayerController::ClientRefreshPlayersGrid_Implementation()
+{
+	if (EmptyLobbyHUD)
+	{
+		EmptyLobbyHUD->RefreshGrid();
+	}
+	else
+	{
+		bHUDIsBeingInitialized = true;
+	}
+}
+
+void AEmptyLobbyPlayerController::SetLobbyPlayerName_Implementation(const FString& PlayerName)
+{
+	ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
+
+	if (GameInstance)
+	{
+		if (GameInstance->GetIsLanGame())
+		{
+			PlayerState->SetPlayerName(PlayerName);
+		}
+	}
 }

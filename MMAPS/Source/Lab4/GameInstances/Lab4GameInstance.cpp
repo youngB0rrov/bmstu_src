@@ -922,7 +922,7 @@ void ULab4GameInstance::CreateSessionViaSDK() const
 	EOS_Sessions_CreateSessionModificationOptions SessionModificationOptions = {};
 	SessionModificationOptions.ApiVersion = EOS_SESSIONS_CREATESESSIONMODIFICATION_API_LATEST;
 	SessionModificationOptions.BucketId = BucketId;
-	SessionModificationOptions.MaxPlayers = 2;
+	SessionModificationOptions.MaxPlayers = 10;
 	SessionModificationOptions.SessionName = TCHAR_TO_ANSI(*m_ServerName.ToString());
 	SessionModificationOptions.LocalUserId = Eos_ProductUserId;
 	SessionModificationOptions.bPresenceEnabled = EOS_TRUE;

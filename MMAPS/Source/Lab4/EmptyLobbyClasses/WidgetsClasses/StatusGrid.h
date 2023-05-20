@@ -14,4 +14,14 @@ class LAB4_API UStatusGrid : public UUserWidget
 {
 	GENERATED_BODY()
 	
+private:
+	UPROPERTY(meta=(BindWidget))
+	UPanelWidget* PlayersTableList;
+	
+	TSubclassOf<UUserWidget> PlayerRowClass;
+
+public:
+	UStatusGrid(const FObjectInitializer& ObjectInitializer);
+	void SetPlayersList();
+	
 };
