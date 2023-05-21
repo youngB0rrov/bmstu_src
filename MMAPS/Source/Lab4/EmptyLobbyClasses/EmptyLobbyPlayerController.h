@@ -28,6 +28,7 @@ private:
 	void SetEmptyLobbyCountdownTimer(uint32 TimeLeft);
 	float GetClientServerDelta();
 	void CheckPlayersSync(float DeltaSeconds);
+	void RequestServerTime();
 
 	UFUNCTION(Server, Reliable)
 	void ServerRequestServerTime(float ClientRequestTime);
@@ -39,11 +40,23 @@ private:
 	void SetLobbyPlayerName(const FString& PlayerName);
 	
 	bool bStartCountdownTimer = false;
+
+	// Целочеслинное количество секунд, отображаемое в таймере
 	uint32 CountdownInt = 0;
+	
+	// Постоянное значение, получаемое с сервера в качестве настройки
 	float CountdownTime = 0.f;
+
+	// Время сервера, когда начался очередной отсчет
 	float CountdownStartTime = 0.f;
+
+	// Разница, старта между сервером и клиентом
 	float ClientServerDelta = 0.f;
+
+	// Количество времени, прошедшее с послднего обновления таблицы
 	float TimeSyncRunning = 0.f;
+
+	// Период обновления таблицы
 	float TimeSyncFrequency = 3.f;
 
 	bool bHUDIsBeingInitialized = false;
@@ -62,5 +75,11 @@ public:
 	void ClientAddCountdownTimer(float CountdownServerStartTime);
 
 	UFUNCTION(Client, Reliable)
+	void ClearCountdownTimer();
+
+	UFUNCTION(Client, Reliable)
 	void ClientRefreshPlayersGrid();
+
+	UFUNCTION(Client, Reliable)
+	void ClientAddCancellationMessage();
 };

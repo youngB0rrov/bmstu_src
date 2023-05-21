@@ -28,6 +28,7 @@ bool UStatusControll::Initialize()
 	StartTimerText->SetVisibility(ESlateVisibility::Hidden);
 	StartTimerInfoText->SetVisibility(ESlateVisibility::Hidden);
 	PressButtonProgressbar->SetVisibility(ESlateVisibility::Hidden);
+	CancelationMessageBox->SetVisibility(ESlateVisibility::Hidden);
 
 	StartMatchButton->OnClicked.AddDynamic(this, &UStatusControll::OnStartButtonMatchedClicked);
 	ExitButton->OnClicked.AddDynamic(this, &UStatusControll::OnExitButtonClicked);

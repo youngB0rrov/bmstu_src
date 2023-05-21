@@ -21,10 +21,7 @@ void AEmptyLobbyPlayerController::ReceivedPlayer()
 	SetInputMode(InputModeUIOnly);
 	bShowMouseCursor = true;
 
-	if (IsLocalController())
-	{
-		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
-	}
+	RequestServerTime();
 }
 
 void AEmptyLobbyPlayerController::BeginPlay()
@@ -116,7 +113,7 @@ void AEmptyLobbyPlayerController::ServerRequestServerTime_Implementation(float C
 void AEmptyLobbyPlayerController::ClientAddCountdownTimer_Implementation(float CountdownServerStartTime)
 {
 	CountdownStartTime = CountdownServerStartTime;
-	EmptyLobbyHUD->SetTimerVisability();
+	EmptyLobbyHUD->SetTimerVisability(true);
 	bStartCountdownTimer = true;
 }
 
@@ -167,6 +164,16 @@ void AEmptyLobbyPlayerController::CheckPlayersSync(float DeltaSeconds)
 	}
 }
 
+void AEmptyLobbyPlayerController::ClearCountdownTimer_Implementation()
+{
+	EmptyLobbyHUD->SetTimerVisability(false);
+	bStartCountdownTimer = false;
+	CountdownInt = 0;
+
+	// Дополнительная синхронизациия во времени клиента и сервера
+	RequestServerTime();
+}
+
 void AEmptyLobbyPlayerController::ClientRefreshPlayersGrid_Implementation()
 {
 	if (EmptyLobbyHUD)
@@ -189,5 +196,21 @@ void AEmptyLobbyPlayerController::SetLobbyPlayerName_Implementation(const FStrin
 		{
 			PlayerState->SetPlayerName(PlayerName);
 		}
+	}
+}
+
+void AEmptyLobbyPlayerController::RequestServerTime()
+{
+	if (IsLocalController())
+	{
+		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
+	}
+}
+
+void AEmptyLobbyPlayerController::ClientAddCancellationMessage_Implementation()
+{
+	if (EmptyLobbyHUD)
+	{
+		EmptyLobbyHUD->ShowCancellationMessage();
 	}
 }

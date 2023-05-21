@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/HorizontalBox.h"
 #include "Lab4/EmptyLobbyClasses/EmptyLobbyPlayerController.h"
 #include "Lab4/GameInstances/Lab4GameInstance.h"
 #include "StatusControll.generated.h"
@@ -48,6 +49,9 @@ public:
 
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* StartTimerText;
+
+	UPROPERTY(meta=(BindWidget))
+	UHorizontalBox* CancelationMessageBox;
 	
 private:
 	UPROPERTY(meta=(BindWidget))

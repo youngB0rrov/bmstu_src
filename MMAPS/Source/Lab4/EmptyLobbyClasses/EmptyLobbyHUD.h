@@ -20,14 +20,20 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UUserWidget> StatusGridWidgetClass;
+
+	const float CancellationMessageDuration = 1.9f;
 	
 public:
 	AEmptyLobbyHUD();
 	void AddStatusControllOverlay();
 	void AddStatusGrid();
 	void RemoveControllOverlay();
-	void SetTimerVisability();
+	void SetTimerVisability(bool bIsVisible);
 	void RefreshGrid();
+	void ShowCancellationMessage();
+
+	UFUNCTION()
+	void HideCansellationMessage();
 
 	UPROPERTY()
 	class UStatusControll* StatusControllWidget;

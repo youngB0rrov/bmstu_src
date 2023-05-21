@@ -32,6 +32,7 @@ void AEmptyLobbyGameMode::ServerTravelToGameMap()
 
 void AEmptyLobbyGameMode::StartServerTravel()
 {
+	bIsReadyToStart = true;
 	CountdownStartTime = GetWorld()->GetTimeSeconds();
 	UWorld* World = GetWorld();
 	
@@ -70,18 +71,46 @@ void AEmptyLobbyGameMode::CheckPlayersStatuses()
 			if (EmptyLobbyPlayerState->bIsReady == false)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Not all users are ready, return;"));
+				if (bIsReadyToStart)
+				{
+					ClearServerTravelTimer();
+				}
+				
 				return;
 			}
 		}
 	}
-
+	
 	StartServerTravel();
+}
+
+void AEmptyLobbyGameMode::ClearServerTravelTimer()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Interrupting sertver travel"));
+	bIsReadyToStart = false;
+	GetWorldTimerManager().ClearTimer(TravelTimer);
+
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		AEmptyLobbyPlayerController* EmptyLobbyPlayerController = Cast<AEmptyLobbyPlayerController>(*It);
+
+		if (EmptyLobbyPlayerController)
+		{
+			EmptyLobbyPlayerController->ClearCountdownTimer();
+			EmptyLobbyPlayerController->ClientAddCancellationMessage();
+		}
+	}
 }
 
 void AEmptyLobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
-
+	
+	// if (bIsReadyToStart)
+	// {
+	// 	ClearServerTravelTimer();
+	// }
+	
 	for(FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
 		AEmptyLobbyPlayerController* EmptyLobbyPlayerController = Cast<AEmptyLobbyPlayerController>(*It);

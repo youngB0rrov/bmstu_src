@@ -29,6 +29,9 @@ public:
 private:
 	FTimerHandle TravelTimer;
 	FTimerDelegate TravelTimerDelegate;
+	bool bIsReadyToStart = false;
+
+	void ClearServerTravelTimer();
 
 protected:
 	virtual void PostLogin(APlayerController* NewPlayer) override;

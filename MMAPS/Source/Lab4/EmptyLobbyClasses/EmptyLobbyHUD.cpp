@@ -66,14 +66,22 @@ void AEmptyLobbyHUD::RemoveControllOverlay()
 	}
 }
 
-void AEmptyLobbyHUD::SetTimerVisability()
+void AEmptyLobbyHUD::SetTimerVisability(bool bIsVisible)
 {
 	if (StatusControllWidget &&
 		StatusControllWidget->StartTimerText &&
 		StatusControllWidget->StartTimerInfoText)
 	{
-		StatusControllWidget->StartTimerText->SetVisibility(ESlateVisibility::Visible);
-		StatusControllWidget->StartTimerInfoText->SetVisibility(ESlateVisibility::Visible);
+		if (bIsVisible)
+		{
+			StatusControllWidget->StartTimerText->SetVisibility(ESlateVisibility::Visible);
+			StatusControllWidget->StartTimerInfoText->SetVisibility(ESlateVisibility::Visible);
+
+			return;
+		}
+
+		StatusControllWidget->StartTimerText->SetVisibility(ESlateVisibility::Hidden);
+		StatusControllWidget->StartTimerInfoText->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 
@@ -83,4 +91,29 @@ void AEmptyLobbyHUD::RefreshGrid()
 	{
 		StatusGridWidget->SetPlayersList();
 	}
+}
+
+void AEmptyLobbyHUD::ShowCancellationMessage()
+{
+	if (StatusControllWidget)
+	{
+		StatusControllWidget->CancelationMessageBox->SetVisibility(ESlateVisibility::Visible);
+
+		FTimerHandle CancellationMessageTimerHandle;
+		FTimerDelegate CancellationMessageTimerDelegate;
+
+		CancellationMessageTimerDelegate.BindUFunction(this, FName("HideCansellationMessage"));
+		
+		GetWorldTimerManager().SetTimer(
+			CancellationMessageTimerHandle,
+			CancellationMessageTimerDelegate,
+			CancellationMessageDuration,
+			false
+		);
+	}
+}
+
+void AEmptyLobbyHUD::HideCansellationMessage()
+{
+	StatusControllWidget->CancelationMessageBox->SetVisibility(ESlateVisibility::Hidden);
 }
