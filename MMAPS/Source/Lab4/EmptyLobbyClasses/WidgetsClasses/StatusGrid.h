@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "StatusGrid.generated.h"
 
+class UCircularThrobber;
 /**
  * 
  */
@@ -17,8 +18,13 @@ class LAB4_API UStatusGrid : public UUserWidget
 private:
 	UPROPERTY(meta=(BindWidget))
 	UPanelWidget* PlayersTableList;
+
+	UPROPERTY(meta=(BindWidget))
+	UCircularThrobber* PlayerGridSpinner;
 	
 	TSubclassOf<UUserWidget> PlayerRowClass;
+
+	bool bIsGridLoading = true;
 
 public:
 	UStatusGrid(const FObjectInitializer& ObjectInitializer);
