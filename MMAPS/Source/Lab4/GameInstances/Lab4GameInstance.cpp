@@ -49,7 +49,6 @@ void ULab4GameInstance::Init()
 	
 	// Получить адрес подсистемы
 	OnlineSubsystem = IOnlineSubsystem::Get();
-	
 	if (OnlineSubsystem == nullptr) return;
 
 	// Получить адрес API сессий
@@ -60,16 +59,12 @@ void ULab4GameInstance::Init()
 	
 	if(!SessionPtr.IsValid()) return;
 	
-	SessionPtr->OnCreateSessionCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnCreateSessionComplete);
-	SessionPtr->OnDestroySessionCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnDestroySessionComplete);
-	SessionPtr->OnJoinSessionCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnJoinSessionComplete);
 	SessionPtr->OnFindSessionsCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnFindSessionsComplete);
+	SessionPtr->OnJoinSessionCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnJoinSessionComplete);
 
 	if (GEngine != nullptr)
 	{
 		GEngine->OnNetworkFailure().AddUObject(this, &ULab4GameInstance::OnNetworkFailure);
-		UE_LOG(LogTemp, Error, TEXT("Ну удалось подключиться к удаленной игровой сессии"));
-		
 	}
 
 	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &ULab4GameInstance::Tick), 0.1f);
@@ -141,6 +136,12 @@ ULab4GameInstance::ULab4GameInstance()
 	{
 		BPLobbyHostButtonClass = BPLobbyHostClass.Class;
 	}
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> BPLoadingWidgetClassFinder(TEXT("/Game/MainMenu/WBP_LoadWidget"));
+	if (BPLoadingWidgetClassFinder.Succeeded())
+	{
+		BPLoadingWidgetClass = BPLoadingWidgetClassFinder.Class;
+	}
 }
 
 void ULab4GameInstance::SetPlayerName(const FString& Name)
@@ -184,16 +185,10 @@ void ULab4GameInstance::RemoveCharacter(ALab4Character* const Character)
 	}
 }
 
-void ULab4GameInstance::Host() const
+void ULab4GameInstance::Host()
 {
-	#if WITH_SDK != 1
+#if WITH_SDK != 1
 	if (!SessionPtr.IsValid()) return;
-	
-	// if (bIsLanGame)
-	// {
-	// 	return;
-	// }
-	// UE_LOG(LogTemp, Warning, TEXT("Here from SDK"));
 	
 	const FNamedOnlineSession *pOnlineSession = SessionPtr->GetNamedSession(SessionNameConst);
 	
@@ -205,12 +200,159 @@ void ULab4GameInstance::Host() const
 	{
 		CreateSession();
 	}
-	#else
+#else
 	CreateSessionViaSDK();
-	#endif
+#endif
 }
 
-void ULab4GameInstance::Join() const
+void ULab4GameInstance::CreateSession()
+{
+	if (!SessionPtr.IsValid()) return;
+	
+	FOnlineSessionSettings SessionSettings;
+	
+	if (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL" || bIsLanGame)
+	{
+		SessionSettings.bIsLANMatch = true;
+		SessionSettings.bUsesPresence = false;
+		SessionSettings.bUseLobbiesIfAvailable = false;
+	}
+	else
+	{
+		SessionSettings.bIsLANMatch = false;
+		SessionSettings.bUsesPresence = true;
+		SessionSettings.bUseLobbiesIfAvailable = true;
+	}
+
+	SessionSettings.bShouldAdvertise = true;
+	SessionSettings.NumPublicConnections = 10;
+	SessionSettings.bAllowJoinInProgress = true;
+	SessionSettings.bUseLobbiesVoiceChatIfAvailable = false;
+
+	FOnlineSessionSetting setting;
+	setting.Data = m_ServerName.ToString();
+	setting.AdvertisementType = EOnlineDataAdvertisementType::ViaOnlineServiceAndPing;
+	
+	SessionSettings.Set(ServerNameKey, setting);
+	SessionSettings.Set(SEARCH_KEYWORDS, FString("Test session"), EOnlineDataAdvertisementType::ViaOnlineService);
+	
+	const FUniqueNetIdPtr NetID = GetFirstGamePlayer()->GetPreferredUniqueNetId().GetUniqueNetId();
+	GetFirstGamePlayer()->SetCachedUniqueNetId(NetID);
+	
+	SessionPtr->OnCreateSessionCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnCreateSessionComplete);
+	SessionPtr->CreateSession(0, SessionNameConst, SessionSettings);
+}
+
+void ULab4GameInstance::OnCreateSessionComplete(FName SessionName, bool Success)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Session creation status: %d"), Success);
+	if (!Success) return;
+	
+	if (m_pMainMenu != nullptr)
+	{
+		m_pMainMenu->TeardownAll();
+	}
+
+	GetWorld()->ServerTravel(TravelLobbyPath);
+	SessionPtr->ClearOnCreateSessionCompleteDelegates(this);
+}
+
+void ULab4GameInstance::DestroySession()
+{
+	if (OnlineSubsystem == nullptr) return;
+
+	SessionPtr = OnlineSubsystem->GetSessionInterface();
+	if (SessionPtr == nullptr) return;
+
+	SessionPtr->OnDestroySessionCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnDestroySessionComplete);
+	SessionPtr->DestroySession(SessionNameConst);
+}
+
+void ULab4GameInstance::OnDestroySessionComplete(FName SessionName, bool Success)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Destroying Session Success %d"), Success);
+	
+	if (!Success) return;
+	
+	if (OnlineSubsystem == nullptr) return;
+
+	SessionPtr = OnlineSubsystem->GetSessionInterface();
+	SessionPtr->ClearOnDestroySessionCompleteDelegates(this);
+}
+
+void ULab4GameInstance::FindSessions()
+{
+	if (OnlineSubsystem == nullptr) return;
+
+	if (!bIsLanGame)
+	{
+		if (bWasLoggedIn == false) return;
+
+		SessionPtr = OnlineSubsystem->GetSessionInterface();
+
+		if (SessionPtr == nullptr) return;
+	
+		SearchSettings = MakeShareable(new FOnlineSessionSearch());
+
+		// Для поиска лобби по ключу на devportal
+		SearchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("Test session"), EOnlineComparisonOp::Equals);
+		SearchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+		SessionPtr->OnFindSessionsCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnFindOnlineSessionsComplete);
+		SessionPtr->FindSessions(0, SearchSettings.ToSharedRef());
+	}
+}
+
+void ULab4GameInstance::OnFindSessionsComplete(bool Success)
+{
+	if (Success && m_pSessionSearch.IsValid() && m_pMainMenu != nullptr)
+	{
+		TArray<FString> ServersList;
+		
+		for (const FOnlineSessionSearchResult& Session : m_pSessionSearch->SearchResults)
+		{
+			FString ServerName;
+			Session.Session.SessionSettings.Get(ServerNameKey, ServerName);
+			ServersList.Add(ServerName);
+		}
+
+		m_pMainMenu->OnInstanceFoundServers(ServersList);
+
+		SessionPtr->ClearOnFindSessionsCompleteDelegates(this);
+	}
+}
+
+void ULab4GameInstance::OnFindOnlineSessionsComplete(const bool bWasSuccessful)
+{
+	const int32 LobbiesCount = SearchSettings->SearchResults.Num();
+	
+	UE_LOG(LogTemp, Warning, TEXT("Finding Lobbies Success: %d"), bWasSuccessful);
+	
+	if (bWasSuccessful)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Found %d lobbies"), LobbiesCount);
+
+		TArray<FString> ServersList;
+		
+		for (const FOnlineSessionSearchResult& Session : SearchSettings->SearchResults)
+		{
+			FString ServerName;
+			Session.Session.SessionSettings.Get(ServerNameKey, ServerName);
+			ServersList.Add(ServerName);
+		}
+
+		m_pMainMenu->OnInstanceFoundServers(ServersList);
+		
+		return;
+	}
+
+	if (OnlineSubsystem == nullptr) return;
+	SessionPtr = OnlineSubsystem->GetSessionInterface();
+	
+	if (SessionPtr == nullptr) return;
+	SessionPtr->ClearOnFindSessionsCompleteDelegates(this);
+}
+
+void ULab4GameInstance::Join()
 {
 	if (m_pMainMenu != nullptr)
 	{
@@ -222,7 +364,7 @@ void ULab4GameInstance::Join() const
 		if (!SessionPtr.IsValid()) return;
 	
 		if (!m_pSessionSearch.IsValid()) return;
-
+	
 		SessionPtr->JoinSession(0, SessionNameConst, m_pSessionSearch->SearchResults[m_JoinIndex]);
 		return;
 	}
@@ -232,7 +374,100 @@ void ULab4GameInstance::Join() const
 	if (!SearchSettings.IsValid()) return;
 	
 	SessionPtr->JoinSession(0, SessionNameConst, SearchSettings->SearchResults[m_JoinIndex]);
-	UE_LOG(LogTemp, Warning, TEXT("Joining session..."));
+}
+
+void ULab4GameInstance::OnJoinSessionComplete(FName Name, EOnJoinSessionCompleteResult::Type Result)
+{
+	FString Address;
+
+	if (Result == EOnJoinSessionCompleteResult::Type::Success)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Join Session status: %d"), Result);
+	} else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Error, while joining online session"));
+	}
+	
+	if (OnlineSubsystem == nullptr) return;
+	SessionPtr = OnlineSubsystem->GetSessionInterface();
+
+	if (SessionPtr == nullptr) return;
+	SessionPtr->GetResolvedConnectString(Name, Address);
+
+	if (Address.IsEmpty()) return;
+	
+	if (APlayerController *PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+	{
+		PC->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
+	}
+}
+
+void ULab4GameInstance::LogIn()
+{
+	if (OnlineSubsystem == nullptr) return;
+	IOnlineIdentityPtr IdentyPtr = OnlineSubsystem->GetIdentityInterface();
+
+	if (IdentyPtr == nullptr) return;
+
+	FOnlineAccountCredentials AccountCredentials;
+	AccountCredentials.Id = FString("");
+	AccountCredentials.Token = FString("");
+	AccountCredentials.Type = FString("accountportal");
+
+	IdentyPtr->OnLoginCompleteDelegates->AddUObject(this, &ULab4GameInstance::OnLoginComplete);
+	IdentyPtr->Login(0, AccountCredentials);
+
+	if (LoadingWidget == nullptr && BPLoadingWidgetClass)
+	{
+		LoadingWidget = CreateWidget(this, BPLoadingWidgetClass);
+		LoadingWidget->AddToViewport();
+	}
+}
+
+void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Logged In: %d"), bWasSuccessful);
+	LoadingWidget->RemoveFromViewport();
+	LoadingWidget = nullptr;
+	
+	bWasLoggedIn = bWasSuccessful;
+	
+	if (OnlineSubsystem == nullptr) return;
+	
+	const FUniqueNetIdString UniqueNetIdString = static_cast<FUniqueNetIdString>(UserId);
+	TArray<FString> AccountIds;
+	UniqueNetIdString.UniqueNetIdStr.ParseIntoArray(AccountIds, EOS_ID_SEPARATOR, false);
+
+	FString EpicAccountIdString;
+	FString ProductUserIdSting;
+	
+	if (AccountIds.Num() > 1 && AccountIds[1].Len() > 0)
+	{
+		ProductUserIdSting = AccountIds[1];
+	}
+	
+	if (AccountIds.Num() > 1 && AccountIds[0].Len() > 0)
+	{
+		EpicAccountIdString = AccountIds[0];
+	}
+	
+	Eos_ProductUserId = EOS_ProductUserId_FromString(TCHAR_TO_UTF8(*ProductUserIdSting));
+	LoggedInUserID = EpicAccountIdFromString(TCHAR_TO_UTF8(*EpicAccountIdString));
+	UE_LOG(LogTemp, Warning, TEXT("ProductUserId in Login callback: %hs"), ProductUserIDToString(Eos_ProductUserId));
+	IOnlineIdentityPtr IdentyPtr = OnlineSubsystem->GetIdentityInterface();
+
+	if (IdentyPtr == nullptr) return;
+
+	IdentyPtr->ClearOnLoginCompleteDelegates(0, this);
+
+	if (bWasSuccessful)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Green, FString::Printf(TEXT("Logged In Successfuly!")));
+		m_pMainMenu->SetWidgetOnLoginComplete();
+	} else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Red, FString::Printf(TEXT("Connetcion Error!")));
+	}
 }
 
 void ULab4GameInstance::RefreshServersList()
@@ -254,7 +489,8 @@ void ULab4GameInstance::RefreshServersList()
 	if (SearchSettings.IsValid())
 	{
 		SearchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("Test session"), EOnlineComparisonOp::Equals);
-		SearchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);		
+		SearchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+		SearchSettings->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 		SessionPtr->FindSessions(0,SearchSettings.ToSharedRef());
 	}
 }
@@ -268,81 +504,6 @@ bool ULab4GameInstance::ChangeConfigToLan()
 {	
 
 	return true;
-}
-
-void ULab4GameInstance::OnCreateSessionComplete(FName SessionName, bool Success)
-{
-	UE_LOG(LogTemp, Warning, TEXT("Success: %d"), Success);
-	GetWorld()->ServerTravel(TravelLobbyPath);
-	
-	if (!Success) return;
-	
-	if (m_pMainMenu != nullptr)
-	{
-		m_pMainMenu->TeardownAll();
-	}
-
-	SessionPtr->ClearOnCreateSessionCompleteDelegates(this);
-}
-
-void ULab4GameInstance::OnDestroySessionComplete(FName SessionName, bool Success)
-{
-	UE_LOG(LogTemp, Warning, TEXT("Destroying Session Success %d"), Success);
-	
-	if (!Success) return;
-
-	if (OnlineSubsystem == nullptr) return;
-
-	SessionPtr = OnlineSubsystem->GetSessionInterface();
-
-	SessionPtr->ClearOnDestroySessionCompleteDelegates(this);
-	//CreateSession();
-}
-
-void ULab4GameInstance::OnFindSessionsComplete(bool Success)
-{
-	if (Success && m_pSessionSearch.IsValid() && m_pMainMenu != nullptr)
-	{
-		TArray<FString> ServersList;
-		
-		for (const FOnlineSessionSearchResult& Session : m_pSessionSearch->SearchResults)
-		{
-			FString ServerName;
-			Session.Session.SessionSettings.Get(ServerNameKey, ServerName);
-			ServersList.Add(ServerName);
-		}
-
-		m_pMainMenu->OnInstanceFoundServers(ServersList);
-	}
-}
-
-void ULab4GameInstance::OnJoinSessionComplete(FName Name, EOnJoinSessionCompleteResult::Type Result)
-{
-	FString Address;
-
-	if (Result == EOnJoinSessionCompleteResult::Type::Success)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Join Session Success %d"), Result);
-	} else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Error, while joining online session"));
-	}
-	
-	if (OnlineSubsystem == nullptr) return;
-
-	SessionPtr = OnlineSubsystem->GetSessionInterface();
-
-	if (SessionPtr == nullptr) return;
-	
-	SessionPtr->GetResolvedConnectString(Name, Address);
-
-	if (Address.IsEmpty()) return;
-	
-	//GetFirstLocalPlayerController()->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
-	if (APlayerController *PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
-	{
-		PC->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
-	}
 }
 
 void ULab4GameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
@@ -364,22 +525,6 @@ void ULab4GameInstance::AddLobbyHostWidget()
 			LobbyHostWidget->AddToViewport();
 		}
 	}
-}
-
-void ULab4GameInstance::LogIn()
-{
-	if (OnlineSubsystem == nullptr) return;
-	IOnlineIdentityPtr IdentyPtr = OnlineSubsystem->GetIdentityInterface();
-
-	if (IdentyPtr == nullptr) return;
-
-	FOnlineAccountCredentials AccountCredentials;
-	AccountCredentials.Id = FString("");
-	AccountCredentials.Token = FString("");
-	AccountCredentials.Type = FString("accountportal");
-
-	IdentyPtr->OnLoginCompleteDelegates->AddUObject(this, &ULab4GameInstance::OnLoginComplete);
-	IdentyPtr->Login(0, AccountCredentials);
 }
 
 void ULab4GameInstance::InitializeSDKCredentials()
@@ -790,49 +935,6 @@ void ULab4GameInstance::CompletionDelegateSessionDestroy(const EOS_Sessions_Dest
 	UE_LOG(LogTemp, Error, TEXT("Error, while destroying session %s: %hs"), **DestroyedSessionName, EOS_EResult_ToString(Data->ResultCode));
 }
 
-void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
-{
-	UE_LOG(LogTemp, Warning, TEXT("Logged In: %d"), bWasSuccessful);
-	bWasLoggedIn = bWasSuccessful;
-	
-	if (OnlineSubsystem == nullptr) return;
-	
-	const FUniqueNetIdString UniqueNetIdString = static_cast<FUniqueNetIdString>(UserId);
-	TArray<FString> AccountIds;
-	UniqueNetIdString.UniqueNetIdStr.ParseIntoArray(AccountIds, EOS_ID_SEPARATOR, false);
-
-	FString EpicAccountIdString;
-	FString ProductUserIdSting;
-	
-	if (AccountIds.Num() > 1 && AccountIds[1].Len() > 0)
-	{
-		ProductUserIdSting = AccountIds[1];
-	}
-	
-	if (AccountIds.Num() > 1 && AccountIds[0].Len() > 0)
-	{
-		EpicAccountIdString = AccountIds[0];
-	}
-	
-	Eos_ProductUserId = EOS_ProductUserId_FromString(TCHAR_TO_UTF8(*ProductUserIdSting));
-	LoggedInUserID = EpicAccountIdFromString(TCHAR_TO_UTF8(*EpicAccountIdString));
-	UE_LOG(LogTemp, Warning, TEXT("ProductUserId in Login callback: %hs"), ProductUserIDToString(Eos_ProductUserId));
-	IOnlineIdentityPtr IdentyPtr = OnlineSubsystem->GetIdentityInterface();
-
-	if (IdentyPtr == nullptr) return;
-
-	IdentyPtr->ClearOnLoginCompleteDelegates(0, this);
-
-	if (bWasSuccessful)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Green, FString::Printf(TEXT("Logged In Successfuly!")));
-		m_pMainMenu->SetWidgetOnLoginComplete();
-	} else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Red, FString::Printf(TEXT("Connetcion Error!")));
-	}
-}
-
 void ULab4GameInstance::HandleQueryGlobalRanksResult(const bool bWasSuccessful,
 	FOnlineLeaderboardReadRef LeaderboardRef)
 {
@@ -1062,71 +1164,6 @@ void ULab4GameInstance::LoginViaSDKAccountPortal()
 	InitializeSessionsHandler();
 }
 
-void ULab4GameInstance::FindSessions()
-{
-	if (OnlineSubsystem == nullptr) return;
-
-	if (!bIsLanGame)
-	{
-		if (bWasLoggedIn == false) return;
-
-		SessionPtr = OnlineSubsystem->GetSessionInterface();
-
-		if (SessionPtr == nullptr) return;
-	
-		SearchSettings = MakeShareable(new FOnlineSessionSearch());
-		SearchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("Test session"), EOnlineComparisonOp::Equals);
-		SearchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
-		SessionPtr->OnFindSessionsCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnFindOnlineSessionsComplete);
-		SessionPtr->FindSessions(0, SearchSettings.ToSharedRef());
-	}
-}
-
-void ULab4GameInstance::OnFindOnlineSessionsComplete(const bool bWasSuccessful)
-{
-	const int32 LobbiesCount = SearchSettings->SearchResults.Num();
-	
-	UE_LOG(LogTemp, Warning, TEXT("Finding Lobbies Success: %d"), bWasSuccessful);
-	
-	if (bWasSuccessful)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Found %d lobbies"), LobbiesCount);
-
-		TArray<FString> ServersList;
-		
-		for (const FOnlineSessionSearchResult& Session : SearchSettings->SearchResults)
-		{
-			FString ServerName;
-			Session.Session.SessionSettings.Get(ServerNameKey, ServerName);
-			ServersList.Add(ServerName);
-		}
-
-		m_pMainMenu->OnInstanceFoundServers(ServersList);
-		
-		return;
-	}
-
-	if (OnlineSubsystem == nullptr) return;
-
-	SessionPtr = OnlineSubsystem->GetSessionInterface();
-
-	if (SessionPtr == nullptr) return;
-
-	SessionPtr->ClearOnFindSessionsCompleteDelegates(this);
-}
-
-void ULab4GameInstance::DestroySession()
-{
-	if (OnlineSubsystem == nullptr) return;
-
-	SessionPtr = OnlineSubsystem->GetSessionInterface();
-
-	if (SessionPtr == nullptr) return;
-
-	SessionPtr->OnDestroySessionCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnDestroySessionComplete);
-	SessionPtr->DestroySession(SessionNameConst);
-}
-
 void ULab4GameInstance::ShowInGameMenu()
 {
 	if (InGameMenu != nullptr)
@@ -1180,44 +1217,6 @@ bool ULab4GameInstance::GetIsLanGame() const
 void ULab4GameInstance::HideGameOverMenu()
 {
 	GameOverWidget->TeardownGameOverMenu();
-}
-
-void ULab4GameInstance::CreateSession() const
-{
-	if (!SessionPtr.IsValid()) return;
-	
-	FOnlineSessionSettings SessionSettings;
-	
-	if (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL" || bIsLanGame)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *IOnlineSubsystem::Get()->GetSubsystemName().ToString());
-		SessionSettings.bIsLANMatch = true;
-		SessionSettings.bUsesPresence = false;
-		SessionSettings.bUseLobbiesIfAvailable = false;
-	}
-	else
-	{
-		SessionSettings.bIsLANMatch = false;
-		SessionSettings.bUsesPresence = true;
-		SessionSettings.bUseLobbiesIfAvailable = true;
-	}
-
-	SessionSettings.bShouldAdvertise = true;
-	SessionSettings.NumPublicConnections = 2;
-	SessionSettings.bAllowJoinInProgress = true;
-	
-
-	FOnlineSessionSetting setting;
-	setting.Data = m_ServerName.ToString();
-	setting.AdvertisementType = EOnlineDataAdvertisementType::ViaOnlineServiceAndPing;
-	
-	SessionSettings.Set(ServerNameKey, setting);
-	SessionSettings.Set(SEARCH_KEYWORDS, FString("Test session"), EOnlineDataAdvertisementType::ViaOnlineService);
-	
-	const FUniqueNetIdPtr NetID = GetFirstGamePlayer()->GetPreferredUniqueNetId().GetUniqueNetId();
-	GetFirstGamePlayer()->SetCachedUniqueNetId(NetID);
-	
-	SessionPtr->CreateSession(0, SessionNameConst, SessionSettings);
 }
 
 void ULab4GameInstance::LoadMainMenu() const

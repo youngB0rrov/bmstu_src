@@ -153,6 +153,7 @@ void UMainMenu::OnClickedPlayerNameAtJoining()
 
 void UMainMenu::OnClickedPlayerNameAtCreation()
 {
+	UE_LOG(LogTemp, Warning, TEXT("Clicked Accept"));
 	if (SessionNameEnterText->GetText().IsEmpty()) return;
 	
 	if (GetGameInstance<ULab4GameInstance>()->GetIsLanGame())

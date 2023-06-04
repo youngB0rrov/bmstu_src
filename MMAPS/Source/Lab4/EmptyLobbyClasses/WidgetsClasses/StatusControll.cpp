@@ -81,6 +81,9 @@ void UStatusControll::OnExitButtonClicked()
 	{
 		EmptyLobbyOwningController->ClientTravel(TravelMainMenuPath, ETravelType::TRAVEL_Absolute);
 	}
+
+	GameInstance = GameInstance == nullptr ? GetGameInstance<ULab4GameInstance>() : GameInstance;
+	GameInstance->DestroySession();
 }
 
 void UStatusControll::OnPlayerButtonDelegates()

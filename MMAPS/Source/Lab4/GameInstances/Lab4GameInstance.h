@@ -46,8 +46,8 @@ public:
 	void AddCharacter(class ALab4Character* const Character, const FString& Name);
 	void RemoveCharacter(class ALab4Character* const Character);
 	
-	void Host() const;
-	void Join() const;
+	void Host();
+	void Join();
 
 	void RefreshServersList();
 	
@@ -135,7 +135,8 @@ public:
 
 	FORCEINLINE FName GetSessionName() const { return SessionNameConst;}
 private:
-	void CreateSession() const;
+	UFUNCTION()
+	void CreateSession();
 	void LoadMainMenu() const;
 	bool bShouldBePaused;
 	
@@ -146,6 +147,9 @@ private:
 
 	UPROPERTY()
 	class UGameOverMenu* GameOverWidget;
+	
+	UPROPERTY()
+	UUserWidget* LoadingWidget;
 	
 	EOS_HPlatform PlatformInterface;
 	static EOS_HAuth AuthInterface;
@@ -185,6 +189,7 @@ private:
 	TSubclassOf<UUserWidget> BPWinnerWidgetClass;
 	TSubclassOf<UUserWidget> BPRankedLeaderboardRowClass;
 	TSubclassOf<UUserWidget> BPLobbyHostButtonClass;
+	TSubclassOf<UUserWidget> BPLoadingWidgetClass;
 	
 	const FName ServerNameKey = "ServerName";
 	const FName SessionNameConst = "Session";
