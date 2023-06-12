@@ -18,6 +18,7 @@ protected:
 	virtual void ReceivedPlayer() override;
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
+	virtual void SetupInputComponent() override;
 	
 private:
 	UPROPERTY()
@@ -29,6 +30,8 @@ private:
 	float GetClientServerDelta();
 	void CheckPlayersSync(float DeltaSeconds);
 	void RequestServerTime();
+	void PushToTalkPressed();
+	void PushToTalkReleased();
 
 	UFUNCTION(Server, Reliable)
 	void ServerRequestServerTime(float ClientRequestTime);

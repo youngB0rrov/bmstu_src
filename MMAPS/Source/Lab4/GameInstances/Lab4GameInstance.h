@@ -12,6 +12,7 @@
 #include "eos_connect_types.h"
 #include "eos_sessions_types.h"
 #include "eos_sdk.h"
+#include "VoiceChat.h"
 #include "Interfaces/OnlineLeaderboardInterface.h"
 #include "Lab4GameInstance.generated.h"
 
@@ -60,6 +61,10 @@ public:
 	void OnJoinSessionComplete(FName Name, EOnJoinSessionCompleteResult::Type Result);
 	void OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);\
 	void AddLobbyHostWidget();
+
+	UFUNCTION(Exec)
+	void EOSVoiceChatLogin();
+	void OnVoiceLoginComplete(const FString& PlayerName, const FVoiceChatResult& Result);
 	
 	UPROPERTY()
 	class ULobbyHostWidget* LobbyHostWidget;
@@ -111,6 +116,7 @@ public:
 	
 	FString GetPlayerName() const { return m_PlayerName; }
 	FORCEINLINE bool GetLoginStatus() const { return bWasLoggedIn;}
+	void GetUserVoiceChatInterface();
 	
 	UFUNCTION(Exec)
 	void ShowInGameMenu();
@@ -174,6 +180,7 @@ private:
 	IOnlineIdentityPtr IdentityPtr;
 	IOnlineStatsPtr StatsPtr;
 	TSharedPtr<FOnlineSessionSearch> m_pSessionSearch;
+	IVoiceChatUser* Lab4VoiceChatUser;
 
 	FString m_PlayerName;
 	FName m_ServerName;

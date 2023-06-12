@@ -50,6 +50,13 @@ void AEmptyLobbyPlayerController::Tick(float DeltaSeconds)
 	CheckPlayersSync(DeltaSeconds);
 }
 
+void AEmptyLobbyPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+	InputComponent->BindAction("PushToTalk", IE_Pressed, this, &AEmptyLobbyPlayerController::PushToTalkPressed);
+	InputComponent->BindAction("PushToTalk", IE_Released, this, &AEmptyLobbyPlayerController::PushToTalkReleased);
+}
+
 void AEmptyLobbyPlayerController::PollInit()
 {
 	if (EmptyLobbyHUD == nullptr)
@@ -205,6 +212,18 @@ void AEmptyLobbyPlayerController::RequestServerTime()
 	{
 		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
 	}
+}
+
+void AEmptyLobbyPlayerController::PushToTalkPressed()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Player is talking"));
+	GetWorld()->Exec(GetWorld(), *FString::Printf(TEXT("ToggleSpeaking 1")));
+}
+
+void AEmptyLobbyPlayerController::PushToTalkReleased()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Player isn't talking anymore"));
+	GetWorld()->Exec(GetWorld(), *FString::Printf(TEXT("ToggleSpeaking 0")));
 }
 
 void AEmptyLobbyPlayerController::ClientAddCancellationMessage_Implementation()

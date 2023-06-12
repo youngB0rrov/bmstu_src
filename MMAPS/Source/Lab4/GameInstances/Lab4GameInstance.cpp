@@ -20,6 +20,7 @@
 #include "Lab4/UserWidgets/GameOverMenu.h"
 #include "Lab4/UserWidgets/LobbyHostWidget.h"
 #include "Lab4/UserWidgets/PlayerTableRow.h"
+#include "OnlineSubsystemEOS.h"
 #include "Lab4/UserWidgets/RankedLeaderboardRow.h"
 
 #define EOS_ID_SEPARATOR TEXT("|")
@@ -227,7 +228,7 @@ void ULab4GameInstance::CreateSession()
 	SessionSettings.bShouldAdvertise = true;
 	SessionSettings.NumPublicConnections = 10;
 	SessionSettings.bAllowJoinInProgress = true;
-	SessionSettings.bUseLobbiesVoiceChatIfAvailable = false;
+	SessionSettings.bUseLobbiesVoiceChatIfAvailable = true;
 
 	FOnlineSessionSetting setting;
 	setting.Data = m_ServerName.ToString();
@@ -464,6 +465,7 @@ void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful,
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Green, FString::Printf(TEXT("Logged In Successfuly!")));
 		m_pMainMenu->SetWidgetOnLoginComplete();
+		EOSVoiceChatLogin();
 	} else
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Red, FString::Printf(TEXT("Connetcion Error!")));
@@ -525,6 +527,46 @@ void ULab4GameInstance::AddLobbyHostWidget()
 			LobbyHostWidget->AddToViewport();
 		}
 	}
+}
+
+void ULab4GameInstance::EOSVoiceChatLogin()
+{
+	OnlineSubsystem = OnlineSubsystem == nullptr ? IOnlineSubsystem::Get() : OnlineSubsystem;
+
+	if (OnlineSubsystem)
+	{
+		IdentityPtr = IdentityPtr == nullptr ? OnlineSubsystem->GetIdentityInterface() : IdentityPtr;
+
+		if (IdentityPtr)
+		{
+			if (bWasLoggedIn)
+			{
+				IVoiceChat* VoiceChatRef = IVoiceChat::Get();
+				if (VoiceChatRef)
+				{
+					Lab4VoiceChatUser = VoiceChatRef->CreateUser();
+
+					if (Lab4VoiceChatUser)
+					{
+						TSharedPtr<const FUniqueNetId> NetId = IdentityPtr->GetUniquePlayerId(0);
+						FPlatformUserId PlatformUserId = IdentityPtr->GetPlatformUserIdFromUniqueNetId(*NetId);
+						Lab4VoiceChatUser->Login(PlatformUserId, NetId->ToString(), TEXT(""), FOnVoiceChatLoginCompleteDelegate::CreateUObject(this, &ULab4GameInstance::OnVoiceLoginComplete));
+					}
+				}
+			}
+		}
+	}
+}
+
+void ULab4GameInstance::OnVoiceLoginComplete(const FString& PlayerName, const FVoiceChatResult& Result)
+{
+	if (Result == EVoiceChatResult::Success)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("User was connected to voice chat successfully"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("Error, while conntecting user to the voice chat"));
 }
 
 void ULab4GameInstance::InitializeSDKCredentials()
@@ -1162,6 +1204,13 @@ void ULab4GameInstance::LoginViaSDKAccountPortal()
 	#endif
 	InitializeConnectHandler();
 	InitializeSessionsHandler();
+}
+
+void ULab4GameInstance::GetUserVoiceChatInterface()
+{
+	if (OnlineSubsystem == nullptr) return;
+	
+	IdentityPtr = IdentityPtr == nullptr ? OnlineSubsystem->GetIdentityInterface() : IdentityPtr;
 }
 
 void ULab4GameInstance::ShowInGameMenu()

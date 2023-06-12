@@ -34,8 +34,6 @@ bool UStatusControll::Initialize()
 	ExitButton->OnClicked.AddDynamic(this, &UStatusControll::OnExitButtonClicked);
 	PlayerReadyButton->OnPressed.AddDynamic(this, &UStatusControll::OnPlayerReadyButtonPressed);
 	PlayerReadyButton->OnReleased.AddDynamic(this, &UStatusControll::OnPlayerButtonReleased);
-	PlayerCancelButton->OnPressed.AddDynamic(this, &UStatusControll::OnPlayerCancelButtonPressed);
-	PlayerCancelButton->OnReleased.AddDynamic(this, &UStatusControll::OnPlayerButtonReleased);
 	
 	return true;
 }
@@ -88,9 +86,22 @@ void UStatusControll::OnExitButtonClicked()
 
 void UStatusControll::OnPlayerButtonDelegates()
 {
-	PressButtonProgressbar->SetVisibility(ESlateVisibility::Hidden);
-	bIsProgressbarVisible = false;
-	PressButtonProgressbar->SetPercent(0.f);
+	if (!bIsReadyStatus)
+	{
+		PressButtonProgressbar->SetVisibility(ESlateVisibility::Hidden);
+		bIsProgressbarVisible = false;
+		PressButtonProgressbar->SetPercent(0.f);
+	}
+	
+	bIsReadyStatus = !bIsReadyStatus;
+	if (bIsReadyStatus)
+	{
+		PlayerReadyButtonText->SetText(FText::FromString(FString::Printf(TEXT("Cancel"))));
+	}
+	else
+	{
+		PlayerReadyButtonText->SetText(FText::FromString(FString::Printf(TEXT("Ready"))));
+	}
 	
 	if (EmptyLobbyOwningController)
 	{
@@ -127,58 +138,47 @@ void UStatusControll::OnPlayerButtonDelegates()
 
 void UStatusControll::OnPlayerReadyButtonPressed()
 {
-	PressButtonProgressbar->SetVisibility(ESlateVisibility::Visible);
-	bIsProgressbarVisible = true;
-	
-	// Ready button clicked
-	PressedButton = 1;
-	GameInstance = GameInstance == nullptr ? GetGameInstance<ULab4GameInstance>() : GameInstance;
-
-	if (GameInstance)
+	if (!bIsReadyStatus)
 	{
-		PressButtonDelegate.BindUFunction(this, FName(TEXT("OnPlayerButtonDelegates")));
-		GameInstance->GetTimerManager().SetTimer(
-			PressButtonHandle,
-			PressButtonDelegate,
-			PressButtonDuration,
-			false
-			);
-	}
-}
-void UStatusControll::OnPlayerCancelButtonPressed()
-{
-	PressButtonProgressbar->SetVisibility(ESlateVisibility::Visible);
-	bIsProgressbarVisible = true;
+		PressButtonProgressbar->SetVisibility(ESlateVisibility::Visible);
+		bIsProgressbarVisible = true;
 	
-	// Cancel button clicked
+		// Ready button clicked
+		PressedButton = 1;
+		GameInstance = GameInstance == nullptr ? GetGameInstance<ULab4GameInstance>() : GameInstance;
+
+		if (GameInstance)
+		{
+			PressButtonDelegate.BindUFunction(this, FName(TEXT("OnPlayerButtonDelegates")));
+			GameInstance->GetTimerManager().SetTimer(
+				PressButtonHandle,
+				PressButtonDelegate,
+				PressButtonDuration,
+				false
+				);
+		}
+		return;
+	}
+
 	PressedButton = 2;
-	GameInstance = GameInstance == nullptr ? GetGameInstance<ULab4GameInstance>() : GameInstance;
-
-	if (GameInstance)
-	{
-		PressButtonDelegate.BindUFunction(this, FName(TEXT("OnPlayerButtonDelegates")));
-		GameInstance->GetTimerManager().SetTimer(
-			PressButtonHandle,
-			PressButtonDelegate,
-			PressButtonDuration,
-			false
-			);
-	}
+	OnPlayerButtonDelegates();
 }
 
 void UStatusControll::OnPlayerButtonReleased()
 {
-	PressButtonProgressbar->SetVisibility(ESlateVisibility::Hidden);
-	bIsProgressbarVisible = false;
-	PressButtonProgressbar->SetPercent(0.f);
-	
-	GameInstance = GameInstance == nullptr ? GetGameInstance<ULab4GameInstance>() : GameInstance;
-
-	if (GameInstance)
+	if (!bIsReadyStatus)
 	{
-		GameInstance->GetTimerManager().ClearTimer(PressButtonHandle);
-	}
+		PressButtonProgressbar->SetVisibility(ESlateVisibility::Hidden);
+		bIsProgressbarVisible = false;
+		PressButtonProgressbar->SetPercent(0.f);
 	
+		GameInstance = GameInstance == nullptr ? GetGameInstance<ULab4GameInstance>() : GameInstance;
+
+		if (GameInstance)
+		{
+			GameInstance->GetTimerManager().ClearTimer(PressButtonHandle);
+		}
+	}
 }
 
 void UStatusControll::SetPorgressbarPercantage()

@@ -40,9 +40,6 @@ public:
 
 	UFUNCTION()
 	void OnPlayerButtonReleased();
-
-	UFUNCTION()
-	void OnPlayerCancelButtonPressed();
 	
 	UPROPERTY(meta=(BindWidget))
 	UTextBlock* StartTimerInfoText;
@@ -58,9 +55,6 @@ private:
 	UButton* PlayerReadyButton;
 
 	UPROPERTY(meta=(BindWidget))
-	UButton* PlayerCancelButton;
-
-	UPROPERTY(meta=(BindWidget))
 	UButton* StartMatchButton;
 
 	UPROPERTY(meta=(BindWidget))
@@ -68,6 +62,9 @@ private:
 
 	UPROPERTY(meta=(BindWidget))
 	UProgressBar* PressButtonProgressbar;
+
+	UPROPERTY(meta=(BindWidget))
+	UTextBlock* PlayerReadyButtonText;
 
 	UPROPERTY()
 	AEmptyLobbyPlayerController* EmptyLobbyOwningController;
@@ -85,5 +82,6 @@ private:
 
 	void SetPorgressbarPercantage();
 
-	uint16 PressedButton;
+	uint16 PressedButton = 0;
+	bool bIsReadyStatus = false;
 };

@@ -103,6 +103,9 @@ protected:
 	void OnRep_PlayerScore();
 
 	void PollInit();
+
+	void PushToTalkPressed();
+	void PushToTalkReleased();
 	
 	FTimerHandle FiringTimer;
 	/** 

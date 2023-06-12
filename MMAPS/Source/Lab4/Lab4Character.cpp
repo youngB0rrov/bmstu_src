@@ -111,6 +111,8 @@ void ALab4Character::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
 	                                 &ALab4Character::OnPressedPlayersList);
 	PlayerInputComponent->BindAction("Show or Hide Players List", IE_Released, this,
 	                                 &ALab4Character::OnReleasedPlayersList);
+	PlayerInputComponent->BindAction("PushToTalk", IE_Pressed, this, &ALab4Character::PushToTalkPressed);
+	PlayerInputComponent->BindAction("PushToTalk", IE_Released, this, &ALab4Character::PushToTalkReleased);
 }
 
 void ALab4Character::Tick(float DeltaSeconds)
@@ -223,6 +225,18 @@ void ALab4Character::PollInit()
 			}
 		}
 	}
+}
+
+void ALab4Character::PushToTalkPressed()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Player is talking"));
+	GetWorld()->Exec(GetWorld(), *FString::Printf(TEXT("ToggleSpeaking 1")));
+}
+
+void ALab4Character::PushToTalkReleased()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Player isn't talking anymore"));
+	GetWorld()->Exec(GetWorld(), *FString::Printf(TEXT("ToggleSpeaking 0")));
 }
 
 void ALab4Character::TurnAtRate(float Rate)
