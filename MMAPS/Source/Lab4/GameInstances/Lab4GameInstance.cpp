@@ -20,7 +20,6 @@
 #include "Lab4/UserWidgets/GameOverMenu.h"
 #include "Lab4/UserWidgets/LobbyHostWidget.h"
 #include "Lab4/UserWidgets/PlayerTableRow.h"
-#include "OnlineSubsystemEOS.h"
 #include "Lab4/UserWidgets/RankedLeaderboardRow.h"
 
 #define EOS_ID_SEPARATOR TEXT("|")
