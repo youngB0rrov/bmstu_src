@@ -1,0 +1,19 @@
+FROM debian:latest
+
+# Создать директорию для выделенного сервера и сделать ее рабочей
+RUN mkdir -p /home/appuser/server
+WORKDIR /home/appuser/server
+
+# Скопировать все файлы из директории LinuxServer в рабочую директорию
+COPY ./LinuxServer /home/appuser/server
+
+# Создать пользователя без прав рута (нужно для запуска инстанса сервера)
+RUN groupadd -g 999 appuser && \
+    useradd -r -u 999 -g appuser appuser
+USER appuser
+
+EXPOSE 7777/tcp
+EXPOSE 7777/udp
+
+ENTRYPOINT ["/home/appuser/server/Lab4Server.sh", "-log"]
+CMD []

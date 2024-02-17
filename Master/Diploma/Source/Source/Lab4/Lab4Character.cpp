@@ -218,7 +218,7 @@ void ALab4Character::PollInit()
 				AddPlayerNameOnServer(m_PlayerName);
 			}
 			
-			if (HasAuthority() && IsLocallyControlled() || GetLocalRole() == ROLE_AutonomousProxy)
+			if ((HasAuthority() && IsLocallyControlled()) || (GetLocalRole() == ROLE_AutonomousProxy))
 			{
 
 				Lab4PlayerState->AddToScore(0);
