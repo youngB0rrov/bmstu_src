@@ -1,0 +1,16 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{559FAC73-4697-EED3-DEBC-9E85824A00EA}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "ServerManager",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		}
+	]
+}

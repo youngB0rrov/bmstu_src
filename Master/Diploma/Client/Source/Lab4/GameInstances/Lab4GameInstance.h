@@ -13,6 +13,7 @@
 #include "eos_sessions_types.h"
 #include "eos_sdk.h"
 #include "VoiceChat.h"
+#include "IWebSocket.h"
 #include "Interfaces/OnlineLeaderboardInterface.h"
 #include "Lab4GameInstance.generated.h"
 
@@ -31,7 +32,10 @@ public:
 
 	UPROPERTY()
 	class UGameMenu* InGameMenu;
+
+	TSharedPtr<IWebSocket> WebSocket;
 	
+	void InitWebSocketConnection();
 	virtual void Init() override;
 	virtual void Shutdown() override;
 	bool Tick(float DeltaSeconds);
@@ -71,7 +75,6 @@ public:
 	
 	void LogIn();
 	void InitializeSDKCredentials();
-	void LoginViaSDKAccountPortal();
 	void InitializePlatformInterface();
 	void InitializeAuthInterfaceViaCredentials();
 	void InitializeAuthInterfaceViaExchangeCode();
@@ -80,12 +83,6 @@ public:
 	void InitializeLeaderboardsHandler();
 	void InitializeConnectHandler();
 	void InitializeSessionsHandler();
-	
-	UFUNCTION(Exec)
-	void SubmitPlayerScores() const;
-	
-	UFUNCTION(Exec)
-	void QueryRanks() const;
 
 	UFUNCTION(Exec)
 	void QueryGlobalRanks(const int32 LeftBoundry, const int32 RightBoundry);
@@ -94,13 +91,7 @@ public:
 	void IngestMatchData();
 	void LoginViaCredentials();
 	static void ConnectViaSDK();
-	void CreateSessionViaSDK() const;
-
-	UFUNCTION(Exec)
-	void DestroySessionViaSDK();
 	
-	static void EOS_CALL CompletionDelegate(const EOS_Auth_LoginCallbackInfo* Data);
-	static void EOS_CALL CompletionDelegateLeaderboards(const EOS_Leaderboards_OnQueryLeaderboardRanksCompleteCallbackInfo* Data);
 	static void EOS_CALL CompletionDelegateIngestPlayerData(const EOS_Stats_IngestStatCompleteCallbackInfo* Data);
 	static void EOS_CALL CompletionDelegateConnect(const EOS_Connect_LoginCallbackInfo* Data);
 	static void EOS_CALL CompletionDelegateSessionCreate(const EOS_Sessions_UpdateSessionCallbackInfo* Data);
@@ -133,11 +124,6 @@ public:
 
 	UFUNCTION(Exec)
 	void HideGameOverMenu();
-
-	static char const* EpicAccountIDToString(EOS_EpicAccountId InAccountId);
-	static char const* ProductUserIDToString(EOS_ProductUserId InAccountId);
-	static EOS_EpicAccountId EpicAccountIdFromString(const char* AccountString);
-	static EOS_ProductUserId ProductUserIdFromString(const char* AccountString);
 
 	FORCEINLINE FName GetSessionName() const { return SessionNameConst;}
 private:

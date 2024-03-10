@@ -90,6 +90,18 @@ public:
 
 	UFUNCTION()
 	void OnLegendsLeagueButtonClicked();
+
+	UFUNCTION()
+	void OnMatchmakingButtonClicked();
+
+	UFUNCTION()
+	void OnMatchmakingCreateButtonClicked();
+
+	UFUNCTION()
+	void OnMatchmakingFindButtonClicked();
+
+	UFUNCTION()
+	void OnMatchmakingBackButtonClicked();
 	
 	TArray<FText> GetCredentials();
 	
@@ -161,6 +173,9 @@ private:
 	UPROPERTY(meta=(BindWidget))
 	UButton* LeaderboardsButton;
 
+	UPROPERTY(meta = (BindWidget))
+	UButton* MainMenuMatchmakingButton;
+
 	UPROPERTY(meta=(BindWidget))
 	UButton* LeaderboardBackButton;
 
@@ -214,6 +229,18 @@ private:
 
 	UPROPERTY(meta=(BindWidget))
 	UWidget* Leaderboard;
+
+	UPROPERTY(meta = (BindWidget))
+	UWidget* Matchmaking;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* MatchmakingCreateButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* MatchmakingFindButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* MatchmakingBackButton;
 
 	UPROPERTY(meta=(BindWidget))
 	class UPanelWidget *ServersList;

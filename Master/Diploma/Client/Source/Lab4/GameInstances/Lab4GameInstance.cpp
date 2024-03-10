@@ -15,6 +15,7 @@
 #include "Lab4/Actors/MainMenuInitializer.h"
 #include "Engine/Engine.h"
 #include "GameFramework/PlayerState.h"
+#include "WebSocketsModule.h"
 #include "Interfaces/OnlineLeaderboardInterface.h"
 #include "Interfaces/OnlineStatsInterface.h"
 #include "Lab4/UserWidgets/GameOverMenu.h"
@@ -73,6 +74,10 @@ void ULab4GameInstance::Init()
 void ULab4GameInstance::Shutdown()
 {
 	FTicker::GetCoreTicker().RemoveTicker(TickDelegateHandle);
+	if (WebSocket->IsConnected())
+	{
+		WebSocket->Close();
+	}
 	Super::Shutdown();
 }
 
@@ -85,6 +90,19 @@ bool ULab4GameInstance::Tick(float DeltaSeconds)
 	return true;
 }
 
+void ULab4GameInstance::InitWebSocketConnection()
+{
+	// Создание веб-сокета
+	if (!FModuleManager::Get().IsModuleLoaded("WebSockets"))
+	{
+		FModuleManager::Get().LoadModule("WebSockets");
+	}
+
+	WebSocket = FWebSocketsModule::Get().CreateWebSocket("ws://localhost:8080");
+
+	UE_LOG(LogTemp, Warning, TEXT("WebSocket connected: %d"), WebSocket->IsConnected())
+		WebSocket->Connect();
+}
 
 void ULab4GameInstance::ConnectMainMenuInitializer(AMainMenuInitializer* const pInitializer)
 {
@@ -434,26 +452,6 @@ void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful,
 	
 	if (OnlineSubsystem == nullptr) return;
 	
-	const FUniqueNetIdString UniqueNetIdString = static_cast<FUniqueNetIdString>(UserId);
-	TArray<FString> AccountIds;
-	UniqueNetIdString.UniqueNetIdStr.ParseIntoArray(AccountIds, EOS_ID_SEPARATOR, false);
-
-	FString EpicAccountIdString;
-	FString ProductUserIdSting;
-	
-	if (AccountIds.Num() > 1 && AccountIds[1].Len() > 0)
-	{
-		ProductUserIdSting = AccountIds[1];
-	}
-	
-	if (AccountIds.Num() > 1 && AccountIds[0].Len() > 0)
-	{
-		EpicAccountIdString = AccountIds[0];
-	}
-	
-	Eos_ProductUserId = EOS_ProductUserId_FromString(TCHAR_TO_UTF8(*ProductUserIdSting));
-	LoggedInUserID = EpicAccountIdFromString(TCHAR_TO_UTF8(*EpicAccountIdString));
-	UE_LOG(LogTemp, Warning, TEXT("ProductUserId in Login callback: %hs"), ProductUserIDToString(Eos_ProductUserId));
 	IOnlineIdentityPtr IdentyPtr = OnlineSubsystem->GetIdentityInterface();
 
 	if (IdentyPtr == nullptr) return;
@@ -654,7 +652,7 @@ void ULab4GameInstance::InitializeAuthInterfaceViaCredentials()
 	AuthCredentials.SystemAuthCredentialsOptions = nullptr;
 	LoginOptions.Credentials = &AuthCredentials;
 
-	EOS_Auth_Login(AuthInterface, &LoginOptions, nullptr, &CompletionDelegate);
+	//EOS_Auth_Login(AuthInterface, &LoginOptions, nullptr, &CompletionDelegate);
 }
 
 void ULab4GameInstance::InitializeAuthInterfaceViaExchangeCode()
@@ -686,8 +684,6 @@ void ULab4GameInstance::InitializeAuthInterfaceViaExchangeCode()
 	AuthCredentials.Type = EOS_ELoginCredentialType::EOS_LCT_ExchangeCode;
 	AuthCredentials.SystemAuthCredentialsOptions = nullptr;
 	LoginOptions.Credentials = &AuthCredentials;
-
-	EOS_Auth_Login(AuthInterface, &LoginOptions, nullptr, &CompletionDelegate);
 }
 
 void ULab4GameInstance::InitializeAuthInterfaceViaAccountPortal()
@@ -710,8 +706,6 @@ void ULab4GameInstance::InitializeAuthInterfaceViaAccountPortal()
 	AuthCredentials.Type = EOS_ELoginCredentialType::EOS_LCT_AccountPortal;
 	AuthCredentials.SystemAuthCredentialsOptions = nullptr;
 	LoginOptions.Credentials = &AuthCredentials;
-
-	EOS_Auth_Login(AuthInterface, &LoginOptions, nullptr, &CompletionDelegate);
 }
 
 void ULab4GameInstance::InitializeStatsHandler()
@@ -773,48 +767,6 @@ void ULab4GameInstance::InitializeSessionsHandler()
 	UE_LOG(LogTemp, Warning, TEXT("Sessions interface has been creaated successfully"));
 }
 
-void ULab4GameInstance::SubmitPlayerScores() const
-{
-	if (StatsInterfaceHandle == nullptr) return;
-
-	EOS_Stats_IngestStatOptions IngestStatOptions = { 0 };
-	EOS_Stats_IngestData IngestData;
-
-	IngestData.ApiVersion = EOS_STATS_INGESTDATA_API_LATEST;
-	IngestData.StatName = TCHAR_TO_ANSI(*FString(TEXT("PlayerFragsHighScore")));
-	// TODO Реализовать функцию перевода заработанных фрагов в очки
-	IngestData.IngestAmount = 3;
-	
-	IngestStatOptions.ApiVersion = EOS_STATS_INGESTSTAT_API_LATEST;
-	IngestStatOptions.StatsCount = 1;
-	IngestStatOptions.Stats = &IngestData;
-	IngestStatOptions.LocalUserId = Eos_ProductUserId;
-	IngestStatOptions.TargetUserId = Eos_ProductUserId;
-
-	EOS_Stats_IngestStat(
-		StatsInterfaceHandle,
-		&IngestStatOptions,
-		nullptr,
-		&CompletionDelegateIngestPlayerData
-		);
-}
-
-void ULab4GameInstance::QueryRanks() const
-{
-	if (LeaderboardsHandle == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Leaderboards handler is invalid"));
-		return;
-	}
-
-	EOS_Leaderboards_QueryLeaderboardRanksOptions LeaderboardRanksOptions = {0};
-	LeaderboardRanksOptions.ApiVersion = EOS_LEADERBOARDS_QUERYLEADERBOARDRANKS_API_LATEST;
-	LeaderboardRanksOptions.LeaderboardId = TCHAR_TO_UTF8(*FString(TEXT("PlayersFragsLeaderboard")));
-	UE_LOG(LogTemp, Warning, TEXT("ProductUserId in QueryRanks: %hs"), ProductUserIDToString(Eos_ProductUserId));
-	LeaderboardRanksOptions.LocalUserId = Eos_ProductUserId;
-	
-	EOS_Leaderboards_QueryLeaderboardRanks(LeaderboardsHandle, &LeaderboardRanksOptions, nullptr, &CompletionDelegateLeaderboards);
-}
 
 void ULab4GameInstance::QueryGlobalRanks(const int32 LeftBoundry, const int32 RightBoundry)
 {
@@ -859,59 +811,6 @@ void ULab4GameInstance::IngestMatchData()
 	FOnlineStatsUserUpdatedStats Stat = FOnlineStatsUserUpdatedStats(Identity->GetUniquePlayerId(0).ToSharedRef());
 
 	APlayerController* CurrentPC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-}
-
-void EOS_CALL ULab4GameInstance::CompletionDelegateLeaderboards(const EOS_Leaderboards_OnQueryLeaderboardRanksCompleteCallbackInfo* Data)
-{
-	UE_LOG(LogTemp, Warning, TEXT("ProductUserId in QueryRanks: %hs"), ProductUserIDToString(Eos_ProductUserId));
-	if (Data->ResultCode == EOS_EResult::EOS_Success)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Accessed to leaderboard data"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Error while accessing leaderboard data: %hs"), EOS_EResult_ToString(Data->ResultCode));
-	}
-}
-
-void EOS_CALL ULab4GameInstance::CompletionDelegate(const EOS_Auth_LoginCallbackInfo* Data)
-{
-	if (Data->ResultCode == EOS_EResult::EOS_InvalidCredentials) {
-		UE_LOG(LogTemp, Warning, TEXT("Authentication error"));
-		GEngine->AddOnScreenDebugMessage(-1,
-			3.f,
-			FColor::Red,
-			FString::Printf(TEXT("Incorrect email or password")),
-			true,
-			FVector2D(3.f)
-			);
-		return;
-	}
-	if (Data->ResultCode == EOS_EResult::EOS_Success) {
-		UE_LOG(LogTemp, Warning, TEXT("User authenticated successfully"));
-		GEngine->AddOnScreenDebugMessage(-1,
-		3.f,
-		FColor::Green,
-		FString::Printf(TEXT("Logged in successfully")),
-		true,
-		FVector2D(3.f)
-		);
-		
-		m_pMainMenu->SetWidgetOnLoginComplete();
-		LoggedInUserID = Data->LocalUserId;
-		ConnectViaSDK();
-		
-		return;
-	}
-	
-	UE_LOG(LogTemp, Warning, TEXT("Authentication error"));
-	GEngine->AddOnScreenDebugMessage(-1,
-		3.f,
-		FColor::Red,
-		FString::Printf(TEXT("Authentication error")),
-		true,
-		FVector2D(3.f)
-		);	
 }
 
 void ULab4GameInstance::CompletionDelegateIngestPlayerData(const EOS_Stats_IngestStatCompleteCallbackInfo* Data)
@@ -1054,155 +953,12 @@ void ULab4GameInstance::ConnectViaSDK()
 	}
 }
 
-void ULab4GameInstance::CreateSessionViaSDK() const
-{
-	if (SessionsHandle == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Error, SessionsHandle is NULL"));
-		return;
-	}
-
-	EOS_Sessions_CreateSessionModificationOptions SessionModificationOptions = {};
-	SessionModificationOptions.ApiVersion = EOS_SESSIONS_CREATESESSIONMODIFICATION_API_LATEST;
-	SessionModificationOptions.BucketId = BucketId;
-	SessionModificationOptions.MaxPlayers = 10;
-	SessionModificationOptions.SessionName = TCHAR_TO_ANSI(*m_ServerName.ToString());
-	SessionModificationOptions.LocalUserId = Eos_ProductUserId;
-	SessionModificationOptions.bPresenceEnabled = EOS_TRUE;
-
-	EOS_HSessionModification SessionModificationHandle = nullptr;
-	const EOS_EResult CreateResult = EOS_Sessions_CreateSessionModification(SessionsHandle, &SessionModificationOptions, &SessionModificationHandle);
-
-	if (CreateResult != EOS_EResult::EOS_Success)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Error, while creating session: %hs"), EOS_EResult_ToString(CreateResult));
-		return;
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("Session has been created successfully"));
-
-	/*
-	 * Настройки приглашениий сессии
-	 */
-	EOS_SessionModification_SetInvitesAllowedOptions InvitesAllowedOptions = {};
-	InvitesAllowedOptions.ApiVersion = EOS_SESSIONMODIFICATION_SETINVITESALLOWED_API_LATEST;
-	InvitesAllowedOptions.bInvitesAllowed = EOS_TRUE;
-	const EOS_EResult SetInviteOptionsResult = EOS_SessionModification_SetInvitesAllowed(SessionModificationHandle, &InvitesAllowedOptions);
-
-	if (SetInviteOptionsResult != EOS_EResult::EOS_Success)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Error, while setting invites allowed"));
-		EOS_SessionModification_Release(SessionModificationHandle);
-		return;
-	}
-
-	/*
-	 * Настройки уровня доступа сесии
-	 */
-	EOS_SessionModification_SetPermissionLevelOptions PermOptions = {};
-	PermOptions.ApiVersion = EOS_SESSIONMODIFICATION_SETPERMISSIONLEVEL_API_LATEST;
-	PermOptions.PermissionLevel = EOS_EOnlineSessionPermissionLevel::EOS_OSPF_PublicAdvertised;
-	const EOS_EResult PermResult = EOS_SessionModification_SetPermissionLevel(SessionModificationHandle, &PermOptions);
-
-	if (PermResult != EOS_EResult::EOS_Success)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Error, while setting permition options: %hs"), EOS_EResult_ToString(PermResult));
-		EOS_SessionModification_Release(SessionModificationHandle);
-		return;
-	}
-
-	/*
-	 * Настройки подключения к сесси в процесссе игры
-	 */
-	EOS_SessionModification_SetJoinInProgressAllowedOptions JoinOptions = {};
-	JoinOptions.ApiVersion = EOS_SESSIONMODIFICATION_SETJOININPROGRESSALLOWED_API_LATEST;
-	JoinOptions.bAllowJoinInProgress = EOS_TRUE;
-	const EOS_EResult JoinResult = EOS_SessionModification_SetJoinInProgressAllowed(SessionModificationHandle, &JoinOptions);
-
-	if (JoinResult != EOS_EResult::EOS_Success)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Error while setting joining in progress: %hs"), EOS_EResult_ToString(JoinResult));
-		EOS_SessionModification_Release(SessionModificationHandle);
-		return;
-	}
-
-	EOS_Sessions_AttributeData AttrData;
-	AttrData.ApiVersion = EOS_SESSIONS_SESSIONATTRIBUTEDATA_API_LATEST;
-
-	EOS_SessionModification_AddAttributeOptions AttrOptions = {};
-	AttrOptions.ApiVersion = EOS_SESSIONMODIFICATION_ADDATTRIBUTE_API_LATEST;
-	AttrOptions.SessionAttribute = &AttrData;
-	
-	//Set bucket id
-	AttrData.Key = EOS_SESSIONS_SEARCH_BUCKET_ID;
-	AttrData.Value.AsUtf8 = BucketId;
-	AttrData.ValueType = EOS_EAttributeType::EOS_AT_STRING;
-	const EOS_EResult SetAttrResult = EOS_SessionModification_AddAttribute(SessionModificationHandle, &AttrOptions);
-	
-	if (SetAttrResult != EOS_EResult::EOS_Success)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Error, while adding bucketId as attribute: %hs"), EOS_EResult_ToString(SetAttrResult));
-		EOS_SessionModification_Release(SessionModificationHandle);
-		
-		return;
-	}
-
-	// Установка хоста
-	const FName NetDriverName = GetDefault<UNetDriver>()->NetDriverName;
-	const FString HostAddressString = FString::Printf(TEXT("EOS:%hs:%s:%d"), ProductUserIDToString(Eos_ProductUserId), *NetDriverName.ToString(), GetTypeHash(NetDriverName.ToString()));
-	EOS_SessionModification_SetHostAddressOptions HostOptions = { };
-	HostOptions.ApiVersion = EOS_SESSIONMODIFICATION_SETHOSTADDRESS_API_LATEST;
-	
-	// Expect URLs to look like "EOS:PUID:SocketName:Channel" and channel can be optional
-	HostOptions.HostAddress = TCHAR_TO_ANSI(*HostAddressString);
-	const EOS_EResult HostResult = EOS_SessionModification_SetHostAddress(SessionModificationHandle, &HostOptions);
-	UE_LOG_ONLINE_SESSION(Log, TEXT("EOS_SessionModification_SetHostAddress(%s) returned (%s)"), *HostAddressString, ANSI_TO_TCHAR(EOS_EResult_ToString(HostResult)));
-	
-	EOS_Sessions_UpdateSessionOptions UpdateOptions = {};
-	UpdateOptions.ApiVersion = EOS_SESSIONS_UPDATESESSION_API_LATEST;
-	UpdateOptions.SessionModificationHandle = SessionModificationHandle;
-	
-	UWorld* World = GetWorld();
-	
-	EOS_Sessions_UpdateSession(
-		SessionsHandle,
-		&UpdateOptions,
-		World,
-		&CompletionDelegateSessionCreate);
-}
-
-void ULab4GameInstance::DestroySessionViaSDK()
-{
-	if (PlatformInterface == nullptr)
-	{
-		return;
-	}
-	
-	SessionsHandle = SessionsHandle == nullptr ? EOS_Platform_GetSessionsInterface(PlatformInterface) : SessionsHandle;
-
-	EOS_Sessions_DestroySessionOptions DestroyOptions = {};
-	DestroyOptions.ApiVersion = EOS_SESSIONS_DESTROYSESSION_API_LATEST;
-	DestroyOptions.SessionName = TCHAR_TO_ANSI(*m_ServerName.ToString());
-	
-	EOS_Sessions_DestroySession(SessionsHandle, &DestroyOptions, new FString(m_ServerName.ToString()), &CompletionDelegateSessionDestroy);
-}
 
 void ULab4GameInstance::LoginViaCredentials()
 {
 	InitializeSDKCredentials();
 	InitializePlatformInterface();
 	InitializeAuthInterfaceViaCredentials();
-}
-
-void ULab4GameInstance::LoginViaSDKAccountPortal()
-{
-	InitializeSDKCredentials();
-	InitializePlatformInterface();
-	#if WITH_SDK == 1
-	InitializeAuthInterfaceViaAccountPortal();
-	#endif
-	InitializeConnectHandler();
-	InitializeSessionsHandler();
 }
 
 void ULab4GameInstance::GetUserVoiceChatInterface()
@@ -1278,66 +1034,4 @@ void ULab4GameInstance::LoadMainMenu() const
 	if (PlayerController == nullptr) return;
 	
 	PlayerController->ClientTravel(TravelMainMenuPath, ETravelType::TRAVEL_Absolute);
-}
-
-char const* ULab4GameInstance::EpicAccountIDToString(EOS_EpicAccountId InAccountId)
-{
-	if (InAccountId == nullptr)
-	{
-		return "NULL";
-	}
-
-	static char TempBuffer[EOS_EPICACCOUNTID_MAX_LENGTH + 1];
-	int32_t TempBufferSize = sizeof(TempBuffer);
-	EOS_EResult ParseResult = EOS_EpicAccountId_ToString(InAccountId, TempBuffer, &TempBufferSize);
-
-	if (ParseResult == EOS_EResult::EOS_Success)
-	{
-		return TempBuffer;
-	}
-
-	UE_LOG(LogTemp, Error, TEXT("Error, while getting EpicAccountID string: %hs"), EOS_EResult_ToString(ParseResult));
-
-	return "ERROR";
-}
-
-char const* ULab4GameInstance::ProductUserIDToString(EOS_ProductUserId InAccountId)
-{
-	if (InAccountId == nullptr)
-	{
-		return "NULL";
-	}
-
-	static char TempBuffer[EOS_EPICACCOUNTID_MAX_LENGTH + 1];
-	int32_t TempBufferSize = sizeof(TempBuffer);
-	EOS_EResult ParseResult = EOS_ProductUserId_ToString(InAccountId, TempBuffer, &TempBufferSize);
-	
-	if (ParseResult == EOS_EResult::EOS_Success)
-	{
-		return TempBuffer;
-	}
-
-	UE_LOG(LogTemp, Error, TEXT("Error, while getting ProductUserID string: %hs"), EOS_EResult_ToString(ParseResult));
-
-	return "ERROR";
-}
-
-EOS_EpicAccountId ULab4GameInstance::EpicAccountIdFromString(const char* AccountString)
-{
-	if (AccountString == nullptr)
-	{
-		return nullptr;
-	}
-
-	return EOS_EpicAccountId_FromString(AccountString);
-}
-
-EOS_ProductUserId ULab4GameInstance::ProductUserIdFromString(const char* AccountString)
-{
-	if (AccountString == nullptr)
-	{
-		return nullptr;
-	}
-
-	return EOS_ProductUserId_FromString(AccountString);
 }

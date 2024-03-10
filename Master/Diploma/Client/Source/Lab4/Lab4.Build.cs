@@ -11,7 +11,7 @@ public class Lab4 : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", 
-			"HeadMountedDisplay", "UMG", "XmlParser", "OnlineSubsystemEOS", "OnlineSubsystem", "EngineSettings", "EOSSDK" });
+			"HeadMountedDisplay", "UMG", "XmlParser", "OnlineSubsystemEOS", "OnlineSubsystem", "EngineSettings", "EOSSDK", "WebSockets" });
 		
 		// Uncomment if you are using online features
 		PrivateDependencyModuleNames.Add("OnlineSubsystem");

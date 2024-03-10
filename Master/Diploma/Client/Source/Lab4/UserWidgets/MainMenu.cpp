@@ -54,6 +54,10 @@ bool UMainMenu::Initialize()
 	GuardiansLeagueButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnGuardiansLeagueButtonClicked);
 	CrusaidersLeagueButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnCrusaidersLeagueButtonClicked);
 	LegendsLeagueButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnLegendsLeagueButtonClicked);
+	MainMenuMatchmakingButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingButtonClicked);
+	MatchmakingCreateButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingCreateButtonClicked);
+	MatchmakingFindButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingFindButtonClicked);
+	MatchmakingBackButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingBackButtonClicked);
 	return true;
 }
 
@@ -236,11 +240,7 @@ void UMainMenu::OnTogglePasswordButtonReleased()
 
 void UMainMenu::OnLogInButtonClicked()
 {
-	GetGameInstance<ULab4GameInstance>()->InitializePlatformInterface();
-	#if WITH_SDK != 1
 	GetGameInstance<ULab4GameInstance>()->LogIn();
-	#endif
-	GetGameInstance<ULab4GameInstance>()->LoginViaSDKAccountPortal();
 	bWasLoggedIn = true;
 }
 
@@ -395,6 +395,36 @@ void UMainMenu::OnLegendsLeagueButtonClicked()
 	}
 
 	GameInstance->QueryGlobalRanks(1001, 2000);
+}
+
+void UMainMenu::OnMatchmakingButtonClicked()
+{
+	ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
+	if (GameInstance == nullptr) return;
+
+	if (!GameInstance->WebSocket->IsConnected())
+	{
+		GameInstance->InitWebSocketConnection();
+	}
+	
+	if (MenuSwitcher == nullptr || Matchmaking == nullptr) return;
+	MenuSwitcher->SetActiveWidget(Matchmaking);
+}
+
+void UMainMenu::OnMatchmakingCreateButtonClicked()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Create matchmaking button clicked"))
+}
+
+void UMainMenu::OnMatchmakingFindButtonClicked()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Find matchmaking button clicked"))
+}
+
+void UMainMenu::OnMatchmakingBackButtonClicked()
+{
+	if (MenuSwitcher == nullptr || ModeSelect == nullptr) return;
+	MenuSwitcher->SetActiveWidget(ModeSelect);
 }
 
 TArray<FText> UMainMenu::GetCredentials()
