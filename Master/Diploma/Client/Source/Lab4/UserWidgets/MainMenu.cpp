@@ -399,16 +399,12 @@ void UMainMenu::OnLegendsLeagueButtonClicked()
 
 void UMainMenu::OnMatchmakingButtonClicked()
 {
-	ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
-	if (GameInstance == nullptr) return;
-
-	if (!GameInstance->WebSocket->IsConnected())
-	{
-		GameInstance->InitWebSocketConnection();
-	}
-	
 	if (MenuSwitcher == nullptr || Matchmaking == nullptr) return;
 	MenuSwitcher->SetActiveWidget(Matchmaking);
+
+	ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
+	if (GameInstance == nullptr) return;
+	GameInstance->CreateSocketConnection();
 }
 
 void UMainMenu::OnMatchmakingCreateButtonClicked()
@@ -419,6 +415,12 @@ void UMainMenu::OnMatchmakingCreateButtonClicked()
 void UMainMenu::OnMatchmakingFindButtonClicked()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Find matchmaking button clicked"))
+	ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
+	if (GameInstance == nullptr) return;
+
+	//ALab4PlayerState* playerState = GetOwningPlayerState<ALab4PlayerState>();
+	//if (playerState == nullptr) return;
+	GameInstance->SendMessageToHostSocket(TEXT("Player wants to find match"));
 }
 
 void UMainMenu::OnMatchmakingBackButtonClicked()

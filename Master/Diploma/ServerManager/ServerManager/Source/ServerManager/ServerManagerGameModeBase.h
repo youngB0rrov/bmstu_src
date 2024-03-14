@@ -13,5 +13,9 @@ UCLASS()
 class SERVERMANAGER_API AServerManagerGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+public:
+	AServerManagerGameModeBase();
+
+protected:
+	virtual void BeginPlay() override;
 };

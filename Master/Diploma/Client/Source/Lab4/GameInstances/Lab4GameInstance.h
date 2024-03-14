@@ -13,7 +13,7 @@
 #include "eos_sessions_types.h"
 #include "eos_sdk.h"
 #include "VoiceChat.h"
-#include "IWebSocket.h"
+#include "Networking.h"
 #include "Interfaces/OnlineLeaderboardInterface.h"
 #include "Lab4GameInstance.generated.h"
 
@@ -33,9 +33,6 @@ public:
 	UPROPERTY()
 	class UGameMenu* InGameMenu;
 
-	TSharedPtr<IWebSocket> WebSocket;
-	
-	void InitWebSocketConnection();
 	virtual void Init() override;
 	virtual void Shutdown() override;
 	bool Tick(float DeltaSeconds);
@@ -65,10 +62,6 @@ public:
 	void OnJoinSessionComplete(FName Name, EOnJoinSessionCompleteResult::Type Result);
 	void OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);\
 	void AddLobbyHostWidget();
-
-	UFUNCTION(Exec)
-	void EOSVoiceChatLogin();
-	void OnVoiceLoginComplete(const FString& PlayerName, const FVoiceChatResult& Result);
 	
 	UPROPERTY()
 	class ULobbyHostWidget* LobbyHostWidget;
@@ -77,12 +70,6 @@ public:
 	void InitializeSDKCredentials();
 	void InitializePlatformInterface();
 	void InitializeAuthInterfaceViaCredentials();
-	void InitializeAuthInterfaceViaExchangeCode();
-	void InitializeAuthInterfaceViaAccountPortal();
-	void InitializeStatsHandler();
-	void InitializeLeaderboardsHandler();
-	void InitializeConnectHandler();
-	void InitializeSessionsHandler();
 
 	UFUNCTION(Exec)
 	void QueryGlobalRanks(const int32 LeftBoundry, const int32 RightBoundry);
@@ -90,12 +77,7 @@ public:
 	UFUNCTION(Exec)
 	void IngestMatchData();
 	void LoginViaCredentials();
-	static void ConnectViaSDK();
-	
-	static void EOS_CALL CompletionDelegateIngestPlayerData(const EOS_Stats_IngestStatCompleteCallbackInfo* Data);
-	static void EOS_CALL CompletionDelegateConnect(const EOS_Connect_LoginCallbackInfo* Data);
-	static void EOS_CALL CompletionDelegateSessionCreate(const EOS_Sessions_UpdateSessionCallbackInfo* Data);
-	static void EOS_CALL CompletionDelegateSessionDestroy(const EOS_Sessions_DestroySessionCallbackInfo* Data);
+
 	void OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId &UserId, const FString &Error);
 	void HandleQueryGlobalRanksResult(const bool bWasSuccessful, FOnlineLeaderboardReadRef LeaderboardRef);
 
@@ -107,7 +89,6 @@ public:
 	
 	FString GetPlayerName() const { return m_PlayerName; }
 	FORCEINLINE bool GetLoginStatus() const { return bWasLoggedIn;}
-	void GetUserVoiceChatInterface();
 	
 	UFUNCTION(Exec)
 	void ShowInGameMenu();
@@ -115,21 +96,23 @@ public:
 	UFUNCTION(Exec)
 	void ShowGameOverMenu();
 
-	
 	void SetIsLanGame(const bool bIsLan);
 	void SetIsOnlineGame(const bool bIsLan);
 	bool GetIsLanGame() const;
-	TArray<class ALab4Character*> GetAllCharacters() const { return m_Characters; }
-	bool GetShouldBePause() const { return bShouldBePaused;}
-
+	FORCEINLINE FName GetSessionName() const { return SessionNameConst; }
 	UFUNCTION(Exec)
 	void HideGameOverMenu();
 
-	FORCEINLINE FName GetSessionName() const { return SessionNameConst;}
+	TArray<class ALab4Character*> GetAllCharacters() const { return m_Characters; }
+	bool GetShouldBePause() const { return bShouldBePaused;}
+	bool CreateSocketConnection();
+	bool SendMessageToHostSocket(const FString& Message);
+
 private:
 	UFUNCTION()
 	void CreateSession();
 	void LoadMainMenu() const;
+	void FromStringToBinaryArray(const FString& Message, TArray<uint8>& OutBinaryArray);
 	bool bShouldBePaused;
 	
 	static AMainMenuInitializer *m_pMainMenu;
@@ -193,4 +176,8 @@ private:
 	const FString TravelMainMenuPath = TEXT("/Game/MainMenu/MainMenuMap");
 	const uint32 ScoreCoefficient = 25;
 	int32 LeftScoreBoundary, RightScoreBoundary; 
+	const FString HostSocketAddress = TEXT("127.0.0.1");
+	int32 HostSocketPort = 8870;
+	FIPv4Address HostIp;
+	FSocket* ConnectionSocket;
 };

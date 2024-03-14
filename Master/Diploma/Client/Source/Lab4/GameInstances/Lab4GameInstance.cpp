@@ -74,9 +74,9 @@ void ULab4GameInstance::Init()
 void ULab4GameInstance::Shutdown()
 {
 	FTicker::GetCoreTicker().RemoveTicker(TickDelegateHandle);
-	if (WebSocket->IsConnected())
+	if (ConnectionSocket != nullptr)
 	{
-		WebSocket->Close();
+		ConnectionSocket->Close();
 	}
 	Super::Shutdown();
 }
@@ -88,20 +88,6 @@ bool ULab4GameInstance::Tick(float DeltaSeconds)
 		EOS_Platform_Tick(PlatformInterface);
 	}
 	return true;
-}
-
-void ULab4GameInstance::InitWebSocketConnection()
-{
-	// Создание веб-сокета
-	if (!FModuleManager::Get().IsModuleLoaded("WebSockets"))
-	{
-		FModuleManager::Get().LoadModule("WebSockets");
-	}
-
-	WebSocket = FWebSocketsModule::Get().CreateWebSocket("ws://localhost:8080");
-
-	UE_LOG(LogTemp, Warning, TEXT("WebSocket connected: %d"), WebSocket->IsConnected())
-		WebSocket->Connect();
 }
 
 void ULab4GameInstance::ConnectMainMenuInitializer(AMainMenuInitializer* const pInitializer)
@@ -462,7 +448,6 @@ void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful,
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Green, FString::Printf(TEXT("Logged In Successfuly!")));
 		m_pMainMenu->SetWidgetOnLoginComplete();
-		EOSVoiceChatLogin();
 	} else
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Red, FString::Printf(TEXT("Connetcion Error!")));
@@ -526,46 +511,6 @@ void ULab4GameInstance::AddLobbyHostWidget()
 	}
 }
 
-void ULab4GameInstance::EOSVoiceChatLogin()
-{
-	OnlineSubsystem = OnlineSubsystem == nullptr ? IOnlineSubsystem::Get() : OnlineSubsystem;
-
-	if (OnlineSubsystem)
-	{
-		IdentityPtr = IdentityPtr == nullptr ? OnlineSubsystem->GetIdentityInterface() : IdentityPtr;
-
-		if (IdentityPtr)
-		{
-			if (bWasLoggedIn)
-			{
-				IVoiceChat* VoiceChatRef = IVoiceChat::Get();
-				if (VoiceChatRef)
-				{
-					Lab4VoiceChatUser = VoiceChatRef->CreateUser();
-
-					if (Lab4VoiceChatUser)
-					{
-						TSharedPtr<const FUniqueNetId> NetId = IdentityPtr->GetUniquePlayerId(0);
-						FPlatformUserId PlatformUserId = IdentityPtr->GetPlatformUserIdFromUniqueNetId(*NetId);
-						Lab4VoiceChatUser->Login(PlatformUserId, NetId->ToString(), TEXT(""), FOnVoiceChatLoginCompleteDelegate::CreateUObject(this, &ULab4GameInstance::OnVoiceLoginComplete));
-					}
-				}
-			}
-		}
-	}
-}
-
-void ULab4GameInstance::OnVoiceLoginComplete(const FString& PlayerName, const FVoiceChatResult& Result)
-{
-	if (Result == EVoiceChatResult::Success)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("User was connected to voice chat successfully"));
-		return;
-	}
-
-	UE_LOG(LogTemp, Error, TEXT("Error, while conntecting user to the voice chat"));
-}
-
 void ULab4GameInstance::InitializeSDKCredentials()
 {
 	EOS_InitializeOptions SDKOptions;
@@ -614,8 +559,6 @@ void ULab4GameInstance::InitializePlatformInterface()
 	if (PlatformInterface != nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PlatformInterface's been created"));
-		InitializeStatsHandler();
-		InitializeLeaderboardsHandler();
 	}
 	else
 	{
@@ -654,119 +597,6 @@ void ULab4GameInstance::InitializeAuthInterfaceViaCredentials()
 
 	//EOS_Auth_Login(AuthInterface, &LoginOptions, nullptr, &CompletionDelegate);
 }
-
-void ULab4GameInstance::InitializeAuthInterfaceViaExchangeCode()
-{
-	AuthInterface =  AuthInterface == nullptr ? EOS_Platform_GetAuthInterface(PlatformInterface) : AuthInterface;
-	FString Token;
-	FParse::Value(FCommandLine::Get(), TEXT("AUTH_PASSWORD"), Token);
-	const char* TokenStr = TCHAR_TO_ANSI(*Token);
-	
-	if (AuthInterface == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("AuthInterface has not been initialized"));
-		return;
-	}
-
-	if (Token.IsEmpty())
-	{
-		UE_LOG(LogTemp, Error, TEXT("Authentication token is invalid"));
-		return;
-	}
-	
-	EOS_Auth_LoginOptions LoginOptions;
-	EOS_Auth_Credentials AuthCredentials;
-	
-	LoginOptions.ApiVersion = EOS_AUTH_LOGIN_API_LATEST;
-	AuthCredentials.Id = "";
-	AuthCredentials.Token = TokenStr;
-	AuthCredentials.ApiVersion = EOS_AUTH_CREDENTIALS_API_LATEST;
-	AuthCredentials.Type = EOS_ELoginCredentialType::EOS_LCT_ExchangeCode;
-	AuthCredentials.SystemAuthCredentialsOptions = nullptr;
-	LoginOptions.Credentials = &AuthCredentials;
-}
-
-void ULab4GameInstance::InitializeAuthInterfaceViaAccountPortal()
-{
-	AuthInterface =  AuthInterface == nullptr ? EOS_Platform_GetAuthInterface(PlatformInterface) : AuthInterface;
-	
-	if (AuthInterface == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("AuthInterface has not been initialized"));
-		return;
-	}
-	
-	EOS_Auth_LoginOptions LoginOptions;
-	EOS_Auth_Credentials AuthCredentials;
-	
-	LoginOptions.ApiVersion = EOS_AUTH_LOGIN_API_LATEST;
-	AuthCredentials.Id = "";
-	AuthCredentials.Token = "";
-	AuthCredentials.ApiVersion = EOS_AUTH_CREDENTIALS_API_LATEST;
-	AuthCredentials.Type = EOS_ELoginCredentialType::EOS_LCT_AccountPortal;
-	AuthCredentials.SystemAuthCredentialsOptions = nullptr;
-	LoginOptions.Credentials = &AuthCredentials;
-}
-
-void ULab4GameInstance::InitializeStatsHandler()
-{
-	if (PlatformInterface == nullptr)
-		return;
-	
-	StatsInterfaceHandle = EOS_Platform_GetStatsInterface(PlatformInterface);
-	UE_LOG(LogTemp, Warning, TEXT("Stats Interface has been created"));
-}
-
-void ULab4GameInstance::InitializeLeaderboardsHandler()
-{
-	if (PlatformInterface == nullptr)
-		return;
-
-	LeaderboardsHandle = EOS_Platform_GetLeaderboardsInterface(PlatformInterface);
-
-	if (LeaderboardsHandle == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Error, while creaating LeaderboardsHandle:"));
-		return;
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("Leaderboards Interface has been created"));
-}
-
-void ULab4GameInstance::InitializeConnectHandler()
-{
-	if (PlatformInterface == nullptr)
-	{
-		return;
-	}
-
-	ConnectHandle = EOS_Platform_GetConnectInterface(PlatformInterface);
-
-	if (ConnectHandle == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Error, while creaating ConnectHandle:"));
-		return;
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("Connect Interface has been created"));
-}
-
-void ULab4GameInstance::InitializeSessionsHandler()
-{
-	if (PlatformInterface == nullptr)
-	{
-		return;
-	}
-
-	if ((SessionsHandle = EOS_Platform_GetSessionsInterface(PlatformInterface)) == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Eror, while initializing sessions handler"));
-		return;
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("Sessions interface has been creaated successfully"));
-}
-
 
 void ULab4GameInstance::QueryGlobalRanks(const int32 LeftBoundry, const int32 RightBoundry)
 {
@@ -813,68 +643,6 @@ void ULab4GameInstance::IngestMatchData()
 	APlayerController* CurrentPC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 }
 
-void ULab4GameInstance::CompletionDelegateIngestPlayerData(const EOS_Stats_IngestStatCompleteCallbackInfo* Data)
-{
-	if (Data->ResultCode == EOS_EResult::EOS_Success)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("User data was submitted successfully"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Error, while submitting user data %hs"), EOS_EResult_ToString(Data->ResultCode));
-	}
-}
-
-void ULab4GameInstance::CompletionDelegateConnect(const EOS_Connect_LoginCallbackInfo* Data)
-{
-	if (Data->ResultCode == EOS_EResult::EOS_Success)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("User connected successfully"));
-		Eos_ProductUserId = Data->LocalUserId;
-
-		return;
-	}
-
-	UE_LOG(LogTemp, Error, TEXT("Error, while connecting user: %hs"), EOS_EResult_ToString(Data->ResultCode));
-}
-
-void ULab4GameInstance::CompletionDelegateSessionCreate(const EOS_Sessions_UpdateSessionCallbackInfo* Data)
-{
-	UWorld* World = static_cast<UWorld*>(Data->ClientData);
-	
-	if (Data->ResultCode == EOS_EResult::EOS_Success)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Session %hs with session id: %hs was created and updated successfully"), Data->SessionName, Data->SessionId);
-
-		if (World != nullptr)
-		{
-			World->ServerTravel(TravelGamePath);
-		}
-		
-		if (m_pMainMenu != nullptr)
-		{
-			m_pMainMenu->TeardownAll();
-		}
-		
-		return;
-	}
-
-	UE_LOG(LogTemp, Error, TEXT("Error, while creating and updating session: %hs"), EOS_EResult_ToString(Data->ResultCode));
-}
-
-void ULab4GameInstance::CompletionDelegateSessionDestroy(const EOS_Sessions_DestroySessionCallbackInfo* Data)
-{
-	const FString* DestroyedSessionName = static_cast<FString*>(Data->ClientData);
-	
-	if (Data->ResultCode == EOS_EResult::EOS_Success)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Session %s was destroyed successfully"), **DestroyedSessionName);
-		return;
-	}
-
-	UE_LOG(LogTemp, Error, TEXT("Error, while destroying session %s: %hs"), **DestroyedSessionName, EOS_EResult_ToString(Data->ResultCode));
-}
-
 void ULab4GameInstance::HandleQueryGlobalRanksResult(const bool bWasSuccessful,
 	FOnlineLeaderboardReadRef LeaderboardRef)
 {
@@ -918,54 +686,11 @@ void ULab4GameInstance::HandleQueryGlobalRanksResult(const bool bWasSuccessful,
 	}
 }
 
-void ULab4GameInstance::ConnectViaSDK()
-{
-	if (AuthInterface == nullptr)
-	{
-		return;
-	}
-
-	EOS_Auth_Token* UserAuthToken;
-	EOS_Auth_CopyUserAuthTokenOptions CopyTokenOptions = {0};
-	CopyTokenOptions.ApiVersion = EOS_AUTH_COPYUSERAUTHTOKEN_API_LATEST;
-
-	if (EOS_Auth_CopyUserAuthToken(AuthInterface, &CopyTokenOptions, LoggedInUserID, &UserAuthToken) == EOS_EResult::EOS_Success)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Getting user access token"));
-		
-		EOS_Connect_Credentials ConnectCredentials;
-		ConnectCredentials.ApiVersion = EOS_CONNECT_CREDENTIALS_API_LATEST;
-		ConnectCredentials.Token = UserAuthToken->AccessToken;
-		ConnectCredentials.Type = EOS_EExternalCredentialType::EOS_ECT_EPIC;
-	
-		EOS_Connect_LoginOptions ConnectLoginOptions = {0};
-		ConnectLoginOptions.ApiVersion = EOS_CONNECT_LOGIN_API_LATEST;
-		ConnectLoginOptions.Credentials = &ConnectCredentials;
-		ConnectLoginOptions.UserLoginInfo = nullptr;
-	
-		if (ConnectHandle == nullptr)
-		{
-			return;
-		}
-	
-		EOS_Connect_Login(ConnectHandle, &ConnectLoginOptions, nullptr, &CompletionDelegateConnect);
-		EOS_Auth_Token_Release(UserAuthToken);
-	}
-}
-
-
 void ULab4GameInstance::LoginViaCredentials()
 {
 	InitializeSDKCredentials();
 	InitializePlatformInterface();
 	InitializeAuthInterfaceViaCredentials();
-}
-
-void ULab4GameInstance::GetUserVoiceChatInterface()
-{
-	if (OnlineSubsystem == nullptr) return;
-	
-	IdentityPtr = IdentityPtr == nullptr ? OnlineSubsystem->GetIdentityInterface() : IdentityPtr;
 }
 
 void ULab4GameInstance::ShowInGameMenu()
@@ -1034,4 +759,59 @@ void ULab4GameInstance::LoadMainMenu() const
 	if (PlayerController == nullptr) return;
 	
 	PlayerController->ClientTravel(TravelMainMenuPath, ETravelType::TRAVEL_Absolute);
+}
+
+bool ULab4GameInstance::CreateSocketConnection()
+{	
+	// Создание клиентского сокета и подключение для отправки сообщений
+	FIPv4Address outAddress;
+	bool addressParseResult = FIPv4Address::Parse(HostSocketAddress, outAddress);
+	if (!addressParseResult)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to parse FStringAddress %s to IPv4Address"), *HostSocketAddress);
+		return false;
+	}
+
+	FIPv4Endpoint Endpoint(outAddress, HostSocketPort);
+	ConnectionSocket = FTcpSocketBuilder("ClientSocket");
+	if (ConnectionSocket->Connect(*Endpoint.ToInternetAddr()))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Successfully connected to host: [address=%s, port=%d]"), *outAddress.ToString(), HostSocketPort));
+		return true;
+	}
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Error, while connecting to host: [address=%s, port=%d]"), *outAddress.ToString(), HostSocketPort));
+	return false;
+}
+
+bool ULab4GameInstance::SendMessageToHostSocket(const FString& Message)
+{
+	TArray<uint8> payload;
+	FromStringToBinaryArray(Message, payload);
+
+	FBufferArchive Ar;
+	int32 bytesSent = 0;
+
+	if (!ConnectionSocket)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Error, while sending message to server. Client socket in nullptr"))
+		return false;
+	}
+	Ar.Append(payload);
+	ConnectionSocket->Send(Ar.GetData(), Ar.Num(), bytesSent);
+	if (bytesSent != Ar.Num())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Error while submiting data to client: sent:%d, length:%d"), bytesSent, Ar.Num())
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Error while submiting data to client")));
+		return false;
+	}
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Successfully sent data: '%s' to host"), *Message));
+	return true;
+}
+
+void ULab4GameInstance::FromStringToBinaryArray(const FString& Message, TArray<uint8>& OutBinaryArray)
+{
+	FTCHARToUTF8 Convert(*Message);
+	OutBinaryArray.Empty();
+	OutBinaryArray.Append((UTF8CHAR*)Convert.Get(), Convert.Length());
 }
