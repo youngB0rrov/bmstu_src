@@ -22,6 +22,7 @@ public:
 	void SetWidgetOnLoginComplete();
 	void AddRankedLeaderboardRow(class URankedLeaderboardRow* PlayerRow);
 	void ClearRankedLeaderboardList();
+	void SetFindingMatchStatusWidgetVisibility(bool bIsVisible);
 	TArray<FText> GetCredentials();
 	void OnUpdaterTimerRunOut() const;
 	void PollInit();

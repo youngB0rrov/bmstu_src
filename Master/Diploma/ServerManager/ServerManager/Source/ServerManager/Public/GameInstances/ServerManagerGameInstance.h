@@ -19,6 +19,7 @@ class SERVERMANAGER_API UServerManagerGameInstance : public UGameInstance
 public:
 	TSharedPtr<FTcpListener> TcpListener;
 	FRunnableThread* Thread;
+	FRunnableThread* ReceiveThread;
 	FSocket* ListenerSocket;
 	// Как идея: Клиентский сокет можно хранить в основном потоке для отправки ему сообщений
 	// Для чтения необходимо создавать дочерний поток, в котором также создается клиентский сокет и происходит чтение бинарных данных

@@ -5,6 +5,7 @@
 #include "RankedLeaderboardRow.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/EditableText.h"
+#include "Components/SizeBox.h"
 #include "MainMenu.generated.h"
 
 class UScrollBox;
@@ -110,7 +111,7 @@ public:
 	void SetWidgetOnLoginComplete();
 	void AddRankedLeaderBoardRow(URankedLeaderboardRow* PlayerTableRow);
 	void ClearRankedLeaderboardList();
-	
+	void SetFindingMatchStatusWidgetVisibility(bool bIsVisible);
 	void SelectIndex(uint32 Index);
 
 protected:
@@ -241,6 +242,9 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* MatchmakingBackButton;
+
+	UPROPERTY(meta = (BindWidget))
+	USizeBox* StatusSizeBox;
 
 	UPROPERTY(meta=(BindWidget))
 	class UPanelWidget *ServersList;

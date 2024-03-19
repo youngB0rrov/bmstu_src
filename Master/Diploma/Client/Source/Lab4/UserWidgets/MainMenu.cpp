@@ -58,6 +58,8 @@ bool UMainMenu::Initialize()
 	MatchmakingCreateButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingCreateButtonClicked);
 	MatchmakingFindButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingFindButtonClicked);
 	MatchmakingBackButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingBackButtonClicked);
+
+	StatusSizeBox->SetVisibility(ESlateVisibility::Hidden);
 	return true;
 }
 
@@ -401,32 +403,38 @@ void UMainMenu::OnMatchmakingButtonClicked()
 {
 	if (MenuSwitcher == nullptr || Matchmaking == nullptr) return;
 	MenuSwitcher->SetActiveWidget(Matchmaking);
-
-	ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
-	if (GameInstance == nullptr) return;
-	GameInstance->CreateSocketConnection();
 }
 
 void UMainMenu::OnMatchmakingCreateButtonClicked()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Create matchmaking button clicked"))
+	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
+	if (gameInstance == nullptr) return;
+
+	gameInstance->CreateSocketConnection();
+	gameInstance->SendMessageToHostSocket(FString::Printf(TEXT("Player %s wants to create match"), *(gameInstance->GetPlayerName())));
 }
 
 void UMainMenu::OnMatchmakingFindButtonClicked()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Find matchmaking button clicked"))
-	ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
-	if (GameInstance == nullptr) return;
+	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
+	if (gameInstance == nullptr) return;
+	if (gameInstance->GetIsFindingMatchInProgress()) return;
 
-	//ALab4PlayerState* playerState = GetOwningPlayerState<ALab4PlayerState>();
-	//if (playerState == nullptr) return;
-	GameInstance->SendMessageToHostSocket(TEXT("Player wants to find match"));
+	gameInstance->CreateSocketConnection();
+	gameInstance->SendMessageToHostSocket(FString::Printf(TEXT("Player %s wants to find match"), *(gameInstance->GetPlayerName())));
 }
 
 void UMainMenu::OnMatchmakingBackButtonClicked()
 {
 	if (MenuSwitcher == nullptr || ModeSelect == nullptr) return;
+	SetFindingMatchStatusWidgetVisibility(false);
 	MenuSwitcher->SetActiveWidget(ModeSelect);
+
+	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
+	if (!gameInstance) return;
+	gameInstance->SetFindingMatchProgress(false);
 }
 
 TArray<FText> UMainMenu::GetCredentials()
@@ -498,6 +506,12 @@ void UMainMenu::ClearRankedLeaderboardList()
 	}
 
 	RankedPlayersList->ClearChildren();
+}
+
+void UMainMenu::SetFindingMatchStatusWidgetVisibility(bool bIsVisible)
+{
+	if (StatusSizeBox == nullptr) return;
+	bIsVisible ? StatusSizeBox->SetVisibility(ESlateVisibility::Visible) : StatusSizeBox->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UMainMenu::SelectIndex(uint32 Index)

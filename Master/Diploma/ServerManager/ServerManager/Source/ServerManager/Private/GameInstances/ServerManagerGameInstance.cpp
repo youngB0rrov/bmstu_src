@@ -2,6 +2,7 @@
 
 
 #include "GameInstances/ServerManagerGameInstance.h"
+#include "Runnable/FReceiveThread.h"
 #include <string>
 
 void UServerManagerGameInstance::Init()
@@ -58,7 +59,6 @@ bool UServerManagerGameInstance::OnConnected(FSocket* ClientSocket, const FIPv4E
 {
 	bool ServiceStatus = false;
 	ServiceStatus = StartMessageService(ClientSocket, ClientEndpoint);
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("New client connected from %s"), *ClientEndpoint.ToString()));
 	return ServiceStatus;
 }
 
@@ -80,7 +80,9 @@ bool UServerManagerGameInstance::StartMessageService(FSocket* ClientSocket, cons
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Error, while sending hello message to client")));
 		}
-		bool receiveResult = ReceivePayload();
+		//bool receiveResult = ReceivePayload();
+		ReceiveThread = FRunnableThread::Create(new FReceiveThread(ConnectionSocket), TEXT("ReceiveThread"), 0, TPri_BelowNormal);
+		ConnectionSocket = nullptr;
 	}
 	return true;
 }
@@ -145,7 +147,7 @@ bool UServerManagerGameInstance::ReceivePayload()
 		ConnectionSocket->Recv(receivedData.GetData(), receivedData.Num(), bytesRead);
 		const FString receivedStringData = FromBinaryArrayToString(receivedData);
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::White, FString::Printf(TEXT("Received data from client: %s"), *receivedStringData));
-		FPlatformProcess::Sleep(0.01f);
+		FPlatformProcess::Sleep(0.1f);
 	}
 	if (receivedData.Num() != 0)
 	{

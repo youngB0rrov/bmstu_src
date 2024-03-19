@@ -100,6 +100,7 @@ public:
 	void SetIsOnlineGame(const bool bIsLan);
 	bool GetIsLanGame() const;
 	FORCEINLINE FName GetSessionName() const { return SessionNameConst; }
+
 	UFUNCTION(Exec)
 	void HideGameOverMenu();
 
@@ -107,6 +108,8 @@ public:
 	bool GetShouldBePause() const { return bShouldBePaused;}
 	bool CreateSocketConnection();
 	bool SendMessageToHostSocket(const FString& Message);
+	void SetFindingMatchProgress(bool bIsFindingMatch);
+	FORCEINLINE bool GetIsFindingMatchInProgress() const { return bIsFindingMatchInProgress; }
 
 private:
 	UFUNCTION()
@@ -180,4 +183,5 @@ private:
 	int32 HostSocketPort = 8870;
 	FIPv4Address HostIp;
 	FSocket* ConnectionSocket;
+	bool bIsFindingMatchInProgress = false;
 };

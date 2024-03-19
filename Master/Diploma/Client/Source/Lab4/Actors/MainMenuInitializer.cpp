@@ -145,6 +145,12 @@ void AMainMenuInitializer::ClearRankedLeaderboardList()
 	}
 }
 
+void AMainMenuInitializer::SetFindingMatchStatusWidgetVisibility(bool bIsVisible)
+{
+	if (!m_pMainMenu) return;
+	m_pMainMenu->SetFindingMatchStatusWidgetVisibility(bIsVisible);
+}
+
 TArray<FText> AMainMenuInitializer::GetCredentials()
 {
 	return m_pMainMenu->GetCredentials();

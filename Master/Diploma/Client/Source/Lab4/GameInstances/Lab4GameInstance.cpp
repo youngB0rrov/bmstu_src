@@ -448,6 +448,11 @@ void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful,
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Green, FString::Printf(TEXT("Logged In Successfuly!")));
 		m_pMainMenu->SetWidgetOnLoginComplete();
+		if (!bIsLanGame)
+		{
+			SetPlayerName(IdentityPtr->GetPlayerNickname(UserId));
+			UE_LOG(LogTemp, Log, TEXT("Player name is %s"), *m_PlayerName)
+		}
 	} else
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Red, FString::Printf(TEXT("Connetcion Error!")));
@@ -806,6 +811,10 @@ bool ULab4GameInstance::SendMessageToHostSocket(const FString& Message)
 		return false;
 	}
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Successfully sent data: '%s' to host"), *Message));
+
+	// For spinnet widget and status
+	SetFindingMatchProgress(true);
+	m_pMainMenu->SetFindingMatchStatusWidgetVisibility(true);
 	return true;
 }
 
@@ -814,4 +823,9 @@ void ULab4GameInstance::FromStringToBinaryArray(const FString& Message, TArray<u
 	FTCHARToUTF8 Convert(*Message);
 	OutBinaryArray.Empty();
 	OutBinaryArray.Append((UTF8CHAR*)Convert.Get(), Convert.Length());
+}
+
+void ULab4GameInstance::SetFindingMatchProgress(bool bIsFindingMatch)
+{
+	bIsFindingMatchInProgress = bIsFindingMatch;
 }
