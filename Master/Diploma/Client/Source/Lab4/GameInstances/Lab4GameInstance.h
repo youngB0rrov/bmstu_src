@@ -110,6 +110,8 @@ public:
 	bool SendMessageToHostSocket(const FString& Message);
 	void SetFindingMatchProgress(bool bIsFindingMatch);
 	FORCEINLINE bool GetIsFindingMatchInProgress() const { return bIsFindingMatchInProgress; }
+	void InitializeReceiveSocketThread();
+	void DisposeReceiveSocketThread();
 
 private:
 	UFUNCTION()
@@ -179,9 +181,11 @@ private:
 	const FString TravelMainMenuPath = TEXT("/Game/MainMenu/MainMenuMap");
 	const uint32 ScoreCoefficient = 25;
 	int32 LeftScoreBoundary, RightScoreBoundary; 
+	//const FString HostSocketAddress = TEXT("127.0.0.1");
 	const FString HostSocketAddress = TEXT("127.0.0.1");
 	int32 HostSocketPort = 8870;
 	FIPv4Address HostIp;
 	FSocket* ConnectionSocket;
 	bool bIsFindingMatchInProgress = false;
+	FRunnableThread* ReceiveThread = nullptr;
 };

@@ -412,6 +412,7 @@ void UMainMenu::OnMatchmakingCreateButtonClicked()
 	if (gameInstance == nullptr) return;
 
 	gameInstance->CreateSocketConnection();
+	gameInstance->InitializeReceiveSocketThread();
 	gameInstance->SendMessageToHostSocket(FString::Printf(TEXT("Player %s wants to create match"), *(gameInstance->GetPlayerName())));
 }
 
@@ -423,6 +424,7 @@ void UMainMenu::OnMatchmakingFindButtonClicked()
 	if (gameInstance->GetIsFindingMatchInProgress()) return;
 
 	gameInstance->CreateSocketConnection();
+	gameInstance->InitializeReceiveSocketThread();
 	gameInstance->SendMessageToHostSocket(FString::Printf(TEXT("Player %s wants to find match"), *(gameInstance->GetPlayerName())));
 }
 
@@ -435,6 +437,7 @@ void UMainMenu::OnMatchmakingBackButtonClicked()
 	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
 	if (!gameInstance) return;
 	gameInstance->SetFindingMatchProgress(false);
+	gameInstance->DisposeReceiveSocketThread();
 }
 
 TArray<FText> UMainMenu::GetCredentials()

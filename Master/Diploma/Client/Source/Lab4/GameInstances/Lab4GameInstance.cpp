@@ -16,6 +16,7 @@
 #include "Engine/Engine.h"
 #include "GameFramework/PlayerState.h"
 #include "WebSocketsModule.h"
+#include "Lab4/Runnable/FReceiveThread.h"
 #include "Interfaces/OnlineLeaderboardInterface.h"
 #include "Interfaces/OnlineStatsInterface.h"
 #include "Lab4/UserWidgets/GameOverMenu.h"
@@ -794,7 +795,7 @@ bool ULab4GameInstance::SendMessageToHostSocket(const FString& Message)
 	TArray<uint8> payload;
 	FromStringToBinaryArray(Message, payload);
 
-	FBufferArchive Ar;
+	FBufferArchive ArchiveBuffer;
 	int32 bytesSent = 0;
 
 	if (!ConnectionSocket)
@@ -802,12 +803,12 @@ bool ULab4GameInstance::SendMessageToHostSocket(const FString& Message)
 		UE_LOG(LogTemp, Error, TEXT("Error, while sending message to server. Client socket in nullptr"))
 		return false;
 	}
-	Ar.Append(payload);
-	ConnectionSocket->Send(Ar.GetData(), Ar.Num(), bytesSent);
-	if (bytesSent != Ar.Num())
+	ArchiveBuffer.Append(payload);
+	ConnectionSocket->Send(ArchiveBuffer.GetData(), ArchiveBuffer.Num(), bytesSent);
+	if (bytesSent != ArchiveBuffer.Num())
 	{
-		UE_LOG(LogTemp, Error, TEXT("Error while submiting data to client: sent:%d, length:%d"), bytesSent, Ar.Num())
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Error while submiting data to client")));
+		UE_LOG(LogTemp, Error, TEXT("Error while submiting data to client: sent:%d, length:%d"), bytesSent, ArchiveBuffer.Num())
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Error while submiting data to client: sent:%d, length:%d"), bytesSent, ArchiveBuffer.Num()));
 		return false;
 	}
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Successfully sent data: '%s' to host"), *Message));
@@ -823,6 +824,27 @@ void ULab4GameInstance::FromStringToBinaryArray(const FString& Message, TArray<u
 	FTCHARToUTF8 Convert(*Message);
 	OutBinaryArray.Empty();
 	OutBinaryArray.Append((UTF8CHAR*)Convert.Get(), Convert.Length());
+}
+
+void ULab4GameInstance::InitializeReceiveSocketThread()
+{
+	if (!ConnectionSocket) return;
+	if (ReceiveThread != nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Receive thread has already been created"))
+		return;
+	}
+	ReceiveThread = FRunnableThread::Create(new FReceiveThread(ConnectionSocket), TEXT("ReceiveThread"), 0, TPri_BelowNormal);
+	UE_LOG(LogTemp, Log, TEXT("Initialized receive socket thread: [ThreadId=%d, ThreadName=%s]"), ReceiveThread->GetThreadID(), *(ReceiveThread->GetThreadName()))
+}
+
+void ULab4GameInstance::DisposeReceiveSocketThread()
+{
+	if (!ReceiveThread) return;
+	ReceiveThread->Kill(true);
+	UE_LOG(LogTemp, Log, TEXT("Disposed receive socket thread: [ThreadId=%d, ThreadName=%s]"), ReceiveThread->GetThreadID(), *(ReceiveThread->GetThreadName()))
+	delete ReceiveThread;
+	ReceiveThread = nullptr;
 }
 
 void ULab4GameInstance::SetFindingMatchProgress(bool bIsFindingMatch)

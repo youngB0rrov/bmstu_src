@@ -3,57 +3,76 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 
-using namespace boost::asio;
-using ip::tcp;
-using std::string;
-using std::cout;
-using std::endl;
-
-typedef tcp::endpoint Endpoint;
-typedef tcp::socket Socket;
-typedef boost::shared_ptr<Socket> socketPtr;
-void sendDataToClient(socketPtr);
-void readDataFromClient(socketPtr);
+void sendDataToClient(boost::shared_ptr<boost::asio::ip::tcp::socket> socket, const std::string& message);
+void readDataFromClient(boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
+void createAcceptThread();
 
 int main()
 {
+    boost::thread_group threads;
+
+    threads.create_thread(createAcceptThread);
+    threads.join_all();
+
+    return 0;
+}
+void createAcceptThread()
+{
+    const unsigned int port = 8870;
     // Создание контекста
-    io_context context;
+    boost::asio::io_context context;
 
     // Инициализация эндпоинта хоста, куда будут подключаться клиенты
-    Endpoint endpoint(ip::address::from_string("127.0.0.1"), 8870);
+    boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string("127.0.0.1"), port);
 
     // Инициализация сокета для прослушки входящих соединений
-    tcp::acceptor acceptor(context, endpoint);
-    cout << "Start listening on 127.0.0.1:8870" << endl;
+    boost::asio::ip::tcp::acceptor acceptor(context, endpoint);
+    std::cout << "Start listening on 127.0.0.1:" << port << std::endl;
 
     while (true)
     {
         boost::this_thread::sleep(1);
-        socketPtr clientSocket(new tcp::socket(context));
+        boost::shared_ptr<boost::asio::ip::tcp::socket> clientSocket(new boost::asio::ip::tcp::socket(context));
         acceptor.accept(*clientSocket);
         boost::thread(boost::bind(readDataFromClient, clientSocket));
     }
 }
-
-void sendDataToClient(socketPtr socket)
+void sendCommandToDaemon(const std::string& command)
 {
-    const string message = "Connected to server manager";
-    socket->write_some(buffer(message, message.length() + 1));
-}
-
-void readDataFromClient(socketPtr socket)
-{
-    while (true)
+    try
     {
-        boost::this_thread::sleep(1);
+        // Создание контекста
+        boost::asio::io_context context;
+        boost::asio::ip::tcp::endpoint daemonEnpoint(boost::asio::ip::address::from_string("127.0.0.1"), 8871);
+        boost::asio::ip::tcp::socket daemonSocket(context);
+
+        daemonSocket.connect(daemonEnpoint);
+        daemonSocket.write_some(boost::asio::buffer(command));
+    }
+    catch (const std::exception&)
+    {
+        std::cout << "Unhandled exception occured!" << std::endl;
+    }
+}
+void sendDataToClient(boost::shared_ptr<boost::asio::ip::tcp::socket> socket, const std::string& message)
+{
+    socket->write_some(boost::asio::buffer(message, message.length() + 1));
+}
+void readDataFromClient(boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
+{
+    bool bIsReading(true);
+    while (bIsReading)
+    {
         char data[512];
 
-        size_t bytesRead = socket->read_some(buffer(data));
+        size_t bytesRead = socket->read_some(boost::asio::buffer(data));
         if (bytesRead > 0)
         {
-            sendDataToClient(socket);
-            cout << "Got data form client: " << string(data) << endl;
+            sendDataToClient(socket, "Request queued");
+            std::cout << "Got data form client: " << std::string(data, bytesRead) << std::endl;
+            std::cout << "Sending command to daemon..." << std::endl;
+            sendCommandToDaemon(std::string("Start"));
+            bIsReading = false;
         }
     }
 }
