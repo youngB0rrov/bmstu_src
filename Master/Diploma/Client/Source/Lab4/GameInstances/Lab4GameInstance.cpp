@@ -782,11 +782,11 @@ bool ULab4GameInstance::CreateSocketConnection()
 	ConnectionSocket = FTcpSocketBuilder("ClientSocket");
 	if (ConnectionSocket->Connect(*Endpoint.ToInternetAddr()))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Successfully connected to host: [address=%s, port=%d]"), *outAddress.ToString(), HostSocketPort));
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Successfully created socket to host: [address=%s, port=%d]"), *outAddress.ToString(), HostSocketPort));
 		return true;
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Error, while connecting to host: [address=%s, port=%d]"), *outAddress.ToString(), HostSocketPort));
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Error, while creating socket to host: [address=%s, port=%d]"), *outAddress.ToString(), HostSocketPort));
 	return false;
 }
 

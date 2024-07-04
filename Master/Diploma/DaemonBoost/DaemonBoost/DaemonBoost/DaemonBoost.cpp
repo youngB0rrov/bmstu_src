@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 void handleIncomeQuery(boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
 void createAcceptThread();
@@ -21,15 +22,15 @@ void createAcceptThread()
     boost::asio::io_context context;
 
     // Инициализация эндпоинта хоста, куда будут подключаться клиенты
-    boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string("127.0.0.1"), port);
+    boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), port);
 
     // Инициализация сокета для прослушки входящих соединений
     boost::asio::ip::tcp::acceptor acceptor(context, endpoint);
-    std::cout << "Start listening on 127.0.0.1:" << port << std::endl;
+    std::cout << "Start listening on 0.0.0.0:" << port << std::endl;
 
     while (true)
     {
-        boost::this_thread::sleep(1);
+        boost::this_thread::sleep(boost::posix_time::seconds(1));
         boost::shared_ptr<boost::asio::ip::tcp::socket> clientSocket(new boost::asio::ip::tcp::socket(context));
         acceptor.accept(*clientSocket);
         boost::thread(boost::bind(handleIncomeQuery, clientSocket));
