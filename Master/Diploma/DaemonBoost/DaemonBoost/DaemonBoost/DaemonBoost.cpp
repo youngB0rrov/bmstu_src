@@ -64,7 +64,7 @@ void startServerInstance()
     #ifdef _WIN32
         const std::string scriptPath = "E:\\Maga\\sem2\\MMAPS\\Releases\\WindowsServer\\Lab4ServerPackaged.bat";
     #else
-        const std::string scriptPath = "";
+        const std::string scriptPath = "/home/user/dedicated-server/LinuxServer/Lab4Server.sh";
     #endif // _WIN32
     try
     {
