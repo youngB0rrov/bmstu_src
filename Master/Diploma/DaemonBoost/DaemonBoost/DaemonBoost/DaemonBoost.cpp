@@ -2,9 +2,11 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/process.hpp>
 
 void handleIncomeQuery(boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
 void createAcceptThread();
+void startServerInstance();
 
 int main()
 {
@@ -46,8 +48,39 @@ void handleIncomeQuery(boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
         size_t bytesRead = socket->read_some(boost::asio::buffer(data));
         if (bytesRead > 0)
         {
-            std::cout << "Handle income query: " << std::string(data, bytesRead) << std::endl;
+            const std::string message = std::string(data, bytesRead);
+            std::cout << "Handle income query: " << message << std::endl;
+            if (message == "Start")
+            {
+                std::cout << "Starting server instance..." << std::endl;
+                boost::thread(startServerInstance).detach();
+            }
             bIsReading = false;
         }
+    }
+}
+void startServerInstance()
+{
+    #ifdef _WIN32
+        const std::string scriptPath = "E:\\Maga\\sem2\\MMAPS\\Releases\\WindowsServer\\Lab4ServerPackaged.bat";
+    #else
+        const std::string scriptPath = "";
+    #endif // _WIN32
+    try
+    {
+        boost::process::child childThreat(scriptPath, boost::process::std_out > stdout, boost::process::std_err > stderr);
+        childThreat.wait();
+        if (childThreat.exit_code() == 0)
+        {
+            std::cout << "Server instance started successfully!" << std::endl;
+        }
+        else
+        {
+            std::cerr << "Error, while starting server instance. Exit code: " << childThreat.exit_code() << std::endl;
+        }
+    }
+    catch (const std::exception& exception)
+    {
+        std::cerr << "Exception occured, while starting server instance: " << exception.what() << std::endl;
     }
 }
