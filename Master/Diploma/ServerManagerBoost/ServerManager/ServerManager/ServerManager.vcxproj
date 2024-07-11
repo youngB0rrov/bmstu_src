@@ -131,7 +131,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\TcpServer\TcpServer.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="ServerManager.cpp" />
+    <ClCompile Include="Utils\ConfigHelper\ConfigHelper.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Engine\TcpServer\TcpServer.h" />
+    <ClInclude Include="Utils\ConfigHelper\ConfigHelper.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="appsettings.ini" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

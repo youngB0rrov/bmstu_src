@@ -8,15 +8,15 @@ void sendDataToClient(boost::shared_ptr<boost::asio::ip::tcp::socket> socket, co
 void readDataFromClient(boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
 void createAcceptThread();
 
-int main()
-{
-    boost::thread_group threads;
-
-    threads.create_thread(createAcceptThread);
-    threads.join_all();
-
-    return 0;
-}
+//int main()
+//{
+//    boost::thread_group threads;
+//
+//    threads.create_thread(createAcceptThread);
+//    threads.join_all();
+//
+//    return 0;
+//}
 void createAcceptThread()
 {
     const unsigned int port = 8870;

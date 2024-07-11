@@ -130,6 +130,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DaemonBoost.cpp" />
+    <ClCompile Include="Engine\TcpServer\TcpServer.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Engine\TcpServer\TcpServer.h" />
+    <ClInclude Include="Utils\ConfigHelper\ConfigHelper.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="appsettings.ini" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

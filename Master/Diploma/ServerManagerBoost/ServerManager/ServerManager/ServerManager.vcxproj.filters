@@ -13,10 +13,42 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Исходные файлы\Engine">
+      <UniqueIdentifier>{27c49318-de47-48e4-864c-a72e3ce06a83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Engine\TcpServer">
+      <UniqueIdentifier>{f0694c33-53ff-43f8-babf-c810ffa752d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Utils">
+      <UniqueIdentifier>{f726ac65-90b6-442e-822b-87cc74206db9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Utils\ConfigHelper">
+      <UniqueIdentifier>{39a076ea-673a-45b3-b8d5-86c16da27e35}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ServerManager.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\TcpServer\TcpServer.cpp">
+      <Filter>Исходные файлы\Engine\TcpServer</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\ConfigHelper\ConfigHelper.cpp">
+      <Filter>Исходные файлы\Utils\ConfigHelper</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Engine\TcpServer\TcpServer.h">
+      <Filter>Исходные файлы\Engine\TcpServer</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\ConfigHelper\ConfigHelper.h">
+      <Filter>Исходные файлы\Utils\ConfigHelper</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="appsettings.ini" />
   </ItemGroup>
 </Project>

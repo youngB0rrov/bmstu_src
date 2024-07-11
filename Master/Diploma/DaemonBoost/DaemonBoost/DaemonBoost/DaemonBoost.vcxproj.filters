@@ -13,10 +13,39 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Исходные файлы\Engine">
+      <UniqueIdentifier>{90a977e8-69d2-42dc-9537-f05c856ec456}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Engine\TcpServer">
+      <UniqueIdentifier>{b5d419a6-275e-48a7-abc8-0af2fd4e753c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Utils">
+      <UniqueIdentifier>{13c83b23-3d02-47f6-8a1c-7c3c6ae1ad24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Utils\ConfigHelper">
+      <UniqueIdentifier>{bcad5005-c09d-4be5-b405-5c89ab5809e7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DaemonBoost.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\TcpServer\TcpServer.cpp">
+      <Filter>Исходные файлы\Engine\TcpServer</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Engine\TcpServer\TcpServer.h">
+      <Filter>Исходные файлы\Engine\TcpServer</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\ConfigHelper\ConfigHelper.h">
+      <Filter>Исходные файлы\Utils\ConfigHelper</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="appsettings.ini" />
   </ItemGroup>
 </Project>

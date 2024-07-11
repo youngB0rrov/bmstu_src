@@ -8,15 +8,16 @@ void handleIncomeQuery(boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
 void createAcceptThread();
 void startServerInstance();
 
-int main()
-{
-    boost::thread_group threads;
+//int main()
+//{
+//    boost::thread_group threads;
+//
+//    threads.create_thread(createAcceptThread);
+//    threads.join_all();
+//
+//    return 0;
+//}
 
-    threads.create_thread(createAcceptThread);
-    threads.join_all();
-
-    return 0;
-}
 void createAcceptThread()
 {
     const unsigned int port = 8871;
@@ -38,6 +39,7 @@ void createAcceptThread()
         boost::thread(boost::bind(handleIncomeQuery, clientSocket));
     }
 }
+
 void handleIncomeQuery(boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
 {
     bool bIsReading(true);
@@ -59,6 +61,7 @@ void handleIncomeQuery(boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
         }
     }
 }
+
 void startServerInstance()
 {
     #ifdef _WIN32
