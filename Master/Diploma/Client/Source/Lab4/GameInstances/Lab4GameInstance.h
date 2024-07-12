@@ -181,8 +181,8 @@ private:
 	const FString TravelMainMenuPath = TEXT("/Game/MainMenu/MainMenuMap");
 	const uint32 ScoreCoefficient = 25;
 	int32 LeftScoreBoundary, RightScoreBoundary; 
-	//const FString HostSocketAddress = TEXT("127.0.0.1");
-	const FString HostSocketAddress = TEXT("192.168.1.11");
+	const FString HostSocketAddress = TEXT("127.0.0.1");
+	//const FString HostSocketAddress = TEXT("192.168.1.11");
 	int32 HostSocketPort = 8870;
 	FIPv4Address HostIp;
 	FSocket* ConnectionSocket;

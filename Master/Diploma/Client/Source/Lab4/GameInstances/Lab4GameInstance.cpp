@@ -812,7 +812,7 @@ bool ULab4GameInstance::SendMessageToHostSocket(const FString& Message)
 		return false;
 	}
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Successfully sent data: '%s' to host"), *Message));
-
+	
 	// For spinnet widget and status
 	SetFindingMatchProgress(true);
 	m_pMainMenu->SetFindingMatchStatusWidgetVisibility(true);

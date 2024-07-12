@@ -133,7 +133,6 @@
   <ItemGroup>
     <ClCompile Include="Engine\TcpServer\TcpServer.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="ServerManager.cpp" />
     <ClCompile Include="Utils\ConfigHelper\ConfigHelper.cpp" />
   </ItemGroup>
   <ItemGroup>

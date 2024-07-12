@@ -40,6 +40,7 @@ void TcpServer::CreateAcceptThread()
 
 void TcpServer::SendCommandToDaemon(const std::string& command)
 {
+    std::cout << "Sending command to daemon: " << command << std::endl;
     try
     {
         boost::asio::ip::tcp::endpoint daemonEnpoint(boost::asio::ip::address::from_string(_daemonIp), _daemonPort);
@@ -70,10 +71,16 @@ void TcpServer::ReadDataFromClient(boost::shared_ptr<boost::asio::ip::tcp::socke
         if (bytesRead > 0)
         {
             std::string message = std::string(data, bytesRead);
-            SendDataToClient(socket, "Request queued");
-            std::cout << "Got data form client: " << message << std::endl;
-            std::cout << "Sending command to daemon: " << "Start" << std::endl;
-            SendCommandToDaemon(std::string("Start"));
+            if (message.find(':') != std::string::npos)
+            {
+                // Обработка присланного URI от DedicatedServer
+                std::cout << "Got URI form started DedicatedServer: " << message << std::endl;
+            }
+            else
+            {
+                std::cout << "Got data form socket: " << message << std::endl;
+                SendCommandToDaemon(std::string("Start"));
+            }
             bIsReading = false;
         }
     }
