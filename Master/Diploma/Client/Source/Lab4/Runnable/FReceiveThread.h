@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Lab4/UserWidgets/MatchmakingConnectWidget.h"
 #include "Networking.h"
 
 /**
@@ -11,9 +12,10 @@
 class LAB4_API FReceiveThread: public FRunnable
 {
 public:
-	FReceiveThread(FSocket* hostSocker)
+	FReceiveThread(FSocket* hostSocket, ULab4GameInstance* gameInstance)
 	{
-		HostSocket = hostSocker;
+		HostSocket = hostSocket;
+		GameInstance = gameInstance;
 		bIsStopped = false;
 	}
 	~FReceiveThread()
@@ -43,6 +45,13 @@ public:
 			{
 				const FString receivedStringData = FromBinaryArrayToString(receivedData);
 				GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("Received data from host: %s"), *receivedStringData));
+				
+				GameInstance->SetConnectAddress(receivedStringData);
+				UMatchmakingConnectWidget* matchmakingConnectWidget = GameInstance->MatchMakingConnectWidget;
+				AsyncTask(ENamedThreads::GameThread, [matchmakingConnectWidget]()
+				{
+					matchmakingConnectWidget->AddToViewport();
+				});
 			}
 			FPlatformProcess::Sleep(0.01f);
 		}
@@ -61,6 +70,7 @@ public:
 
 private:
 	FSocket* HostSocket;
+	ULab4GameInstance* GameInstance;
 	bool bIsStopped;
 
 	FString FromBinaryArrayToString(const TArray<uint8>& receivedData)

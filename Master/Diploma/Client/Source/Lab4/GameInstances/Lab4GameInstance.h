@@ -43,6 +43,7 @@ public:
 	ULab4GameInstance();
 	void SetPlayerName(const FString& Name);
 	void SetServerName(const FString& SessionName);
+	void SetConnectAddress(const FString& ConnectAddressFromDedicatedServer);
 	void SetJoinIndex(const uint32 Index);
 
 	void AddCharacter(class ALab4Character* const Character, const FString& Name);
@@ -65,6 +66,9 @@ public:
 	
 	UPROPERTY()
 	class ULobbyHostWidget* LobbyHostWidget;
+
+	UPROPERTY()
+	class UMatchmakingConnectWidget* MatchMakingConnectWidget;
 	
 	void LogIn();
 	void InitializeSDKCredentials();
@@ -110,6 +114,7 @@ public:
 	bool SendMessageToHostSocket(const FString& Message);
 	void SetFindingMatchProgress(bool bIsFindingMatch);
 	FORCEINLINE bool GetIsFindingMatchInProgress() const { return bIsFindingMatchInProgress; }
+	FORCEINLINE FString GetConnectionAddress() const { return ConnectAddress; }
 	void InitializeReceiveSocketThread();
 	void DisposeReceiveSocketThread();
 
@@ -171,6 +176,7 @@ private:
 	TSubclassOf<UUserWidget> BPRankedLeaderboardRowClass;
 	TSubclassOf<UUserWidget> BPLobbyHostButtonClass;
 	TSubclassOf<UUserWidget> BPLoadingWidgetClass;
+	TSubclassOf<UUserWidget> BPMatchmakingConnectWidgetClass;
 	
 	const FName ServerNameKey = "ServerName";
 	const FName SessionNameConst = "Session";
@@ -183,6 +189,7 @@ private:
 	int32 LeftScoreBoundary, RightScoreBoundary; 
 	const FString HostSocketAddress = TEXT("127.0.0.1");
 	//const FString HostSocketAddress = TEXT("192.168.1.11");
+	FString ConnectAddress;
 	int32 HostSocketPort = 8870;
 	FIPv4Address HostIp;
 	FSocket* ConnectionSocket;

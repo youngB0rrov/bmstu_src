@@ -14,7 +14,7 @@ TcpServer::TcpServer()
     _daemonIp = daemonIp;
 }
 
-void TcpServer::startServer()
+void TcpServer::StartServer()
 {
     _acceptThread = boost::thread(&TcpServer::CreateAcceptThread, this);
     _acceptThread.join();
@@ -34,7 +34,7 @@ void TcpServer::CreateAcceptThread()
         boost::this_thread::sleep(boost::posix_time::seconds(1));
         boost::shared_ptr<boost::asio::ip::tcp::socket> clientSocket(new boost::asio::ip::tcp::socket(_context));
         acceptor.accept(*clientSocket);
-        boost::thread(boost::bind(&TcpServer::ReadDataFromClient, this, clientSocket));
+        boost::thread(boost::bind(&TcpServer::ReadDataFromSocket, this, clientSocket));
     }
 }
 
@@ -55,12 +55,12 @@ void TcpServer::SendCommandToDaemon(const std::string& command)
     }
 }
 
-void TcpServer::SendDataToClient(boost::shared_ptr<boost::asio::ip::tcp::socket> socket, const std::string& message)
+void TcpServer::SendDataToSocket(boost::shared_ptr<boost::asio::ip::tcp::socket> socket, const std::string& message)
 {
     socket->write_some(boost::asio::buffer(message, message.length() + 1));
 }
 
-void TcpServer::ReadDataFromClient(boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
+void TcpServer::ReadDataFromSocket(boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
 {
     bool bIsReading(true);
     while (bIsReading)
@@ -73,15 +73,51 @@ void TcpServer::ReadDataFromClient(boost::shared_ptr<boost::asio::ip::tcp::socke
             std::string message = std::string(data, bytesRead);
             if (message.find(':') != std::string::npos)
             {
-                // Обработка присланного URI от DedicatedServer
-                std::cout << "Got URI form started DedicatedServer: " << message << std::endl;
+                ProcessDataFromDaemon(message);
             }
             else
             {
-                std::cout << "Got data form socket: " << message << std::endl;
-                SendCommandToDaemon(std::string("Start"));
+                ProcessDataFromClient(message, socket);
             }
             bIsReading = false;
         }
     }
+}
+
+void TcpServer::ProcessDataFromClient(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
+{
+    std::cout << "Got data from client: " << message << std::endl;
+    
+    ClientInfo clientInfo;
+    clientInfo.Socket = socket;
+    
+    if (message == "CREATE")
+    {
+        clientInfo.UserType = ClientType::INITIATOR;
+        SendCommandToDaemon(std::string("Start"));
+    }
+    if (message == "JOIN")
+    {
+        clientInfo.UserType = ClientType::PLAYER;
+    }
+    
+    _connectedClients.push(clientInfo);
+    std::cout << "Added client to queue: [CLIENT_ADDRESS=" << socket->remote_endpoint().address().to_string() << ":" << socket->remote_endpoint().port() << ",CLIENT_TYPE=" << clientInfo.UserType << "]" << std::endl;
+}
+
+void TcpServer::ProcessDataFromDaemon(std::string& message)
+{
+    // Обработка присланного URI от DedicatedServer
+    std::cout << "Got URI form started DedicatedServer: " << message << std::endl;
+
+    if (_connectedClients.empty())
+    {
+        std::cout << "Connected clients queue is empty. No client to send IP:PORT to" << std::endl;
+        return;
+    }
+
+    ClientInfo& firstClientInQueue = _connectedClients.front();
+    std::cout << "Senging data to cleint: " << message << std::endl;
+    SendDataToSocket(firstClientInQueue.Socket, message);
+    _connectedClients.pop();
 }

@@ -3,14 +3,9 @@
 
 int main()
 {
-	try
-	{
-		TcpServer* tcpServer = new TcpServer();
-		tcpServer->startServer();
-	}
-	catch (const std::exception& e)
-	{
-		std::cerr << "Exception: " << e.what() << std::endl;
-	}
+	TcpServer* tcpServer = new TcpServer();
+	tcpServer->StartServer();
+
+	delete tcpServer;
 	return 0;
 }

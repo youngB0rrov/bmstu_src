@@ -25,6 +25,12 @@
     <Filter Include="Исходные файлы\Utils\ConfigHelper">
       <UniqueIdentifier>{39a076ea-673a-45b3-b8d5-86c16da27e35}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Исходные файлы\Data">
+      <UniqueIdentifier>{6eb81a69-5d74-4c7e-83b1-1d4880442daa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Data\Enums">
+      <UniqueIdentifier>{0f690d6a-f00d-4e2b-819d-358ffd07b8a0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -33,8 +39,8 @@
     <ClCompile Include="Engine\TcpServer\TcpServer.cpp">
       <Filter>Исходные файлы\Engine\TcpServer</Filter>
     </ClCompile>
-    <ClCompile Include="Utils\ConfigHelper\ConfigHelper.cpp">
-      <Filter>Исходные файлы\Utils\ConfigHelper</Filter>
+    <ClCompile Include="ClientType.cpp">
+      <Filter>Исходные файлы\Data\Enums</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -43,6 +49,12 @@
     </ClInclude>
     <ClInclude Include="Utils\ConfigHelper\ConfigHelper.h">
       <Filter>Исходные файлы\Utils\ConfigHelper</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientInfo.h">
+      <Filter>Исходные файлы\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientType.h">
+      <Filter>Исходные файлы\Data\Enums</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

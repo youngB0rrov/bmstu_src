@@ -131,12 +131,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ClientType.cpp" />
     <ClCompile Include="Engine\TcpServer\TcpServer.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Utils\ConfigHelper\ConfigHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ClientInfo.h" />
     <ClInclude Include="Engine\TcpServer\TcpServer.h" />
+    <ClInclude Include="ClientType.h" />
     <ClInclude Include="Utils\ConfigHelper\ConfigHelper.h" />
   </ItemGroup>
   <ItemGroup>

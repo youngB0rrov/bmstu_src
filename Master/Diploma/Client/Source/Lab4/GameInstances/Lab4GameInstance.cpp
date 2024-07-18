@@ -23,6 +23,7 @@
 #include "Lab4/UserWidgets/LobbyHostWidget.h"
 #include "Lab4/UserWidgets/PlayerTableRow.h"
 #include "Lab4/UserWidgets/RankedLeaderboardRow.h"
+#include "Lab4/UserWidgets/MatchmakingConnectWidget.h"
 
 #define EOS_ID_SEPARATOR TEXT("|")
 #define WITH_SDK 0
@@ -70,6 +71,11 @@ void ULab4GameInstance::Init()
 	}
 
 	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &ULab4GameInstance::Tick), 0.1f);
+
+	if (BPMatchmakingConnectWidgetClass)
+	{
+		MatchMakingConnectWidget = CreateWidget<UMatchmakingConnectWidget>(this, BPMatchmakingConnectWidgetClass);
+	}
 }
 
 void ULab4GameInstance::Shutdown()
@@ -146,6 +152,12 @@ ULab4GameInstance::ULab4GameInstance()
 	if (BPLoadingWidgetClassFinder.Succeeded())
 	{
 		BPLoadingWidgetClass = BPLoadingWidgetClassFinder.Class;
+	}
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> BPMatchmakingConnectWidgetFinder(TEXT("/Game/MainMenu/WBP_MatchmakingConnectWidget"));
+	if (BPMatchmakingConnectWidgetFinder.Succeeded())
+	{
+		BPMatchmakingConnectWidgetClass = BPMatchmakingConnectWidgetFinder.Class;
 	}
 }
 
@@ -834,7 +846,7 @@ void ULab4GameInstance::InitializeReceiveSocketThread()
 		UE_LOG(LogTemp, Error, TEXT("Receive thread has already been created"))
 		return;
 	}
-	ReceiveThread = FRunnableThread::Create(new FReceiveThread(ConnectionSocket), TEXT("ReceiveThread"), 0, TPri_BelowNormal);
+	ReceiveThread = FRunnableThread::Create(new FReceiveThread(ConnectionSocket, this), TEXT("ReceiveThread"), 0, TPri_BelowNormal);
 	UE_LOG(LogTemp, Log, TEXT("Initialized receive socket thread: [ThreadId=%d, ThreadName=%s]"), ReceiveThread->GetThreadID(), *(ReceiveThread->GetThreadName()))
 }
 
@@ -850,4 +862,8 @@ void ULab4GameInstance::DisposeReceiveSocketThread()
 void ULab4GameInstance::SetFindingMatchProgress(bool bIsFindingMatch)
 {
 	bIsFindingMatchInProgress = bIsFindingMatch;
+}
+void ULab4GameInstance::SetConnectAddress(const FString& ConnectAddressFromDedicatedServer)
+{
+	ConnectAddress = ConnectAddressFromDedicatedServer;
 }

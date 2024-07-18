@@ -413,7 +413,7 @@ void UMainMenu::OnMatchmakingCreateButtonClicked()
 
 	gameInstance->CreateSocketConnection();
 	gameInstance->InitializeReceiveSocketThread();
-	gameInstance->SendMessageToHostSocket(FString::Printf(TEXT("Player %s wants to create match"), *(gameInstance->GetPlayerName())));
+	gameInstance->SendMessageToHostSocket(FString::Printf(TEXT("CREATE")));
 }
 
 void UMainMenu::OnMatchmakingFindButtonClicked()
@@ -425,7 +425,7 @@ void UMainMenu::OnMatchmakingFindButtonClicked()
 
 	gameInstance->CreateSocketConnection();
 	gameInstance->InitializeReceiveSocketThread();
-	gameInstance->SendMessageToHostSocket(FString::Printf(TEXT("Player %s wants to find match"), *(gameInstance->GetPlayerName())));
+	gameInstance->SendMessageToHostSocket(FString::Printf(TEXT("JOIN")));
 }
 
 void UMainMenu::OnMatchmakingBackButtonClicked()
