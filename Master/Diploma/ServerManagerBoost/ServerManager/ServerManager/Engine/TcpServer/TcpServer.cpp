@@ -6,9 +6,9 @@ TcpServer::TcpServer()
 {
     int port, daemonPort;
     std::string daemonIp;
-    ConfigHelper::ReadVariableFromConfig("appsettings.ini", "listenPort", port);
-    ConfigHelper::ReadVariableFromConfig("appsettings.ini", "daemonPort", daemonPort);
-    ConfigHelper::ReadVariableFromConfig("appsettings.ini", "daemonIp", daemonIp);
+    ConfigHelper::ReadVariableFromConfig("appsettings.ini", "Network.listenPort", port);
+    ConfigHelper::ReadVariableFromConfig("appsettings.ini", "DaemonNetwork.daemonPort", daemonPort);
+    ConfigHelper::ReadVariableFromConfig("appsettings.ini", "DaemonNetwork.daemonIp", daemonIp);
     _port = port;
     _daemonPort = daemonPort;
     _daemonIp = daemonIp;

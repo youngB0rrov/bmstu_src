@@ -7,13 +7,13 @@ TcpServer::TcpServer()
 {
     int port;
     std::string scriptPath;
-    ConfigHelper::ReadVariableFromConfig("appsettings.ini", "listenPort", port);
+    ConfigHelper::ReadVariableFromConfig("appsettings.ini", "Network.listenPort", port);
     _port = port;
 
     #ifdef _WIN32
-        ConfigHelper::ReadVariableFromConfig("appsettings.ini", "scriptPathWindows", scriptPath);
+        ConfigHelper::ReadVariableFromConfig("appsettings.ini", "SystemPaths.scriptPathWindows", scriptPath);
     #else
-        ConfigHelper::ReadVariableFromConfig("appsettings.ini", "scriptPathLinux", scriptPath);
+        ConfigHelper::ReadVariableFromConfig("appsettings.ini", "SystemPaths.scriptPathLinux", scriptPath);
     #endif // _WIN32
     _scriptPath = scriptPath;
 }
