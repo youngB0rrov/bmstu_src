@@ -133,12 +133,14 @@
   <ItemGroup>
     <ClCompile Include="ClientType.cpp" />
     <ClCompile Include="Engine\TcpServer\TcpServer.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ClientInfo.h" />
     <ClInclude Include="Engine\TcpServer\TcpServer.h" />
     <ClInclude Include="ClientType.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="Utils\ConfigHelper\ConfigHelper.h" />
   </ItemGroup>
   <ItemGroup>

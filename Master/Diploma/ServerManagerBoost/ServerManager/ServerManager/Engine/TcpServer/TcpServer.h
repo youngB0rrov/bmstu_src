@@ -2,7 +2,7 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <string>
-#include <queue>
+#include <vector>
 #include "../../ClientInfo.h"
 
 class TcpServer
@@ -20,7 +20,7 @@ private:
 	unsigned int _daemonPort;
 	std::string _daemonIp;
 
-	std::queue<ClientInfo> _connectedClients;
+	std::vector<ClientInfo> _connectedClients;
 
 	void CreateAcceptThread();
 	void SendCommandToDaemon(const std::string& command);

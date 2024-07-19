@@ -31,6 +31,9 @@
     <Filter Include="Исходные файлы\Data\Enums">
       <UniqueIdentifier>{0f690d6a-f00d-4e2b-819d-358ffd07b8a0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Исходные файлы\Utils\Logger">
+      <UniqueIdentifier>{2e0e4cf6-e222-476d-b146-f75b247d963a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -41,6 +44,9 @@
     </ClCompile>
     <ClCompile Include="ClientType.cpp">
       <Filter>Исходные файлы\Data\Enums</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Исходные файлы\Utils\Logger</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -55,6 +61,9 @@
     </ClInclude>
     <ClInclude Include="ClientType.h">
       <Filter>Исходные файлы\Data\Enums</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Исходные файлы\Utils\Logger</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

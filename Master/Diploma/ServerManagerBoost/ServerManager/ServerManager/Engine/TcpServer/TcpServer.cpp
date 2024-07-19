@@ -1,6 +1,7 @@
 #include "TcpServer.h"
 #include "../../Utils/ConfigHelper/ConfigHelper.h"
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/range/adaptors.hpp>
 
 TcpServer::TcpServer()
 {
@@ -101,7 +102,7 @@ void TcpServer::ProcessDataFromClient(std::string& message, boost::shared_ptr<bo
         clientInfo.UserType = ClientType::PLAYER;
     }
     
-    _connectedClients.push(clientInfo);
+    _connectedClients.push_back(clientInfo);
     std::cout << "Added client to queue: [CLIENT_ADDRESS=" << socket->remote_endpoint().address().to_string() << ":" << socket->remote_endpoint().port() << ",CLIENT_TYPE=" << clientInfo.UserType << "]" << std::endl;
 }
 
@@ -110,14 +111,17 @@ void TcpServer::ProcessDataFromDaemon(std::string& message)
     // Обработка присланного URI от DedicatedServer
     std::cout << "Got URI form started DedicatedServer: " << message << std::endl;
 
-    if (_connectedClients.empty())
+    auto initiatorConnectedClients = boost::adaptors::filter(_connectedClients, [](const ClientInfo& clientInfo) {
+        return clientInfo.UserType == ClientType::INITIATOR;
+    });
+    if (initiatorConnectedClients.empty())
     {
         std::cout << "Connected clients queue is empty. No client to send IP:PORT to" << std::endl;
         return;
     }
 
-    ClientInfo& firstClientInQueue = _connectedClients.front();
+    ClientInfo& firstInitiatorInQueue = initiatorConnectedClients.front();
     std::cout << "Senging data to cleint: " << message << std::endl;
-    SendDataToSocket(firstClientInQueue.Socket, message);
-    _connectedClients.pop();
+    SendDataToSocket(firstInitiatorInQueue.Socket, message);
+    _connectedClients.erase(_connectedClients.begin());
 }
