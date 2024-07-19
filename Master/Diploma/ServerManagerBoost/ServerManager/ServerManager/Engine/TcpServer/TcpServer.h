@@ -3,7 +3,7 @@
 #include <boost/thread.hpp>
 #include <string>
 #include <vector>
-#include "../../ClientInfo.h"
+#include "../../Data/ClientInfo.h"
 
 class TcpServer
 {

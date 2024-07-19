@@ -1,6 +1,6 @@
 #pragma once
 #include <boost/asio.hpp>
-#include "ClientType.h"
+#include "../Data/Enums/ClientType.h"
 
 struct ClientInfo
 {

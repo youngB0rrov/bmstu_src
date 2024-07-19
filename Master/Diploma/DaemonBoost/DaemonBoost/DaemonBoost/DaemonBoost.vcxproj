@@ -129,7 +129,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="DaemonBoost.cpp" />
     <ClCompile Include="Engine\TcpServer\TcpServer.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>

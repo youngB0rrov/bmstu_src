@@ -27,9 +27,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DaemonBoost.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\TcpServer\TcpServer.cpp">
       <Filter>Исходные файлы\Engine\TcpServer</Filter>
     </ClCompile>
