@@ -2,6 +2,7 @@
 #include "../../Utils/ConfigHelper/ConfigHelper.h"
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/range/adaptors.hpp>
+#include "../../Utils/Logger/Logger.h"
 
 TcpServer::TcpServer()
 {
@@ -28,7 +29,8 @@ void TcpServer::CreateAcceptThread()
 
     // Инициализация сокета для прослушки входящих соединений
     boost::asio::ip::tcp::acceptor acceptor(_context, endpoint);
-    std::cout << "Start listening on 0.0.0.0:" << _port << std::endl;
+    Logger::GetInstance() << "Start listening on 0.0.0.0:" << _port << std::endl;
+    //std::cout << "Start listening on 0.0.0.0:" << _port << std::endl;
 
     while (true)
     {
@@ -111,9 +113,11 @@ void TcpServer::ProcessDataFromDaemon(std::string& message)
     // Обработка присланного URI от DedicatedServer
     std::cout << "Got URI form started DedicatedServer: " << message << std::endl;
 
-    auto initiatorConnectedClients = boost::adaptors::filter(_connectedClients, [](const ClientInfo& clientInfo) {
+    auto initiatorConnectedClients = boost::adaptors::filter(_connectedClients, [](const ClientInfo& clientInfo)
+    {
         return clientInfo.UserType == ClientType::INITIATOR;
     });
+
     if (initiatorConnectedClients.empty())
     {
         std::cout << "Connected clients queue is empty. No client to send IP:PORT to" << std::endl;

@@ -1,7 +1,8 @@
 #pragma once
 #include <ostream>
 
-enum class ClientType {
+enum class ClientType
+{
 	INITIATOR,
 	PLAYER
 };

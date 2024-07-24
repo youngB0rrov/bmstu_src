@@ -61,6 +61,8 @@ public:
 	void OnDestroySessionComplete(FName SessionName, bool Success);
 	void OnFindSessionsComplete(bool Success);
 	void OnJoinSessionComplete(FName Name, EOnJoinSessionCompleteResult::Type Result);
+	void OnWriteUserFileCompleteDelegate(bool bWasSuccessfull, const FUniqueNetId& userId, const FString& fileName);
+	void OnReadUserFileCompleteDelegate(bool bWasSuccessfull, const FUniqueNetId& userId, const FString& fileName);
 	void OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);\
 	void AddLobbyHostWidget();
 	
@@ -123,6 +125,7 @@ private:
 	void CreateSession();
 	void LoadMainMenu() const;
 	void FromStringToBinaryArray(const FString& Message, TArray<uint8>& OutBinaryArray);
+	void SetInitialPlayerDataForCloudStorage();
 	bool bShouldBePaused;
 	
 	static AMainMenuInitializer *m_pMainMenu;
@@ -158,6 +161,7 @@ private:
 	IOnlineLeaderboardsPtr LeaderboardsPtr;
 	IOnlineIdentityPtr IdentityPtr;
 	IOnlineStatsPtr StatsPtr;
+	IOnlineUserCloudPtr UserCloudPtr;
 	TSharedPtr<FOnlineSessionSearch> m_pSessionSearch;
 	IVoiceChatUser* Lab4VoiceChatUser;
 
@@ -187,8 +191,7 @@ private:
 	const FString TravelMainMenuPath = TEXT("/Game/MainMenu/MainMenuMap");
 	const uint32 ScoreCoefficient = 25;
 	int32 LeftScoreBoundary, RightScoreBoundary; 
-	const FString HostSocketAddress = TEXT("127.0.0.1");
-	//const FString HostSocketAddress = TEXT("192.168.1.11");
+	FString HostSocketAddress;
 	FString ConnectAddress;
 	int32 HostSocketPort = 8870;
 	FIPv4Address HostIp;

@@ -19,11 +19,16 @@
 #include "Lab4/Runnable/FReceiveThread.h"
 #include "Interfaces/OnlineLeaderboardInterface.h"
 #include "Interfaces/OnlineStatsInterface.h"
+#include "Interfaces/OnlineUserCloudInterface.h"
 #include "Lab4/UserWidgets/GameOverMenu.h"
 #include "Lab4/UserWidgets/LobbyHostWidget.h"
 #include "Lab4/UserWidgets/PlayerTableRow.h"
 #include "Lab4/UserWidgets/RankedLeaderboardRow.h"
 #include "Lab4/UserWidgets/MatchmakingConnectWidget.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
+#include "Serialization/JsonReader.h"
 
 #define EOS_ID_SEPARATOR TEXT("|")
 #define WITH_SDK 0
@@ -56,6 +61,7 @@ void ULab4GameInstance::Init()
 
 	// Получить адрес API сессий
 	SessionPtr = OnlineSubsystem->GetSessionInterface();
+	UserCloudPtr = OnlineSubsystem->GetUserCloudInterface();
 	LeaderboardsPtr = OnlineSubsystem->GetLeaderboardsInterface();
 	StatsPtr = OnlineSubsystem->GetStatsInterface();
 	IdentityPtr = OnlineSubsystem->GetIdentityInterface();
@@ -76,6 +82,14 @@ void ULab4GameInstance::Init()
 	{
 		MatchMakingConnectWidget = CreateWidget<UMatchmakingConnectWidget>(this, BPMatchmakingConnectWidgetClass);
 	}
+
+	if (!UserCloudPtr.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("UserCloudInterface is invalid in Init method"))
+		return;
+	}
+	UserCloudPtr->OnWriteUserFileCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnWriteUserFileCompleteDelegate);
+	UserCloudPtr->OnReadUserFileCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnReadUserFileCompleteDelegate);
 }
 
 void ULab4GameInstance::Shutdown()
@@ -111,7 +125,14 @@ ULab4GameInstance::ULab4GameInstance()
 {
 	bWasLoggedIn = false;
 	bShouldBePaused = false;
-	
+	int32 serverPort;
+	FString serverAddress;
+
+	GConfig->GetInt(TEXT("ServerManager"), TEXT("Port"), serverPort, GEngineIni);
+	GConfig->GetString(TEXT("ServerManager"), TEXT("Address"), serverAddress, GEngineIni);
+	HostSocketAddress = serverAddress;
+	HostSocketPort = serverPort;
+
 	static ConstructorHelpers::FClassFinder<UUserWidget> BPInGameMenu(TEXT("/Game/MainMenu/WBP_ToMainMenu"));
 	BPInGameMenuClass = BPInGameMenu.Class;
 
@@ -444,6 +465,7 @@ void ULab4GameInstance::LogIn()
 void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& Error)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Logged In: %d"), bWasSuccessful);
+	UE_LOG(LogTemp, Log, TEXT("User FUniqueNetId: %s"), *UserId.ToString())
 	LoadingWidget->RemoveFromViewport();
 	LoadingWidget = nullptr;
 	
@@ -461,6 +483,7 @@ void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful,
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Green, FString::Printf(TEXT("Logged In Successfuly!")));
 		m_pMainMenu->SetWidgetOnLoginComplete();
+		SetInitialPlayerDataForCloudStorage();
 		if (!bIsLanGame)
 		{
 			SetPlayerName(IdentityPtr->GetPlayerNickname(UserId));
@@ -863,7 +886,101 @@ void ULab4GameInstance::SetFindingMatchProgress(bool bIsFindingMatch)
 {
 	bIsFindingMatchInProgress = bIsFindingMatch;
 }
+
 void ULab4GameInstance::SetConnectAddress(const FString& ConnectAddressFromDedicatedServer)
 {
 	ConnectAddress = ConnectAddressFromDedicatedServer;
+}
+
+void ULab4GameInstance::SetInitialPlayerDataForCloudStorage()
+{
+	TSharedPtr<FJsonObject> playerData = MakeShareable(new FJsonObject);
+	playerData->SetBoolField("CanCreateMatch", false);
+
+	FString plyaerDataString;
+	TSharedRef<TJsonWriter<>> writer = TJsonWriterFactory<>::Create(&plyaerDataString);
+	FJsonSerializer::Serialize(playerData.ToSharedRef(), writer);
+	UE_LOG(LogTemp, Log, TEXT("PlayerDataString after serialization: %s"), *plyaerDataString);
+
+	FUniqueNetIdPtr userUniqueId = IdentityPtr->GetUniquePlayerId(0);
+	if (!userUniqueId.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid UniquePlayerId"))
+		return;
+	}
+
+	FString fileName = TEXT("PlayerData.json");
+	FTCHARToUTF8 Converter(*plyaerDataString);
+	TArray<uint8> playerDataBytes;
+
+	playerDataBytes.Append((uint8*)Converter.Get(), Converter.Length());
+	playerDataBytes.Add(0);
+
+	if (!UserCloudPtr.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("UserCloudPtr is invalid"))
+		return;
+	}
+
+	UserCloudPtr->WriteUserFile(*userUniqueId, fileName, playerDataBytes, false);
+}
+
+void ULab4GameInstance::OnWriteUserFileCompleteDelegate(bool bWasSuccessfull, const FUniqueNetId& userId, const FString& fileName)
+{
+	if (bWasSuccessfull)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Player data successfully stored to file: %s"), *fileName);
+		UserCloudPtr->ReadUserFile(userId, fileName);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Error, while storing player data to file: %s"), *fileName);
+	}
+	UserCloudPtr->ClearOnWriteUserFileCompleteDelegates(this);
+}
+
+void ULab4GameInstance::OnReadUserFileCompleteDelegate(bool bWasSuccessfull, const FUniqueNetId& userId, const FString& fileName)
+{
+	if (bWasSuccessfull)
+	{
+		FUniqueNetIdPtr userUniqueId = IdentityPtr->GetUniquePlayerId(0);
+		
+		if (!userUniqueId.IsValid())
+		{
+			UE_LOG(LogTemp, Error, TEXT("Error, while reading player data from file. UnserUniqueId is invalid"))
+			return;
+		}
+
+		TArray<uint8> playerDataBytes;
+		if (UserCloudPtr->GetFileContents(*userUniqueId, fileName, playerDataBytes))
+		{
+			if (playerDataBytes.Num() > 0 && playerDataBytes.Last() == 0)
+			{
+				playerDataBytes.Pop();
+			}
+			FString playerDataContentString(UTF8_TO_TCHAR(playerDataBytes.GetData()));
+			playerDataContentString.TrimStartAndEndInline();
+			UE_LOG(LogTemp, Log, TEXT("Got raw json string: %s"), *playerDataContentString)
+
+			TSharedPtr<TJsonReader<>> reader = TJsonReaderFactory<>::Create(playerDataContentString);
+			TSharedPtr<FJsonObject> jsonObject = MakeShareable(new FJsonObject());
+
+			if (FJsonSerializer::Deserialize(reader.ToSharedRef(), jsonObject))
+			{
+				bool bCanPlayerCreateMatch;
+				bool bParseResult = jsonObject->TryGetBoolField("CanCreateMatch", bCanPlayerCreateMatch);
+
+				if (!bParseResult)
+				{
+					UE_LOG(LogTemp, Error, TEXT("Error, while getting value from json object"))
+				}
+				UE_LOG(LogTemp, Log, TEXT("CanUserCreateMatch: %s"), bCanPlayerCreateMatch ? TEXT("true") : TEXT("false"));
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Error, while deserializing raw json string"))
+			}
+		}
+	}
+	UserCloudPtr->ClearOnReadUserFileCompleteDelegates(this);
 }
