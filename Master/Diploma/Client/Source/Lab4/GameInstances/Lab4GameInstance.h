@@ -5,6 +5,8 @@
 #include "OnlineSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "Interfaces/OnlinePurchaseInterface.h"
+#include "Interfaces/OnlineStoreInterfaceV2.h"
 #include "Lab4/UserWidgets/PlayerHealthBar.h"
 #include "eos_types.h"
 #include "eos_auth_types.h"
@@ -120,12 +122,17 @@ public:
 	void InitializeReceiveSocketThread();
 	void DisposeReceiveSocketThread();
 
+	UFUNCTION(Exec)
+	void StartPurchase();
+
 private:
 	UFUNCTION()
 	void CreateSession();
 	void LoadMainMenu() const;
 	void FromStringToBinaryArray(const FString& Message, TArray<uint8>& OutBinaryArray);
 	void SetInitialPlayerDataForCloudStorage();
+	void RetrieveOffers();
+	void RetrieveOffersById(const TArray<FUniqueOfferId>& OfferIds);
 	bool bShouldBePaused;
 	
 	static AMainMenuInitializer *m_pMainMenu;
@@ -162,6 +169,8 @@ private:
 	IOnlineIdentityPtr IdentityPtr;
 	IOnlineStatsPtr StatsPtr;
 	IOnlineUserCloudPtr UserCloudPtr;
+	IOnlineStoreV2Ptr UserStoreInterface;
+	IOnlinePurchasePtr UserPurchaseInterface;
 	TSharedPtr<FOnlineSessionSearch> m_pSessionSearch;
 	IVoiceChatUser* Lab4VoiceChatUser;
 
@@ -198,4 +207,6 @@ private:
 	FSocket* ConnectionSocket;
 	bool bIsFindingMatchInProgress = false;
 	FRunnableThread* ReceiveThread = nullptr;
+
+	TArray<FOnlineStoreOfferRef> Offers;
 };

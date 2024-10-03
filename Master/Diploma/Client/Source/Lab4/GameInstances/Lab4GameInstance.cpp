@@ -62,6 +62,8 @@ void ULab4GameInstance::Init()
 	// Получить адрес API сессий
 	SessionPtr = OnlineSubsystem->GetSessionInterface();
 	UserCloudPtr = OnlineSubsystem->GetUserCloudInterface();
+	UserStoreInterface = OnlineSubsystem->GetStoreV2Interface();
+	UserPurchaseInterface = OnlineSubsystem->GetPurchaseInterface();
 	LeaderboardsPtr = OnlineSubsystem->GetLeaderboardsInterface();
 	StatsPtr = OnlineSubsystem->GetStatsInterface();
 	IdentityPtr = OnlineSubsystem->GetIdentityInterface();
@@ -484,6 +486,9 @@ void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful,
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Green, FString::Printf(TEXT("Logged In Successfuly!")));
 		m_pMainMenu->SetWidgetOnLoginComplete();
 		SetInitialPlayerDataForCloudStorage();
+		//QueryCategories();
+		RetrieveOffers();
+
 		if (!bIsLanGame)
 		{
 			SetPlayerName(IdentityPtr->GetPlayerNickname(UserId));
@@ -983,4 +988,87 @@ void ULab4GameInstance::OnReadUserFileCompleteDelegate(bool bWasSuccessfull, con
 		}
 	}
 	UserCloudPtr->ClearOnReadUserFileCompleteDelegates(this);
+}
+
+void ULab4GameInstance::RetrieveOffers()
+{
+	FUniqueNetIdPtr userUniqueId = IdentityPtr->GetUniquePlayerId(0);
+	if (!userUniqueId.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Error, while retrieving offers. UnserUniqueId is invalid"))
+		return;
+	}
+
+	FOnlineStoreFilter filter;
+
+	UserStoreInterface->QueryOffersByFilter(*userUniqueId, filter, FOnQueryOnlineStoreOffersComplete::CreateLambda([this](bool bWasSuccessfull, const TArray<FUniqueOfferId>& OfferIds, const FString& Error)
+	{
+		if (bWasSuccessfull)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Offers retrieved successfully"))
+			RetrieveOffersById(OfferIds);
+
+			return;
+		}
+		UE_LOG(LogTemp, Error, TEXT("Failed to retrieve offers: %s"), *Error);
+	}));
+}
+
+void ULab4GameInstance::RetrieveOffersById(const TArray<FUniqueOfferId>& OfferIds)
+{
+	FUniqueNetIdPtr userUniqueId = IdentityPtr->GetUniquePlayerId(0);
+	if (!userUniqueId.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Error, while querying offers by IDs. UnserUniqueId is invalid"))
+		return;
+	}
+
+	UserStoreInterface->QueryOffersById(*userUniqueId, OfferIds, FOnQueryOnlineStoreOffersComplete::CreateLambda([this](bool bWasSuccessful, const TArray<FUniqueOfferId>& OfferIds, const FString& Error)
+	{
+		FString ExcludeOfferId = FString(TEXT("03098188b46941b69160fe557939008f"));
+		if (bWasSuccessful)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Query offers by IDs succeded"))
+			UserStoreInterface->GetOffers(Offers);
+
+			for (const FOnlineStoreOfferRef& Offer : Offers)
+			{
+				if (Offer->OfferId == ExcludeOfferId) continue;
+				UE_LOG(LogTemp, Log, TEXT("Got offer: [ID=%s, Title=%s]"), *(Offer->OfferId), *(Offer->Title.ToString()))
+			}
+
+			return;
+		}
+		UE_LOG(LogTemp, Error, TEXT("Failed to retrieve offers by IDs: %s"), *Error);
+	}));
+}
+
+void ULab4GameInstance::StartPurchase()
+{
+	FUniqueNetIdPtr userUniqueId = IdentityPtr->GetUniquePlayerId(0);
+	if (!userUniqueId.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Error, while purchasing item. UnserUniqueId is invalid"))
+		return;
+	}
+
+	if (!UserPurchaseInterface.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("PurchaseInterface pointer is invalid"))
+		return;
+	}
+
+	FPurchaseCheckoutRequest checkoutRequest = {};
+	checkoutRequest.AddPurchaseOffer(TEXT("DedicatedMatchStart"), TEXT("9a9f52d765114c688ea1d4ca9daa6fec"), 1);
+
+	UserPurchaseInterface->Checkout(*userUniqueId, checkoutRequest, FOnPurchaseCheckoutComplete::CreateLambda([](const FOnlineError& Result, const TSharedRef<FPurchaseReceipt>& Receipt)
+	{
+		if (Result.WasSuccessful())
+		{
+			UE_LOG(LogTemp, Log, TEXT("Checkout completed successfully"))
+			return;
+		}
+
+		UE_LOG(LogTemp, Error, TEXT("Failed to complete checkout: %s"), *(Result.ErrorRaw));
+	}));
 }
