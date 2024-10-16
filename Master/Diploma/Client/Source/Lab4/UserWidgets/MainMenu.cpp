@@ -411,9 +411,22 @@ void UMainMenu::OnMatchmakingCreateButtonClicked()
 	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
 	if (gameInstance == nullptr) return;
 
-	gameInstance->CreateSocketConnection();
-	gameInstance->InitializeReceiveSocketThread();
-	gameInstance->SendMessageToHostSocket(FString::Printf(TEXT("CREATE")));
+	if (gameInstance->GetIfCanStartDedicated())
+	{
+		gameInstance->CreateSocketConnection();
+		gameInstance->InitializeReceiveSocketThread();
+		gameInstance->SendMessageToHostSocket(FString::Printf(TEXT("CREATE")));
+
+		return;
+	}
+	if (gameInstance->GetIsLanGame())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Purchase can be made in online mode only!"), true, FVector2D(2.f));
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Starting purchasing process from main menu"))
+	gameInstance->StartPurchase();
 }
 
 void UMainMenu::OnMatchmakingFindButtonClicked()
@@ -430,9 +443,10 @@ void UMainMenu::OnMatchmakingFindButtonClicked()
 
 void UMainMenu::OnMatchmakingBackButtonClicked()
 {
-	if (MenuSwitcher == nullptr || ModeSelect == nullptr) return;
+	if (MenuSwitcher == nullptr || MainMenu == nullptr) return;
+
 	SetFindingMatchStatusWidgetVisibility(false);
-	MenuSwitcher->SetActiveWidget(ModeSelect);
+	MenuSwitcher->SetActiveWidget(MainMenu);
 
 	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
 	if (!gameInstance) return;
@@ -539,4 +553,15 @@ void UMainMenu::UpdateChildren(uint32 NewIndexSelected)
 	{
 		pRow->bIsSelected = true;
 	}
+}
+
+void UMainMenu::SetMatchmakingHintTextVisibility(bool bIsVisible)
+{
+	if (MatchmakingCreateButtonHintText == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("MatchmakingCreateButtonHintTextPtr in invalid"))
+		return;
+	}
+	UE_LOG(LogTemp, Log, TEXT("Setting MatchmakingHintText visibility to false"))
+	MatchmakingCreateButtonHintText->SetVisibility(ESlateVisibility::Hidden);
 }

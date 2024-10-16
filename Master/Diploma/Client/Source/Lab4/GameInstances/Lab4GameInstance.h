@@ -125,6 +125,9 @@ public:
 
 	UFUNCTION(Exec)
 	void StartPurchase();
+	void QueryUserReceipts(bool bShouldFinalize);
+	void GetUserReceipts(FUniqueNetIdPtr userUniqueId, bool bShouldFinalize = false);
+	FORCEINLINE bool GetIfCanStartDedicated() const { return bCanStartDedicatedMatch; }
 
 private:
 	UFUNCTION()
@@ -134,7 +137,6 @@ private:
 	void SetInitialPlayerDataForCloudStorage();
 	void RetrieveOffers();
 	void RetrieveOffersById(const TArray<FUniqueOfferId>& OfferIds);
-	void QueryUserReceipts();
 	bool bShouldBePaused;
 	
 	static AMainMenuInitializer *m_pMainMenu;
@@ -197,6 +199,9 @@ private:
 	const FName SessionNameConst = "Session";
 	const FName RankedLeaderboardName = TEXT("PlayersFragsLeaderboard");
 	const FName RankedStatName = TEXT("PlayerFragsHighScore");
+	const FString OfferId = TEXT("9a9f52d765114c688ea1d4ca9daa6fec");
+	const FString OfferIdTest = TEXT("2c505f659c55438eab80355e90d749b4");
+
 	static const FString TravelGamePath;
 	FString TravelLobbyPath;
 	const FString TravelMainMenuPath = TEXT("/Game/MainMenu/MainMenuMap");
@@ -211,4 +216,5 @@ private:
 	FRunnableThread* ReceiveThread = nullptr;
 
 	TArray<FOnlineStoreOfferRef> Offers;
+	bool bCanStartDedicatedMatch;
 };

@@ -113,6 +113,7 @@ public:
 	void ClearRankedLeaderboardList();
 	void SetFindingMatchStatusWidgetVisibility(bool bIsVisible);
 	void SelectIndex(uint32 Index);
+	void SetMatchmakingHintTextVisibility(bool bIsVisible);
 
 protected:
 	virtual bool Initialize() override;
@@ -176,6 +177,9 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* MainMenuMatchmakingButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* MatchmakingCreateButtonHintText;
 
 	UPROPERTY(meta=(BindWidget))
 	UButton* LeaderboardBackButton;

@@ -151,6 +151,16 @@ void AMainMenuInitializer::SetFindingMatchStatusWidgetVisibility(bool bIsVisible
 	m_pMainMenu->SetFindingMatchStatusWidgetVisibility(bIsVisible);
 }
 
+void AMainMenuInitializer::SetMatchmakingHintTextVisibility(bool bIsVisible)
+{
+	if (!m_pMainMenu)
+	{
+		UE_LOG(LogTemp, Error, TEXT("MainMenuPtr is invalid"))
+		return;
+	}
+	m_pMainMenu->SetMatchmakingHintTextVisibility(bIsVisible);
+}
+
 TArray<FText> AMainMenuInitializer::GetCredentials()
 {
 	return m_pMainMenu->GetCredentials();

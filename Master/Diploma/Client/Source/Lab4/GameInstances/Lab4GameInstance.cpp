@@ -128,6 +128,7 @@ ULab4GameInstance::ULab4GameInstance()
 {
 	bWasLoggedIn = false;
 	bShouldBePaused = false;
+	bCanStartDedicatedMatch = false;
 	int32 serverPort;
 	FString serverAddress;
 
@@ -486,9 +487,9 @@ void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful,
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Green, FString::Printf(TEXT("Logged In Successfuly!")));
 		m_pMainMenu->SetWidgetOnLoginComplete();
-		SetInitialPlayerDataForCloudStorage();
-		//QueryCategories();
-		RetrieveOffers();
+		// SetInitialPlayerDataForCloudStorage();
+		RetrieveOffers(); 
+		QueryUserReceipts(false);
 
 		if (!bIsLanGame)
 		{
@@ -1060,13 +1061,13 @@ void ULab4GameInstance::StartPurchase()
 	}
 
 	FPurchaseCheckoutRequest checkoutRequest = {};
-	checkoutRequest.AddPurchaseOffer(TEXT("DedicatedMatchStart"), TEXT("9a9f52d765114c688ea1d4ca9daa6fec"), 1);
+	checkoutRequest.AddPurchaseOffer(TEXT("DedicatedMatchStart"), OfferId, 1);
 
-	UserPurchaseInterface->Checkout(*userUniqueId, checkoutRequest, FOnPurchaseCheckoutComplete::CreateLambda([this](const FOnlineError& Result, const TSharedRef<FPurchaseReceipt>& Receipt)
+	UserPurchaseInterface->Checkout(*userUniqueId, checkoutRequest, FOnPurchaseCheckoutComplete::CreateLambda([this, userUniqueId](const FOnlineError& Result, const TSharedRef<FPurchaseReceipt>& Receipt)
 	{
 		if (Result.bSucceeded)
 		{
-			QueryUserReceipts();
+			GetUserReceipts(userUniqueId, true);
 			return;
 		}
 
@@ -1074,7 +1075,7 @@ void ULab4GameInstance::StartPurchase()
 	}));
 }
 
-void ULab4GameInstance::QueryUserReceipts()
+void ULab4GameInstance::QueryUserReceipts(bool bShouldFinalize)
 {
 	FUniqueNetIdPtr userUniqueId = IdentityPtr->GetUniquePlayerId(0);
 	if (!userUniqueId.IsValid())
@@ -1089,53 +1090,73 @@ void ULab4GameInstance::QueryUserReceipts()
 		return;
 	}
 
-	UserPurchaseInterface->QueryReceipts(*userUniqueId, true, FOnQueryReceiptsComplete::CreateLambda([this, userUniqueId](const FOnlineError& Result)
+	UserPurchaseInterface->QueryReceipts(*userUniqueId, true, FOnQueryReceiptsComplete::CreateLambda([this, userUniqueId, bShouldFinalize](const FOnlineError& Result)
 	{
 		if (Result.bSucceeded)
 		{
 			UE_LOG(LogTemp, Log, TEXT("Successfully queried user receipts"))
-			TArray<FPurchaseReceipt> userReceipts;
+			GetUserReceipts(userUniqueId, bShouldFinalize);
 
-			UserPurchaseInterface->GetReceipts(*userUniqueId, userReceipts);
-			for (const FPurchaseReceipt& userReceipt : userReceipts)
-			{
-				UE_LOG(LogTemp, Log, TEXT("User receipt transaction Id: %s"), *(userReceipt.TransactionId))
-				if (userReceipt.TransactionState != EPurchaseTransactionState::Purchased)
-				{
-					UE_LOG(LogTemp, Error, TEXT("Transaction with ID: %s is not purchased yet"), *(userReceipt.TransactionId))
-					continue;
-				}
-
-				for (const FPurchaseReceipt::FReceiptOfferEntry& offerEntry : userReceipt.ReceiptOffers)
-				{
-					UE_LOG(LogTemp, Log, TEXT("OfferId: %s, quantity: %d"), *(offerEntry.OfferId), offerEntry.Quantity)
-					for (const FPurchaseReceipt::FLineItemInfo& offerLineItem : offerEntry.LineItems)
-					{
-						UE_LOG(LogTemp, Log, TEXT("OfferLineItem name: %s"), *(offerLineItem.ItemName))
-						FString InReceiptValidationInfo = offerLineItem.ValidationInfo;
-
-						if (InReceiptValidationInfo.IsEmpty())
-						{
-							UE_LOG(LogTemp, Log, TEXT("OfferLineItem name has empty validation info: %s. Skip finalizing"))
-							continue;
-						}
-
-						UserPurchaseInterface->FinalizeReceiptValidationInfo(*userUniqueId, InReceiptValidationInfo, FOnFinalizeReceiptValidationInfoComplete::CreateLambda([userReceipt, offerEntry](const FOnlineError& Result, const FString& ValidationInfo)
-						{
-							if (Result.bSucceeded)
-							{
-								UE_LOG(LogTemp, Log, TEXT("Successfully finilized purchase: TransactionId: %s, OfferId: %s"), *(userReceipt.TransactionId), *(offerEntry.OfferId))
-								return;
-							}
-
-							UE_LOG(LogTemp, Error, TEXT("Error, while finalizing purchase: %s"), *(Result.ErrorRaw))
-						}));
-					}
-				}
-			}
 			return;
 		}
 
 		UE_LOG(LogTemp, Error, TEXT("Error, while querying user receipts: %s"), *(Result.ErrorRaw))
 	}));
+}
+
+void ULab4GameInstance::GetUserReceipts(FUniqueNetIdPtr userUniqueId, bool bShouldFinalize)
+{
+	TArray<FPurchaseReceipt> userReceipts;
+	UserPurchaseInterface->GetReceipts(*userUniqueId, userReceipts);
+
+	for (const FPurchaseReceipt& userReceipt : userReceipts)
+	{
+		UE_LOG(LogTemp, Log, TEXT("User receipt transaction Id: %s"), *(userReceipt.TransactionId))
+		if (userReceipt.TransactionState != EPurchaseTransactionState::Purchased)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Transaction with ID: %s is not purchased yet"), *(userReceipt.TransactionId))
+			continue;
+		}
+
+		for (const FPurchaseReceipt::FReceiptOfferEntry& offerEntry : userReceipt.ReceiptOffers)
+		{
+			UE_LOG(LogTemp, Log, TEXT("OfferId: %s, quantity: %d"), *(offerEntry.OfferId), offerEntry.Quantity)
+
+			if (!bCanStartDedicatedMatch && offerEntry.OfferId == OfferIdTest)
+			{
+				bCanStartDedicatedMatch = true;
+				UE_LOG(LogTemp, Log, TEXT("OfferId %s has been found. Set bCanStartDedicatedMatch = true"), *OfferId)
+			}
+			if (!bShouldFinalize) continue;
+
+			// Finalizing purchased transations
+			for (const FPurchaseReceipt::FLineItemInfo& offerLineItem : offerEntry.LineItems)
+			{
+				UE_LOG(LogTemp, Log, TEXT("OfferLineItem name: %s"), *(offerLineItem.ItemName))
+				FString InReceiptValidationInfo = offerLineItem.ValidationInfo;
+
+				if (InReceiptValidationInfo.IsEmpty())
+				{
+					UE_LOG(LogTemp, Log, TEXT("OfferLineItem name has empty validation info: %s. Skip finalizing"))
+					continue;
+				}
+
+				UserPurchaseInterface->FinalizeReceiptValidationInfo(*userUniqueId, InReceiptValidationInfo, FOnFinalizeReceiptValidationInfoComplete::CreateLambda([userReceipt, offerEntry](const FOnlineError& Result, const FString& ValidationInfo)
+				{
+					if (Result.bSucceeded)
+					{
+						UE_LOG(LogTemp, Log, TEXT("Successfully finilized purchase: TransactionId: %s, OfferId: %s"), *(userReceipt.TransactionId), *(offerEntry.OfferId))
+						return;
+					}
+
+					UE_LOG(LogTemp, Error, TEXT("Error, while finalizing purchase: %s"), *(Result.ErrorRaw))
+				}));
+			}
+		}
+	}
+
+	if (bCanStartDedicatedMatch)
+	{
+		m_pMainMenu->SetMatchmakingHintTextVisibility(false);
+	}
 }
