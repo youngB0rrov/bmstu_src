@@ -5,6 +5,7 @@
 #include "OnlineSubsystem.h"
 #include "Engine/GameInstance.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "Interfaces/OnlineEntitlementsInterface.h"
 #include "Interfaces/OnlinePurchaseInterface.h"
 #include "Interfaces/OnlineStoreInterfaceV2.h"
 #include "Lab4/UserWidgets/PlayerHealthBar.h"
@@ -133,6 +134,7 @@ private:
 	void SetInitialPlayerDataForCloudStorage();
 	void RetrieveOffers();
 	void RetrieveOffersById(const TArray<FUniqueOfferId>& OfferIds);
+	void QueryUserReceipts();
 	bool bShouldBePaused;
 	
 	static AMainMenuInitializer *m_pMainMenu;

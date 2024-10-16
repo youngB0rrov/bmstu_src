@@ -20,6 +20,7 @@
 #include "Interfaces/OnlineLeaderboardInterface.h"
 #include "Interfaces/OnlineStatsInterface.h"
 #include "Interfaces/OnlineUserCloudInterface.h"
+#include "Interfaces/OnlineEntitlementsInterface.h"
 #include "Lab4/UserWidgets/GameOverMenu.h"
 #include "Lab4/UserWidgets/LobbyHostWidget.h"
 #include "Lab4/UserWidgets/PlayerTableRow.h"
@@ -1061,14 +1062,80 @@ void ULab4GameInstance::StartPurchase()
 	FPurchaseCheckoutRequest checkoutRequest = {};
 	checkoutRequest.AddPurchaseOffer(TEXT("DedicatedMatchStart"), TEXT("9a9f52d765114c688ea1d4ca9daa6fec"), 1);
 
-	UserPurchaseInterface->Checkout(*userUniqueId, checkoutRequest, FOnPurchaseCheckoutComplete::CreateLambda([](const FOnlineError& Result, const TSharedRef<FPurchaseReceipt>& Receipt)
+	UserPurchaseInterface->Checkout(*userUniqueId, checkoutRequest, FOnPurchaseCheckoutComplete::CreateLambda([this](const FOnlineError& Result, const TSharedRef<FPurchaseReceipt>& Receipt)
 	{
-		if (Result.WasSuccessful())
+		if (Result.bSucceeded)
 		{
-			UE_LOG(LogTemp, Log, TEXT("Checkout completed successfully"))
+			QueryUserReceipts();
 			return;
 		}
 
 		UE_LOG(LogTemp, Error, TEXT("Failed to complete checkout: %s"), *(Result.ErrorRaw));
+	}));
+}
+
+void ULab4GameInstance::QueryUserReceipts()
+{
+	FUniqueNetIdPtr userUniqueId = IdentityPtr->GetUniquePlayerId(0);
+	if (!userUniqueId.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Error, while querying user entitlements. UnserUniqueId is invalid"))
+		return;
+	}
+
+	if (!UserPurchaseInterface.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("PurchaseInterface pointer is invalid"))
+		return;
+	}
+
+	UserPurchaseInterface->QueryReceipts(*userUniqueId, true, FOnQueryReceiptsComplete::CreateLambda([this, userUniqueId](const FOnlineError& Result)
+	{
+		if (Result.bSucceeded)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Successfully queried user receipts"))
+			TArray<FPurchaseReceipt> userReceipts;
+
+			UserPurchaseInterface->GetReceipts(*userUniqueId, userReceipts);
+			for (const FPurchaseReceipt& userReceipt : userReceipts)
+			{
+				UE_LOG(LogTemp, Log, TEXT("User receipt transaction Id: %s"), *(userReceipt.TransactionId))
+				if (userReceipt.TransactionState != EPurchaseTransactionState::Purchased)
+				{
+					UE_LOG(LogTemp, Error, TEXT("Transaction with ID: %s is not purchased yet"), *(userReceipt.TransactionId))
+					continue;
+				}
+
+				for (const FPurchaseReceipt::FReceiptOfferEntry& offerEntry : userReceipt.ReceiptOffers)
+				{
+					UE_LOG(LogTemp, Log, TEXT("OfferId: %s, quantity: %d"), *(offerEntry.OfferId), offerEntry.Quantity)
+					for (const FPurchaseReceipt::FLineItemInfo& offerLineItem : offerEntry.LineItems)
+					{
+						UE_LOG(LogTemp, Log, TEXT("OfferLineItem name: %s"), *(offerLineItem.ItemName))
+						FString InReceiptValidationInfo = offerLineItem.ValidationInfo;
+
+						if (InReceiptValidationInfo.IsEmpty())
+						{
+							UE_LOG(LogTemp, Log, TEXT("OfferLineItem name has empty validation info: %s. Skip finalizing"))
+							continue;
+						}
+
+						UserPurchaseInterface->FinalizeReceiptValidationInfo(*userUniqueId, InReceiptValidationInfo, FOnFinalizeReceiptValidationInfoComplete::CreateLambda([userReceipt, offerEntry](const FOnlineError& Result, const FString& ValidationInfo)
+						{
+							if (Result.bSucceeded)
+							{
+								UE_LOG(LogTemp, Log, TEXT("Successfully finilized purchase: TransactionId: %s, OfferId: %s"), *(userReceipt.TransactionId), *(offerEntry.OfferId))
+								return;
+							}
+
+							UE_LOG(LogTemp, Error, TEXT("Error, while finalizing purchase: %s"), *(Result.ErrorRaw))
+						}));
+					}
+				}
+			}
+			return;
+		}
+
+		UE_LOG(LogTemp, Error, TEXT("Error, while querying user receipts: %s"), *(Result.ErrorRaw))
 	}));
 }
