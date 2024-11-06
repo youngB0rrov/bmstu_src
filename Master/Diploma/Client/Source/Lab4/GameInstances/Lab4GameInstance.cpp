@@ -30,6 +30,10 @@
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 #include "Serialization/JsonReader.h"
+#include "Misc/Guid.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "HAL/PlatformFilemanager.h"
 
 #define EOS_ID_SEPARATOR TEXT("|")
 #define WITH_SDK 0
@@ -93,6 +97,11 @@ void ULab4GameInstance::Init()
 	}
 	UserCloudPtr->OnWriteUserFileCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnWriteUserFileCompleteDelegate);
 	UserCloudPtr->OnReadUserFileCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnReadUserFileCompleteDelegate);
+
+	if (!CheckIfGuidExists())
+	{
+		GenerateGuidAndSave();
+	}
 }
 
 void ULab4GameInstance::Shutdown()
@@ -1125,6 +1134,7 @@ void ULab4GameInstance::GetUserReceipts(FUniqueNetIdPtr userUniqueId, bool bShou
 			if (!bCanStartDedicatedMatch && offerEntry.OfferId == OfferIdAudience)
 			{
 				bCanStartDedicatedMatch = true;
+				SavePurchaseToFile(offerEntry.OfferId);
 				UE_LOG(LogTemp, Log, TEXT("OfferId %s has been found. Set bCanStartDedicatedMatch = true"), *OfferId)
 			}
 			if (!bShouldFinalize) continue;
@@ -1159,4 +1169,128 @@ void ULab4GameInstance::GetUserReceipts(FUniqueNetIdPtr userUniqueId, bool bShou
 	{
 		m_pMainMenu->SetMatchmakingHintTextVisibility(false);
 	}
+}
+
+void ULab4GameInstance::GenerateGuidAndSave()
+{
+	FString appGuidString = FGuid::NewGuid().ToString();
+	UE_LOG(LogTemp, Log, TEXT("Generated app GUID"))
+
+	SaveBase64EncodedData(appGuidString, FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("AppData"), TEXT("AppGUID.dat")));
+}
+
+void ULab4GameInstance::SaveBase64EncodedData(const FString& Data, const FString& FilePath)
+{
+	FString encodedData = FBase64::Encode(Data);
+	FString filePath = FilePath;
+
+	FFileHelper::SaveStringToFile(encodedData, *filePath);
+	UE_LOG(LogTemp, Log, TEXT("Saved encoded GUID to directory"))
+}
+
+FString ULab4GameInstance::LoadBase64EncodedData(const FString& FilePath)
+{
+	FString encodedData;
+	FString filePath = FilePath;
+
+	if (FFileHelper::LoadFileToString(encodedData, *filePath))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Successfully read data from file: %s"), *filePath)
+
+		FString decodedData;
+		FBase64::Decode(encodedData, decodedData);
+		return decodedData;
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("Data not found in file: %s"), *filePath)
+	return TEXT("");
+}
+
+bool ULab4GameInstance::CheckIfGuidExists()
+{
+	FString filePath = FPaths::ProjectSavedDir() + TEXT("AppData/AppGUID.dat");
+
+	return FPlatformFileManager::Get().GetPlatformFile().FileExists(*filePath);
+}
+
+void ULab4GameInstance::SavePurchaseToFile(const FString& PurchaseOfferId)
+{
+	if (!CheckIfGuidExists())
+	{
+		UE_LOG(LogTemp, Error, TEXT("App GUID not found"))
+		return;
+	}
+
+	FString playerLogin = GetPlayerName();
+	FString offerIdHash = GetSHA256Hash(PurchaseOfferId);
+	FString appGuid = LoadBase64EncodedData(FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("AppData"), TEXT("AppGUID.dat")));
+	FString fileName = offerIdHash + TEXT("_") + playerLogin + TEXT(".dat");
+	FString filePath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Purchases"), fileName);
+
+	if (FPlatformFileManager::Get().GetPlatformFile().FileExists(*filePath))
+	{
+		UE_LOG(LogTemp, Log, TEXT("Offer with ID: %s already exists, hash: %s. Cancel saving data..."), *PurchaseOfferId, *offerIdHash);
+		return;
+	}
+
+	FString fileContent = FString::Printf(TEXT("AppGUID=%s\nOfferId=%s"), *appGuid, *PurchaseOfferId);
+	SaveBase64EncodedData(fileContent, filePath);
+	UE_LOG(LogTemp, Log, TEXT("Saved information about offer: [OfferId=%s, UserLogin=%s]]"), *PurchaseOfferId, *playerLogin);
+}
+
+bool ULab4GameInstance::CheckIfOfferAcquired()
+{
+	FString directoryPath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Purchases"));
+	IPlatformFile& platformFile = FPlatformFileManager::Get().GetPlatformFile();
+	FString appGuid = LoadBase64EncodedData(FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("AppData"), TEXT("AppGUID.dat")));
+	FString playerLogin = TEXT("YOUNG_BORROW");
+	TArray<FString> files;
+
+	if (!platformFile.DirectoryExists(*directoryPath))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Purchases directory does not exist. Access forbidden"))
+		return false;
+	}
+
+	platformFile.FindFiles(files, *directoryPath, TEXT(""));
+	if (files.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Purchases directory does not exist. Access forbidden"))
+		return false;
+	}
+
+	for (const FString& filePath : files)
+	{
+		FString fileContent = LoadBase64EncodedData(filePath);
+		if (fileContent.IsEmpty())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("fileContent is empty for filePath: %s"), *filePath);
+			continue;
+		}
+
+		FString fileAppGuid, fileOfferId;
+		FParse::Value(*fileContent, TEXT("AppGUID="), fileAppGuid);
+		FParse::Value(*fileContent, TEXT("OfferId"), fileOfferId);
+
+		if (appGuid != fileAppGuid)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("FileAppGuid: %s and apdGuid: %s are not equal. Access to offer is forbidden"))
+			continue;
+		}
+
+		fileOfferId = fileOfferId.Replace(TEXT("\n"), TEXT("")).Replace(TEXT("="), TEXT("")).TrimStartAndEnd();
+		if (fileOfferId == OfferIdAudience)
+		{
+			UE_LOG(LogTemp, Log, TEXT("Found valid purchase for starting dedicated matches"))
+			return true;
+		}
+	}
+	return false;
+}
+
+FString ULab4GameInstance::GetSHA256Hash(const FString& Data)
+{
+	FSHAHash hash;
+	FSHA1::HashBuffer(TCHAR_TO_UTF8(*Data), Data.Len(), hash.Hash);
+	return hash.ToString();
 }

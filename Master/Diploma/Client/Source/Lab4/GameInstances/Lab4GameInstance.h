@@ -128,6 +128,7 @@ public:
 	void QueryUserReceipts(bool bShouldFinalize);
 	void GetUserReceipts(FUniqueNetIdPtr userUniqueId, bool bShouldFinalize = false);
 	FORCEINLINE bool GetIfCanStartDedicated() const { return bCanStartDedicatedMatch; }
+	bool CheckIfOfferAcquired();
 
 private:
 	UFUNCTION()
@@ -137,6 +138,12 @@ private:
 	void SetInitialPlayerDataForCloudStorage();
 	void RetrieveOffers();
 	void RetrieveOffersById(const TArray<FUniqueOfferId>& OfferIds);
+	void GenerateGuidAndSave();
+	void SaveBase64EncodedData(const FString& Data, const FString& FilePath);
+	FString LoadBase64EncodedData(const FString& FilePath);
+	bool CheckIfGuidExists();
+	void SavePurchaseToFile(const FString& PurchaseOfferId);
+	FString GetSHA256Hash(const FString& Data);
 	bool bShouldBePaused;
 	
 	static AMainMenuInitializer *m_pMainMenu;

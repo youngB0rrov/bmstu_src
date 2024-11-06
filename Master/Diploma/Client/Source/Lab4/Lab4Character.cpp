@@ -217,10 +217,8 @@ void ALab4Character::PollInit()
 				m_PlayerName = GameInstance->GetPlayerName();
 				AddPlayerNameOnServer(m_PlayerName);
 			}
-			
 			if ((HasAuthority() && IsLocallyControlled()) || (GetLocalRole() == ROLE_AutonomousProxy))
 			{
-
 				Lab4PlayerState->AddToScore(0);
 			}
 		}

@@ -421,6 +421,16 @@ void UMainMenu::OnMatchmakingCreateButtonClicked()
 	}
 	if (gameInstance->GetIsLanGame())
 	{
+		if (gameInstance->CheckIfOfferAcquired())
+		{
+			SetMatchmakingHintTextVisibility(false);
+			gameInstance->CreateSocketConnection();
+			gameInstance->InitializeReceiveSocketThread();
+			gameInstance->SendMessageToHostSocket(FString::Printf(TEXT("CREATE")));
+
+			return;
+		}
+
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Purchase can be made in online mode only!"), true, FVector2D(2.f));
 		return;
 	}

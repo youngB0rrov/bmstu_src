@@ -15,6 +15,22 @@ public class Lab4 : ModuleRules
 		
 		// Uncomment if you are using online features
 		PrivateDependencyModuleNames.Add("OnlineSubsystem");
-		
+
+		//string OpenSSLPath = Path.Combine(ModuleDirectory, "..", "..", "ThirdParty", "OpenSSL");
+		//PublicIncludePaths.Add(Path.Combine(OpenSSLPath, "include"));
+
+		//if (Target.Platform == UnrealTargetPlatform.Win64)
+		//{
+		//	if (Target.Configuration == UnrealTargetConfiguration.Debug)
+		//	{
+		//		PublicAdditionalLibraries.Add(Path.Combine(OpenSSLPath, "lib/VC/x64/MDd", "libssl.lib"));
+		//		PublicAdditionalLibraries.Add(Path.Combine(OpenSSLPath, "lib/VC/x64/MDd", "libcrypto.lib"));
+		//	}
+		//	else
+		//	{
+		//		PublicAdditionalLibraries.Add(Path.Combine(OpenSSLPath, "lib/VC/x64/MD", "libssl.lib"));
+		//		PublicAdditionalLibraries.Add(Path.Combine(OpenSSLPath, "lib/VC/x64/MD", "libcrypto.lib"));
+		//	}
+		//}
 	}
 }
