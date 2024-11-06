@@ -200,7 +200,7 @@ private:
 	const FName RankedLeaderboardName = TEXT("PlayersFragsLeaderboard");
 	const FName RankedStatName = TEXT("PlayerFragsHighScore");
 	const FString OfferId = TEXT("9a9f52d765114c688ea1d4ca9daa6fec");
-	const FString OfferIdTest = TEXT("2c505f659c55438eab80355e90d749b4");
+	const FString OfferIdAudience = TEXT("2c505f659c55438eab80355e90d749b4");
 
 	static const FString TravelGamePath;
 	FString TravelLobbyPath;

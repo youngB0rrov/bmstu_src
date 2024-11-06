@@ -1122,7 +1122,7 @@ void ULab4GameInstance::GetUserReceipts(FUniqueNetIdPtr userUniqueId, bool bShou
 		{
 			UE_LOG(LogTemp, Log, TEXT("OfferId: %s, quantity: %d"), *(offerEntry.OfferId), offerEntry.Quantity)
 
-			if (!bCanStartDedicatedMatch && offerEntry.OfferId == OfferIdTest)
+			if (!bCanStartDedicatedMatch && offerEntry.OfferId == OfferIdAudience)
 			{
 				bCanStartDedicatedMatch = true;
 				UE_LOG(LogTemp, Log, TEXT("OfferId %s has been found. Set bCanStartDedicatedMatch = true"), *OfferId)
