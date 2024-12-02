@@ -7,6 +7,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Lab4/Actors/MainMenuInitializer.h"
 #include "Lab4/GameInstances/Lab4GameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
 #define WITH_SDK 0
 
@@ -60,6 +61,8 @@ bool UMainMenu::Initialize()
 	MatchmakingBackButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingBackButtonClicked);
 
 	StatusSizeBox->SetVisibility(ESlateVisibility::Hidden);
+	MainMenuMatchmakingButton->SetIsEnabled(false);
+	LeaderboardsButton->SetIsEnabled(false);
 	return true;
 }
 
@@ -111,10 +114,25 @@ void UMainMenu::SetPlayerName(const FString& Name) const
 
 void UMainMenu::OnClickedCreate()
 {
-	m_bIsCreateGame = true;
-	MenuSwitcher->SetActiveWidget(SessionNameMenu);
+	UE_LOG(LogTemp, Warning, TEXT("Create match button clicked"))
+	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
+	if (gameInstance == nullptr) return;
 
-	m_pMainMenu->OnWidgetToCreate();
+	if (gameInstance->GetIfCanStartDedicated())
+	{
+		m_bIsCreateGame = true;
+		MenuSwitcher->SetActiveWidget(SessionNameMenu);
+		m_pMainMenu->OnWidgetToCreate();
+		return;
+	}
+	if (gameInstance->GetIsLanGame() && !gameInstance->GetIfCanStartDedicated())
+	{
+		gameInstance->MatchmakingInputWidget->AddToViewport();
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Starting purchasing process from main menu"))
+	gameInstance->StartPurchase();
 }
 
 void UMainMenu::OnClickedJoin()
@@ -419,24 +437,15 @@ void UMainMenu::OnMatchmakingCreateButtonClicked()
 
 		return;
 	}
-	if (gameInstance->GetIsLanGame())
+	if (!gameInstance->GetIsLanGame() && !gameInstance->GetIfCanStartDedicated())
 	{
-		if (gameInstance->CheckIfOfferAcquired())
-		{
-			SetMatchmakingHintTextVisibility(false);
-			gameInstance->CreateSocketConnection();
-			gameInstance->InitializeReceiveSocketThread();
-			gameInstance->SendMessageToHostSocket(FString::Printf(TEXT("CREATE")));
+		UE_LOG(LogTemp, Log, TEXT("Starting purchasing process from main menu"))
+		gameInstance->StartPurchase();
 
-			return;
-		}
-
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Purchase can be made in online mode only!"), true, FVector2D(2.f));
 		return;
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("Starting purchasing process from main menu"))
-	gameInstance->StartPurchase();
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("Matchmaking is available in online mode only"));
 }
 
 void UMainMenu::OnMatchmakingFindButtonClicked()
@@ -574,4 +583,48 @@ void UMainMenu::SetMatchmakingHintTextVisibility(bool bIsVisible)
 	}
 	UE_LOG(LogTemp, Log, TEXT("Setting MatchmakingHintText visibility to false"))
 	MatchmakingCreateButtonHintText->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UMainMenu::SetCreateGameHintTextVisibility(bool bIsVisible)
+{
+	if (CreateGameHintText == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("MatchmakingCreateButtonHintTextPtr in invalid"))
+		return;
+	}
+	CreateGameHintText->SetVisibility(ESlateVisibility::Hidden);
+}
+
+void UMainMenu::HandleMatchmakingStatusAndConnect()
+{
+	SetMatchmakingStatusText("Connecting...");
+	
+	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
+	if (!gameInstance) return;
+
+	APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	FString connectionString = gameInstance->GetConnectionAddress();
+	playerController->ClientTravel(connectionString, ETravelType::TRAVEL_Absolute);
+}
+
+void UMainMenu::ShowOnlineOnlyButtons()
+{
+	if (MainMenuMatchmakingButton == nullptr) return;
+	if (LeaderboardsButton == nullptr) return;
+
+	LeaderboardsButton->SetIsEnabled(true);
+	MainMenuMatchmakingButton->SetIsEnabled(true);
+}
+
+void UMainMenu::GiveAccessToCreateMatchSection()
+{
+	m_bIsCreateGame = true;
+	MenuSwitcher->SetActiveWidget(SessionNameMenu);
+	m_pMainMenu->OnWidgetToCreate();
+}
+
+void UMainMenu::SetMatchmakingStatusText(const FString& StatusText)
+{
+	if (MatchmakingStatusText == nullptr) return;
+	MatchmakingStatusText->SetText(FText::FromString(StatusText));
 }

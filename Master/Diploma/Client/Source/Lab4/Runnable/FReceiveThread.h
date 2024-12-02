@@ -47,10 +47,10 @@ public:
 				GEngine->AddOnScreenDebugMessage(-1, 10.f, FColor::Green, FString::Printf(TEXT("Received data from host: %s"), *receivedStringData));
 				
 				GameInstance->SetConnectAddress(receivedStringData);
-				UMatchmakingConnectWidget* matchmakingConnectWidget = GameInstance->MatchMakingConnectWidget;
-				AsyncTask(ENamedThreads::GameThread, [matchmakingConnectWidget]()
+				AMainMenuInitializer* mainMenu = GameInstance->GetMainMenuPtr();
+				AsyncTask(ENamedThreads::GameThread, [mainMenu]()
 				{
-					matchmakingConnectWidget->AddToViewport();
+					mainMenu->SetMatchmakingStatusAndConnect();
 				});
 			}
 			FPlatformProcess::Sleep(0.01f);

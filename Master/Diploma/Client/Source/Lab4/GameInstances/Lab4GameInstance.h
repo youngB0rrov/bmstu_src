@@ -8,6 +8,7 @@
 #include "Interfaces/OnlineEntitlementsInterface.h"
 #include "Interfaces/OnlinePurchaseInterface.h"
 #include "Interfaces/OnlineStoreInterfaceV2.h"
+#include "Lab4/UserWidgets/MatchmakingInputWidget.h"
 #include "Lab4/UserWidgets/PlayerHealthBar.h"
 #include "eos_types.h"
 #include "eos_auth_types.h"
@@ -74,6 +75,9 @@ public:
 
 	UPROPERTY()
 	class UMatchmakingConnectWidget* MatchMakingConnectWidget;
+
+	UPROPERTY()
+	UMatchmakingInputWidget* MatchmakingInputWidget;
 	
 	void LogIn();
 	void InitializeSDKCredentials();
@@ -129,6 +133,10 @@ public:
 	void GetUserReceipts(FUniqueNetIdPtr userUniqueId, bool bShouldFinalize = false);
 	FORCEINLINE bool GetIfCanStartDedicated() const { return bCanStartDedicatedMatch; }
 	bool CheckIfOfferAcquired();
+	void SetMatchmakingHintTextVisibility(bool bIsVisible);
+	void SetCreateGameHintTextVisibility(bool bIsVisible);
+	FORCEINLINE static AMainMenuInitializer* GetMainMenuPtr() { return m_pMainMenu; }
+	void GiveAccessToCreateMatchSection();
 
 private:
 	UFUNCTION()
@@ -201,7 +209,8 @@ private:
 	TSubclassOf<UUserWidget> BPLobbyHostButtonClass;
 	TSubclassOf<UUserWidget> BPLoadingWidgetClass;
 	TSubclassOf<UUserWidget> BPMatchmakingConnectWidgetClass;
-	
+	TSubclassOf<UUserWidget> BPMatchmakingInputWidgetClass;
+
 	const FName ServerNameKey = "ServerName";
 	const FName SessionNameConst = "Session";
 	const FName RankedLeaderboardName = TEXT("PlayersFragsLeaderboard");

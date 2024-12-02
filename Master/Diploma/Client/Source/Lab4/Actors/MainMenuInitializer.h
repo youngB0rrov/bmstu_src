@@ -24,6 +24,10 @@ public:
 	void ClearRankedLeaderboardList();
 	void SetFindingMatchStatusWidgetVisibility(bool bIsVisible);
 	void SetMatchmakingHintTextVisibility(bool bIsVisible);
+	void SetCreateGameHintTextVisibility(bool bIsVisible);
+	void SetMatchmakingStatusAndConnect();
+	void ShowOnlineOnlyButtons();
+	void GiveAccessToCreateMatchSection();
 	TArray<FText> GetCredentials();
 	void OnUpdaterTimerRunOut() const;
 	void PollInit();

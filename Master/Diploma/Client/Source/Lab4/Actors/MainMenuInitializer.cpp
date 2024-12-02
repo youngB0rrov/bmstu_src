@@ -161,6 +161,16 @@ void AMainMenuInitializer::SetMatchmakingHintTextVisibility(bool bIsVisible)
 	m_pMainMenu->SetMatchmakingHintTextVisibility(bIsVisible);
 }
 
+void AMainMenuInitializer::SetCreateGameHintTextVisibility(bool bIsVisible)
+{
+	if (!m_pMainMenu)
+	{
+		UE_LOG(LogTemp, Error, TEXT("MainMenuPtr is invalid"))
+		return;
+	}
+	m_pMainMenu->SetCreateGameHintTextVisibility(bIsVisible);
+}
+
 TArray<FText> AMainMenuInitializer::GetCredentials()
 {
 	return m_pMainMenu->GetCredentials();
@@ -192,4 +202,34 @@ void AMainMenuInitializer::TeardownAll() const
 {
 	m_pMainMenu->Teardown();
 	m_pServersListUpdater->StopTimer();
+}
+
+void AMainMenuInitializer::SetMatchmakingStatusAndConnect()
+{
+	if (m_pMainMenu == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Faild to connect to dedicated server, m_pMainMenu ptr is nullptr"))
+		return;
+	}
+	m_pMainMenu->HandleMatchmakingStatusAndConnect();
+}
+
+void AMainMenuInitializer::ShowOnlineOnlyButtons()
+{
+	if (m_pMainMenu == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Faild to enable Matchmaking and leaderboards buttons, m_pMainMenu ptr is nullptr"))
+		return;
+	}
+	m_pMainMenu->ShowOnlineOnlyButtons();
+}
+
+void AMainMenuInitializer::GiveAccessToCreateMatchSection()
+{
+	if (m_pMainMenu == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Faild to get to create match section, m_pMainMenu ptr is nullptr"))
+		return;
+	}
+	m_pMainMenu->GiveAccessToCreateMatchSection();
 }

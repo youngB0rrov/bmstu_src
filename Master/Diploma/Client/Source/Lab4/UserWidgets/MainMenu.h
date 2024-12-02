@@ -2,8 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "PlayerTableRow.h"
-#include "RankedLeaderboardRow.h"
 #include "Blueprint/UserWidget.h"
+#include "RankedLeaderboardRow.h"
 #include "Components/EditableText.h"
 #include "Components/SizeBox.h"
 #include "MainMenu.generated.h"
@@ -114,12 +114,17 @@ public:
 	void SetFindingMatchStatusWidgetVisibility(bool bIsVisible);
 	void SelectIndex(uint32 Index);
 	void SetMatchmakingHintTextVisibility(bool bIsVisible);
+	void SetCreateGameHintTextVisibility(bool bIsVisible);
+	void HandleMatchmakingStatusAndConnect();
+	void ShowOnlineOnlyButtons();
+	void GiveAccessToCreateMatchSection();
 
 protected:
 	virtual bool Initialize() override;
 	
 private:
 	void UpdateChildren(uint32 NewIndexSelected);
+	void SetMatchmakingStatusText(const FString& StatusText);
 	
 	UPROPERTY(meta=(BindWidget))
 	class UButton *CreateGameButton;
@@ -180,6 +185,12 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MatchmakingCreateButtonHintText;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* CreateGameHintText;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* MatchmakingStatusText;
 
 	UPROPERTY(meta=(BindWidget))
 	UButton* LeaderboardBackButton;

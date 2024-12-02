@@ -26,6 +26,7 @@
 #include "Lab4/UserWidgets/PlayerTableRow.h"
 #include "Lab4/UserWidgets/RankedLeaderboardRow.h"
 #include "Lab4/UserWidgets/MatchmakingConnectWidget.h"
+#include "Lab4/UserWidgets/MatchmakingInputWidget.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -88,6 +89,10 @@ void ULab4GameInstance::Init()
 	if (BPMatchmakingConnectWidgetClass)
 	{
 		MatchMakingConnectWidget = CreateWidget<UMatchmakingConnectWidget>(this, BPMatchmakingConnectWidgetClass);
+	}
+	if (BPMatchmakingInputWidgetClass)
+	{
+		MatchmakingInputWidget = CreateWidget<UMatchmakingInputWidget>(this, BPMatchmakingInputWidgetClass);
 	}
 
 	if (!UserCloudPtr.IsValid())
@@ -156,21 +161,18 @@ ULab4GameInstance::ULab4GameInstance()
 	}
 
 	static ConstructorHelpers::FClassFinder<UUserWidget> BPHealthBar(TEXT("/Game/GameUI/WBP_HealthBar"));
-
 	if (BPHealthBar.Succeeded())
 	{
 		BPHealthBarClass = BPHealthBar.Class;
 	}
 
 	static ConstructorHelpers::FClassFinder<UUserWidget> BPRankedLeaderboardRow(TEXT("/Game/MainMenu/WBP_RankedPlayerRow"));
-
 	if (BPRankedLeaderboardRow.Succeeded())
 	{
 		BPRankedLeaderboardRowClass = BPRankedLeaderboardRow.Class;
 	}
 	
 	static ConstructorHelpers::FClassFinder<UUserWidget> BPWinnerWidgetClassFinder(TEXT("/Game/MainMenu/WBP_WinnerWidget"));
-
 	if (BPWinnerWidgetClassFinder.Succeeded())
 	{
 		BPWinnerWidgetClass = BPWinnerWidgetClassFinder.Class;
@@ -192,6 +194,12 @@ ULab4GameInstance::ULab4GameInstance()
 	if (BPMatchmakingConnectWidgetFinder.Succeeded())
 	{
 		BPMatchmakingConnectWidgetClass = BPMatchmakingConnectWidgetFinder.Class;
+	}
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> BPMatchmakingInputWidgetFinder(TEXT("/Game/MainMenu/WBP_MatchmakingInput"));
+	if (BPMatchmakingInputWidgetFinder.Succeeded())
+	{
+		BPMatchmakingInputWidgetClass = BPMatchmakingInputWidgetFinder.Class;
 	}
 }
 
@@ -495,6 +503,7 @@ void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful,
 	if (bWasSuccessful)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Green, FString::Printf(TEXT("Logged In Successfuly!")));
+		m_pMainMenu->ShowOnlineOnlyButtons();
 		m_pMainMenu->SetWidgetOnLoginComplete();
 		// SetInitialPlayerDataForCloudStorage();
 		RetrieveOffers(); 
@@ -1168,6 +1177,7 @@ void ULab4GameInstance::GetUserReceipts(FUniqueNetIdPtr userUniqueId, bool bShou
 	if (bCanStartDedicatedMatch)
 	{
 		m_pMainMenu->SetMatchmakingHintTextVisibility(false);
+		m_pMainMenu->SetCreateGameHintTextVisibility(false);
 	}
 }
 
@@ -1243,7 +1253,7 @@ bool ULab4GameInstance::CheckIfOfferAcquired()
 	FString directoryPath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Purchases"));
 	IPlatformFile& platformFile = FPlatformFileManager::Get().GetPlatformFile();
 	FString appGuid = LoadBase64EncodedData(FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("AppData"), TEXT("AppGUID.dat")));
-	FString playerLogin = TEXT("YOUNG_BORROW");
+	FString playerLogin = GetPlayerName();
 	TArray<FString> files;
 
 	if (!platformFile.DirectoryExists(*directoryPath))
@@ -1268,7 +1278,7 @@ bool ULab4GameInstance::CheckIfOfferAcquired()
 			continue;
 		}
 
-		FString fileAppGuid, fileOfferId;
+		FString fileAppGuid, fileOfferId, filePlayerName;
 		FParse::Value(*fileContent, TEXT("AppGUID="), fileAppGuid);
 		FParse::Value(*fileContent, TEXT("OfferId"), fileOfferId);
 
@@ -1278,14 +1288,47 @@ bool ULab4GameInstance::CheckIfOfferAcquired()
 			continue;
 		}
 
+		FString fileName = FPaths::GetBaseFilename(filePath); // Получаем только имя файла без расширения
+		FString hashPart;
+		FString userLogin;
+		if (fileName.Split(TEXT("_"), &hashPart, &userLogin))
+		{
+			if (userLogin != playerLogin)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Player login %s not found in fileName. Access to offer is forbidden"), *playerLogin)
+				continue;
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Failed to split filename: %s"), *fileName);
+			continue;
+		}
+
 		fileOfferId = fileOfferId.Replace(TEXT("\n"), TEXT("")).Replace(TEXT("="), TEXT("")).TrimStartAndEnd();
 		if (fileOfferId == OfferIdAudience)
 		{
 			UE_LOG(LogTemp, Log, TEXT("Found valid purchase for starting dedicated matches"))
+			bCanStartDedicatedMatch = true;
 			return true;
 		}
 	}
 	return false;
+}
+
+void ULab4GameInstance::SetMatchmakingHintTextVisibility(bool bIsVisible)
+{
+	m_pMainMenu->SetMatchmakingHintTextVisibility(bIsVisible);
+}
+
+void ULab4GameInstance::SetCreateGameHintTextVisibility(bool bIsVisible)
+{
+	m_pMainMenu->SetCreateGameHintTextVisibility(bIsVisible);
+}
+
+void ULab4GameInstance::GiveAccessToCreateMatchSection()
+{
+	m_pMainMenu->GiveAccessToCreateMatchSection();
 }
 
 FString ULab4GameInstance::GetSHA256Hash(const FString& Data)
