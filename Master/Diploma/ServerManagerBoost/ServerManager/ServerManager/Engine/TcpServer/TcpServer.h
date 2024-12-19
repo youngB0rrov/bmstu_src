@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "../../Data/ClientInfo.h"
+#include "../../Data/ServerInfo.h"
 
 class TcpServer
 {
@@ -13,19 +14,25 @@ public:
 
 private:
 	boost::asio::io_context _context;
-	boost::thread _acceptThread;
+	boost::thread _clientsAcceptThread;
+	boost::thread _serversAcceptThread;
 
 	// Параметры подключения
 	unsigned int _port;
+	unsigned int _serversListenPort;
 	unsigned int _daemonPort;
 	std::string _daemonIp;
 
 	std::vector<ClientInfo> _connectedClients;
+	std::vector<ServerInfo> _runningServers;
 
-	void CreateAcceptThread();
+	void CreateClientsAcceptThread();
+	void CreateServersAcceptThread();
 	void SendCommandToDaemon(const std::string& command);
 	void SendDataToSocket(boost::shared_ptr<boost::asio::ip::tcp::socket> socket, const std::string& message);
-	void ReadDataFromSocket(boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
+	void ReadDataFromClientSocket(boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
+	void ReadDataFromServerSocket(boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
 	void ProcessDataFromClient(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
-	void ProcessDataFromDaemon(std::string& message);
+	void ProcessDataFromServer(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
+	void SendConnectionStringToClient(std::string& message);
 };

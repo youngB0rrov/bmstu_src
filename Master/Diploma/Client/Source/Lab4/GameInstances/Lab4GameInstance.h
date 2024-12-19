@@ -74,9 +74,6 @@ public:
 	class ULobbyHostWidget* LobbyHostWidget;
 
 	UPROPERTY()
-	class UMatchmakingConnectWidget* MatchMakingConnectWidget;
-
-	UPROPERTY()
 	UMatchmakingInputWidget* MatchmakingInputWidget;
 	
 	void LogIn();
@@ -113,6 +110,7 @@ public:
 	void SetIsOnlineGame(const bool bIsLan);
 	bool GetIsLanGame() const;
 	FORCEINLINE FName GetSessionName() const { return SessionNameConst; }
+	FORCEINLINE bool GetIfLoggedIn() const { return bWasLoggedIn; }
 
 	UFUNCTION(Exec)
 	void HideGameOverMenu();
@@ -137,6 +135,8 @@ public:
 	void SetCreateGameHintTextVisibility(bool bIsVisible);
 	FORCEINLINE static AMainMenuInitializer* GetMainMenuPtr() { return m_pMainMenu; }
 	void GiveAccessToCreateMatchSection();
+	FString LoadBase64EncodedData(const FString& FilePath);
+	void ShowMatchmakingInputWidget(bool bIsVisible);
 
 private:
 	UFUNCTION()
@@ -148,7 +148,6 @@ private:
 	void RetrieveOffersById(const TArray<FUniqueOfferId>& OfferIds);
 	void GenerateGuidAndSave();
 	void SaveBase64EncodedData(const FString& Data, const FString& FilePath);
-	FString LoadBase64EncodedData(const FString& FilePath);
 	bool CheckIfGuidExists();
 	void SavePurchaseToFile(const FString& PurchaseOfferId);
 	FString GetSHA256Hash(const FString& Data);
@@ -208,7 +207,6 @@ private:
 	TSubclassOf<UUserWidget> BPRankedLeaderboardRowClass;
 	TSubclassOf<UUserWidget> BPLobbyHostButtonClass;
 	TSubclassOf<UUserWidget> BPLoadingWidgetClass;
-	TSubclassOf<UUserWidget> BPMatchmakingConnectWidgetClass;
 	TSubclassOf<UUserWidget> BPMatchmakingInputWidgetClass;
 
 	const FName ServerNameKey = "ServerName";

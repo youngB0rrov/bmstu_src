@@ -53,5 +53,11 @@ void UMatchmakingInputWidget::OnMatchmakingInputCofirmButtonClicked()
 
 void UMatchmakingInputWidget::OnMatchmakingInputCancelButtonClicked()
 {
-	RemoveFromViewport();
+	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
+	if (gameInstance == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameInstance ptr is invalid"))
+		return;
+	}
+	gameInstance->ShowMatchmakingInputWidget(false);
 }

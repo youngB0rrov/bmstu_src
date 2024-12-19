@@ -86,15 +86,6 @@ void ULab4GameInstance::Init()
 
 	TickDelegateHandle = FTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &ULab4GameInstance::Tick), 0.1f);
 
-	if (BPMatchmakingConnectWidgetClass)
-	{
-		MatchMakingConnectWidget = CreateWidget<UMatchmakingConnectWidget>(this, BPMatchmakingConnectWidgetClass);
-	}
-	if (BPMatchmakingInputWidgetClass)
-	{
-		MatchmakingInputWidget = CreateWidget<UMatchmakingInputWidget>(this, BPMatchmakingInputWidgetClass);
-	}
-
 	if (!UserCloudPtr.IsValid())
 	{
 		UE_LOG(LogTemp, Error, TEXT("UserCloudInterface is invalid in Init method"))
@@ -151,6 +142,12 @@ ULab4GameInstance::ULab4GameInstance()
 	HostSocketAddress = serverAddress;
 	HostSocketPort = serverPort;
 
+	if (IsRunningDedicatedServer())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Application is running as dedicated server, skip finding blueprints classes..."))
+		return;
+	}
+
 	static ConstructorHelpers::FClassFinder<UUserWidget> BPInGameMenu(TEXT("/Game/MainMenu/WBP_ToMainMenu"));
 	BPInGameMenuClass = BPInGameMenu.Class;
 
@@ -190,13 +187,7 @@ ULab4GameInstance::ULab4GameInstance()
 		BPLoadingWidgetClass = BPLoadingWidgetClassFinder.Class;
 	}
 
-	static ConstructorHelpers::FClassFinder<UUserWidget> BPMatchmakingConnectWidgetFinder(TEXT("/Game/MainMenu/WBP_MatchmakingConnectWidget"));
-	if (BPMatchmakingConnectWidgetFinder.Succeeded())
-	{
-		BPMatchmakingConnectWidgetClass = BPMatchmakingConnectWidgetFinder.Class;
-	}
-
-	static ConstructorHelpers::FClassFinder<UUserWidget> BPMatchmakingInputWidgetFinder(TEXT("/Game/MainMenu/WBP_MatchmakingInput"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> BPMatchmakingInputWidgetFinder(TEXT("/Game/MainMenu/WBP_MatchmakingInputWidget"));
 	if (BPMatchmakingInputWidgetFinder.Succeeded())
 	{
 		BPMatchmakingInputWidgetClass = BPMatchmakingInputWidgetFinder.Class;
@@ -502,6 +493,7 @@ void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful,
 
 	if (bWasSuccessful)
 	{
+		SetIsLanGame(false);
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Green, FString::Printf(TEXT("Logged In Successfuly!")));
 		m_pMainMenu->ShowOnlineOnlyButtons();
 		m_pMainMenu->SetWidgetOnLoginComplete();
@@ -1214,6 +1206,25 @@ FString ULab4GameInstance::LoadBase64EncodedData(const FString& FilePath)
 
 	UE_LOG(LogTemp, Error, TEXT("Data not found in file: %s"), *filePath)
 	return TEXT("");
+}
+
+void ULab4GameInstance::ShowMatchmakingInputWidget(bool bIsVisible = true)
+{
+	if (!bIsVisible && MatchmakingInputWidget != nullptr)
+	{
+		MatchmakingInputWidget->RemoveFromViewport();
+		MatchmakingInputWidget = nullptr;
+		
+		return;
+	}
+	if (MatchmakingInputWidget == nullptr && BPMatchmakingInputWidgetClass)
+	{
+		MatchmakingInputWidget = CreateWidget<UMatchmakingInputWidget>(this, BPMatchmakingInputWidgetClass);
+		if (MatchmakingInputWidget)
+		{
+			MatchmakingInputWidget->AddToViewport();
+		}
+	}
 }
 
 bool ULab4GameInstance::CheckIfGuidExists()

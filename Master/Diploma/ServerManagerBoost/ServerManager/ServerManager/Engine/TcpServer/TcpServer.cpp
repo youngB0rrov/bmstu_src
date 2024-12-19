@@ -2,42 +2,66 @@
 #include "../../Utils/ConfigHelper/ConfigHelper.h"
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/range/adaptors.hpp>
+#include <boost/range/algorithm/find_if.hpp>
 #include "../../Utils/Logger/Logger.h"
+#include "../../Utils/CommandsHelper/CommandsHelper.h"
+#include <sstream>
+#include <unordered_map>
+#include <boost/uuid/string_generator.hpp>
 
 TcpServer::TcpServer()
 {
-    int port, daemonPort;
+    int port, daemonPort, serversListenPort;
     std::string daemonIp;
     ConfigHelper::ReadVariableFromConfig("appsettings.ini", "Network.listenPort", port);
     ConfigHelper::ReadVariableFromConfig("appsettings.ini", "DaemonNetwork.daemonPort", daemonPort);
     ConfigHelper::ReadVariableFromConfig("appsettings.ini", "DaemonNetwork.daemonIp", daemonIp);
+    ConfigHelper::ReadVariableFromConfig("appsettings.ini", "Network.serversListenPort", serversListenPort);
     _port = port;
     _daemonPort = daemonPort;
     _daemonIp = daemonIp;
+    _serversListenPort = serversListenPort;
 }
 
 void TcpServer::StartServer()
 {
-    _acceptThread = boost::thread(&TcpServer::CreateAcceptThread, this);
-    _acceptThread.join();
+    Logger::GetInstance() << "Start listening requests on 0.0.0.0:" << _port << std::endl;
+    _clientsAcceptThread = boost::thread(&TcpServer::CreateClientsAcceptThread, this);
+    _serversAcceptThread = boost::thread(&TcpServer::CreateServersAcceptThread, this);
+
+    _clientsAcceptThread.join();
+    _serversAcceptThread.join();
 }
 
-void TcpServer::CreateAcceptThread()
+void TcpServer::CreateClientsAcceptThread()
 {
     // Инициализация эндпоинта хоста, куда будут подключаться клиенты
     boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), _port);
 
     // Инициализация сокета для прослушки входящих соединений
     boost::asio::ip::tcp::acceptor acceptor(_context, endpoint);
-    Logger::GetInstance() << "Start listening on 0.0.0.0:" << _port << std::endl;
-    //std::cout << "Start listening on 0.0.0.0:" << _port << std::endl;
 
     while (true)
     {
         boost::this_thread::sleep(boost::posix_time::seconds(1));
         boost::shared_ptr<boost::asio::ip::tcp::socket> clientSocket(new boost::asio::ip::tcp::socket(_context));
         acceptor.accept(*clientSocket);
-        boost::thread(boost::bind(&TcpServer::ReadDataFromSocket, this, clientSocket));
+        boost::thread(boost::bind(&TcpServer::ReadDataFromClientSocket, this, clientSocket));
+    }
+}
+
+void TcpServer::CreateServersAcceptThread()
+{
+    boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), _serversListenPort);
+    boost::asio::ip::tcp::acceptor acceptor(_context, endpoint);
+    //Logger::GetInstance() << "Start listening server requests on 0.0.0.0:" << _serversListenPort << std::endl;
+
+    while (true)
+    {
+        boost::this_thread::sleep(boost::posix_time::seconds(1));
+        boost::shared_ptr<boost::asio::ip::tcp::socket> serversSocket(new boost::asio::ip::tcp::socket(_context));
+        acceptor.accept(*serversSocket);
+        boost::thread(boost::bind(&TcpServer::ReadDataFromServerSocket, this, serversSocket));
     }
 }
 
@@ -63,7 +87,7 @@ void TcpServer::SendDataToSocket(boost::shared_ptr<boost::asio::ip::tcp::socket>
     socket->write_some(boost::asio::buffer(message, message.length() + 1));
 }
 
-void TcpServer::ReadDataFromSocket(boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
+void TcpServer::ReadDataFromClientSocket(boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
 {
     bool bIsReading(true);
     while (bIsReading)
@@ -74,17 +98,43 @@ void TcpServer::ReadDataFromSocket(boost::shared_ptr<boost::asio::ip::tcp::socke
         if (bytesRead > 0)
         {
             std::string message = std::string(data, bytesRead);
-            if (message.find(':') != std::string::npos)
-            {
-                ProcessDataFromDaemon(message);
-            }
-            else
-            {
-                ProcessDataFromClient(message, socket);
-            }
+            ProcessDataFromClient(message, socket);
             bIsReading = false;
         }
     }
+}
+
+void TcpServer::ReadDataFromServerSocket(boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
+{
+    try
+    {
+        while (true)
+        {
+            char data[512];
+
+            size_t bytesRead = socket->read_some(boost::asio::buffer(data));
+            if (bytesRead > 0)
+            {
+                std::string message = std::string(data, bytesRead);
+                ProcessDataFromServer(message, socket);
+            }
+        }
+    }
+    catch (const boost::system::system_error& error)
+    {
+        if (error.code() == boost::asio::error::eof || error.code() == boost::asio::error::connection_reset)
+        {
+            std::cout << "Finish reading from client socket, client disconnected cleanly" << std::endl;
+        }
+        else
+        {
+            std::cout << "Socket error occured: " << error.what() << std::endl;
+        }
+    }
+
+    socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both);
+    socket->close();
+    std::cout << "Client socket closed" << std::endl;
 }
 
 void TcpServer::ProcessDataFromClient(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
@@ -97,7 +147,7 @@ void TcpServer::ProcessDataFromClient(std::string& message, boost::shared_ptr<bo
     if (message == "CREATE")
     {
         clientInfo.UserType = ClientType::INITIATOR;
-        SendCommandToDaemon(std::string("Start"));
+        SendCommandToDaemon(std::string("START"));
     }
     if (message == "JOIN")
     {
@@ -105,13 +155,65 @@ void TcpServer::ProcessDataFromClient(std::string& message, boost::shared_ptr<bo
     }
     
     _connectedClients.push_back(clientInfo);
-    std::cout << "Added client to queue: [CLIENT_ADDRESS=" << socket->remote_endpoint().address().to_string() << ":" << socket->remote_endpoint().port() << ",CLIENT_TYPE=" << clientInfo.UserType << "]" << std::endl;
+    std::cout << "Added client to queue: [CLIENT_ADDRESS=" << socket->remote_endpoint().address().to_string() << ":" << socket->remote_endpoint().port() << ", CLIENT_TYPE=" << clientInfo.UserType << "]" << std::endl;
 }
 
-void TcpServer::ProcessDataFromDaemon(std::string& message)
+void TcpServer::ProcessDataFromServer(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
+{
+    Logger::GetInstance() << "Got data from dedicated server: " << message << std::endl;
+
+    std::string commandType = CommandsHelper::GetCommandTypeFromMessage(message);
+    std::unordered_map<std::string, std::string> commandKeyValuePairs = CommandsHelper::GetKeyValuePairs(message);
+
+    if (commandType == "REGISTER_SERVER")
+    {
+        Logger::GetInstance() << "Registering server job started..." << std::endl;
+        ServerInfo newServer;
+
+        newServer.m_uuid = commandKeyValuePairs["uuid"];
+        newServer.m_URI = commandKeyValuePairs["uri"];
+        newServer.m_maxPlayers = atoi(commandKeyValuePairs["max_players"].c_str());
+        newServer.m_currentPlayers = atoi(commandKeyValuePairs["current_players"].c_str());
+
+        _runningServers.insert(_runningServers.begin(), newServer);
+        std::cout << "Registered server with uuid = " << newServer.m_uuid << std::endl;
+        SendConnectionStringToClient(newServer.m_URI);
+
+        Logger::GetInstance() << "Registering server job finished..." << std::endl;
+    }
+    if (commandType == "UPDATE_SERVER")
+    {
+        Logger::GetInstance() << "Updating server job started..." << std::endl;
+        std::string updatedInstanceUuid = commandKeyValuePairs["uuid"];
+
+        auto registeredServer = boost::find_if(_runningServers, [&updatedInstanceUuid](const ServerInfo& serverInfo)
+        {
+            return serverInfo.m_uuid == updatedInstanceUuid;
+        });
+
+        if (registeredServer == _runningServers.end())
+        {
+            std::cout << "Server with such uuid: " << updatedInstanceUuid << " not found" << std::endl;
+            Logger::GetInstance() << "Updating server job finished..." << std::endl;
+            
+            return;
+        }
+
+        ServerInfo& foundRegisteredServer(*registeredServer);
+        int currentPlayers = atoi(commandKeyValuePairs["current_players"].c_str());
+
+        std::cout << "Old value: " << foundRegisteredServer.m_currentPlayers << std::endl;
+        foundRegisteredServer.m_currentPlayers = currentPlayers;
+        std::cout << "New value: " << foundRegisteredServer.m_currentPlayers << std::endl;
+
+        Logger::GetInstance() << "Updating server job finished..." << std::endl;
+    }
+}
+
+void TcpServer::SendConnectionStringToClient(std::string& message)
 {
     // Обработка присланного URI от DedicatedServer
-    std::cout << "Got URI form started DedicatedServer: " << message << std::endl;
+    std::cout << "Sending uri of started dedicated server to client: " << message << std::endl;
 
     auto initiatorConnectedClients = boost::adaptors::filter(_connectedClients, [](const ClientInfo& clientInfo)
     {

@@ -16,6 +16,7 @@ class LAB4_API AEmptyLobbyGameMode : public AGameMode
 	
 public:
 	AEmptyLobbyGameMode();
+	~AEmptyLobbyGameMode();
 
 	UFUNCTION()
 	void ServerTravelToGameMap();
@@ -34,13 +35,21 @@ private:
 	FString ServerManagerAddress;
 	FString DaemonAddress;
 	uint32 ServerManagerPort;
+	uint32 ServerManagerServersPort;
 	bool bIsReadyToStart = false;
+	FSocket* ConnectionSocket;
 
 	void ClearServerTravelTimer();
 	void SendUriToServerManager(const int32 Port);
+	void UpdatePlayersInfoForServerManager();
 	void FromStringToBinaryArray(const FString& Message, TArray<uint8>& OutBinaryArray);
+	void SendMessageWithSocket(const FString& Message);
+	bool InitializeSocketToServerManager();
+	bool ReconnectToServerManager();
+	FString GetServerInstanceUuid();
 
 protected:
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+	virtual void Logout(AController* Exiting) override;
 	virtual void BeginPlay() override;
 };

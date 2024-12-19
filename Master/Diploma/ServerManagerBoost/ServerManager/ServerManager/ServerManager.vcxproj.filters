@@ -34,6 +34,9 @@
     <Filter Include="Исходные файлы\Utils\Logger">
       <UniqueIdentifier>{2e0e4cf6-e222-476d-b146-f75b247d963a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Исходные файлы\Utils\CommandsHelper">
+      <UniqueIdentifier>{1a73abba-daf1-4343-8960-b7e25e911c38}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -47,6 +50,9 @@
     </ClCompile>
     <ClCompile Include="Utils\Logger\Logger.cpp">
       <Filter>Исходные файлы\Utils\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\CommandsHelper\CommandsHelper.cpp">
+      <Filter>Исходные файлы\Utils\CommandsHelper</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -64,6 +70,12 @@
     </ClInclude>
     <ClInclude Include="Utils\Logger\Logger.h">
       <Filter>Исходные файлы\Utils\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\ServerInfo.h">
+      <Filter>Исходные файлы\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\CommandsHelper\CommandsHelper.h">
+      <Filter>Исходные файлы\Utils\CommandsHelper</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -60,9 +60,16 @@ bool UMainMenu::Initialize()
 	MatchmakingFindButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingFindButtonClicked);
 	MatchmakingBackButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingBackButtonClicked);
 
+	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
+	bool bIsLoggedIn = false;
+	if (gameInstance != nullptr)
+	{
+		bIsLoggedIn = gameInstance->GetIfLoggedIn();
+	}
+
 	StatusSizeBox->SetVisibility(ESlateVisibility::Hidden);
-	MainMenuMatchmakingButton->SetIsEnabled(false);
-	LeaderboardsButton->SetIsEnabled(false);
+	MainMenuMatchmakingButton->SetIsEnabled(bIsLoggedIn);
+	LeaderboardsButton->SetIsEnabled(bIsLoggedIn);
 	return true;
 }
 
@@ -125,9 +132,9 @@ void UMainMenu::OnClickedCreate()
 		m_pMainMenu->OnWidgetToCreate();
 		return;
 	}
-	if (gameInstance->GetIsLanGame() && !gameInstance->GetIfCanStartDedicated())
+	if (!gameInstance->GetIfLoggedIn() && !gameInstance->GetIfCanStartDedicated())
 	{
-		gameInstance->MatchmakingInputWidget->AddToViewport();
+		gameInstance->ShowMatchmakingInputWidget(true);
 		return;
 	}
 

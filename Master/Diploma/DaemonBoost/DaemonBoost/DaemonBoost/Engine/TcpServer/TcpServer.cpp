@@ -54,7 +54,7 @@ void TcpServer::HandleIncomeQuery(boost::shared_ptr<boost::asio::ip::tcp::socket
         {
             const std::string message = std::string(data, bytesRead);
             std::cout << "Handle income query: " << message << std::endl;
-            if (message == "Start")
+            if (message == "START")
             {
                 std::cout << "Starting server instance..." << std::endl;
                 boost::thread(&TcpServer::StartServerInstance, this).detach();
