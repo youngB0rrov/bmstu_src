@@ -1,6 +1,7 @@
 #include <sstream>
 #include <iostream>
 #include "CommandsHelper.h"
+#include "../../Data/Enums/ServerCommandType.h"
 
 
 std::string CommandsHelper::GetCommandTypeFromMessage(const std::string& message)
@@ -10,6 +11,26 @@ std::string CommandsHelper::GetCommandTypeFromMessage(const std::string& message
     std::getline(stream, command, ',');
 
     return command;
+}
+
+ServerCommandType CommandsHelper::GetServerCommandType(const std::string& message)
+{
+    std::string stringCommand = GetCommandTypeFromMessage(message);
+
+    static const std::unordered_map<std::string, ServerCommandType> commandMap =
+    {
+        { "REGISTER_SERVER", ServerCommandType::REGISTER_SERVER },
+        { "UPDATE_SERVER", ServerCommandType::UPDATE_SERVER }
+    };
+
+    auto iterator = commandMap.find(stringCommand);
+
+    if (iterator != commandMap.end())
+    {
+        return iterator->second;
+    }
+    
+    return ServerCommandType::UNKNOWN;
 }
 
 std::unordered_map<std::string, std::string> CommandsHelper::GetKeyValuePairs(const std::string& message)
@@ -26,10 +47,6 @@ std::unordered_map<std::string, std::string> CommandsHelper::GetKeyValuePairs(co
             std::string key = token.substr(0, pos);
             std::string value = token.substr(pos + 1);
             keyValuePairs[key] = value;
-        }
-        else
-        {
-            std::cout << "Char \'=\' not found. Probably message command type: " << token << std::endl;
         }
     }
 

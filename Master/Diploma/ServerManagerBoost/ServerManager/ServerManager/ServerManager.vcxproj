@@ -140,6 +140,7 @@
   <ItemGroup>
     <ClInclude Include="Data\ClientInfo.h" />
     <ClInclude Include="Data\Enums\ClientType.h" />
+    <ClInclude Include="Data\Enums\ServerCommandType.h" />
     <ClInclude Include="Data\ServerInfo.h" />
     <ClInclude Include="Engine\TcpServer\TcpServer.h" />
     <ClInclude Include="Utils\CommandsHelper\CommandsHelper.h" />

@@ -2,6 +2,9 @@
 #include <iostream>
 #include "TcpServer.h"
 #include "../../Utils/ConfigHelper/ConfigHelper.h"
+#include "../../Utils/Logger/Logger.h"
+#include "../../Utils/CommandsHelper/CommandsHelper.h"
+#include "../../Data/Enums/IncomeServerManagerCommand.h"
 
 TcpServer::TcpServer()
 {
@@ -31,7 +34,7 @@ void TcpServer::CreateAcceptThread()
 
     // Инициализация сокета для прослушки входящих соединений
     boost::asio::ip::tcp::acceptor acceptor(_context, endpoint);
-    std::cout << "Start listening on 0.0.0.0:" << _port << std::endl;
+    Logger::GetInstance() << "Start listening on 0.0.0.0:" << _port << std::endl;
 
     while (true)
     {
@@ -53,12 +56,20 @@ void TcpServer::HandleIncomeQuery(boost::shared_ptr<boost::asio::ip::tcp::socket
         if (bytesRead > 0)
         {
             const std::string message = std::string(data, bytesRead);
-            std::cout << "Handle income query: " << message << std::endl;
-            if (message == "START")
+            Logger::GetInstance() << "Handle income command: " << message << std::endl;
+            IncomeServerManagerCommand command = CommandsHelper::GetIncomeServerManagerCommand(message);
+            
+            switch (command)
             {
-                std::cout << "Starting server instance..." << std::endl;
-                boost::thread(&TcpServer::StartServerInstance, this).detach();
+                case IncomeServerManagerCommand::START:
+                {
+                    Logger::GetInstance() << "Starting server instance..." << std::endl;
+                    boost::thread(&TcpServer::StartServerInstance, this).detach();
+                }
+                default:
+                    Logger::GetInstance() << "Unknown command type from server manager, skip processing data..." << std::endl;
             }
+
             bIsReading = false;
         }
     }
@@ -72,15 +83,15 @@ void TcpServer::StartServerInstance()
         childThreat.wait();
         if (childThreat.exit_code() == 0)
         {
-            std::cout << "Server instance started successfully!" << std::endl;
+            Logger::GetInstance() << "Server instance started successfully!" << std::endl;
         }
         else
         {
-            std::cerr << "Error, while starting server instance. Exit code: " << childThreat.exit_code() << std::endl;
+            Logger::GetInstance() << "Error, while starting server instance. Exit code: " << childThreat.exit_code() << std::endl;
         }
     }
     catch (const std::exception& exception)
     {
-        std::cerr << "Exception occured, while starting server instance: " << exception.what() << std::endl;
+        Logger::GetInstance() << "Exception occured, while starting server instance: " << exception.what() << std::endl;
     }
 }

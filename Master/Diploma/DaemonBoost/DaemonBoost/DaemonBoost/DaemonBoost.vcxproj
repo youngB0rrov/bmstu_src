@@ -131,10 +131,13 @@
   <ItemGroup>
     <ClCompile Include="Engine\TcpServer\TcpServer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Utils\CommandsHelper\CommandsHelper.cpp" />
     <ClCompile Include="Utils\Logger\Logger.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Data\Enums\IncomeServerManagerCommand.h" />
     <ClInclude Include="Engine\TcpServer\TcpServer.h" />
+    <ClInclude Include="Utils\CommandsHelper\CommandsHelper.h" />
     <ClInclude Include="Utils\ConfigHelper\ConfigHelper.h" />
     <ClInclude Include="Utils\Logger\Logger.h" />
   </ItemGroup>

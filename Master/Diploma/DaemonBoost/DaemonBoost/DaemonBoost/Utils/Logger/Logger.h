@@ -15,7 +15,7 @@ public:
 	static Logger& GetInstance();
 
 	template<typename T>
-	Logger& operator<<(T& message)
+	Logger& operator<<(const T& message)
 	{
 		buffer << message;
 		return *this;

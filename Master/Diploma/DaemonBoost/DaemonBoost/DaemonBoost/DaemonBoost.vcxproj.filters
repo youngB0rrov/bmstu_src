@@ -28,6 +28,15 @@
     <Filter Include="Исходные файлы\Utils\Logger">
       <UniqueIdentifier>{8de679ff-b844-423e-bcd7-b0766855a712}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Исходные файлы\Data">
+      <UniqueIdentifier>{a6a99dce-2364-4258-8a12-69fa25a77625}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Data\Enums">
+      <UniqueIdentifier>{026d6d5a-b6f9-43c1-bd9c-41dd902f1ad5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Utils\CommandsHelper">
+      <UniqueIdentifier>{36f69a67-f2ba-4fdc-9fd3-dc7286a49104}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\TcpServer\TcpServer.cpp">
@@ -39,6 +48,9 @@
     <ClCompile Include="Utils\Logger\Logger.cpp">
       <Filter>Исходные файлы\Utils\Logger</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\CommandsHelper\CommandsHelper.cpp">
+      <Filter>Исходные файлы\Utils\CommandsHelper</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\TcpServer\TcpServer.h">
@@ -49,6 +61,12 @@
     </ClInclude>
     <ClInclude Include="Utils\Logger\Logger.h">
       <Filter>Исходные файлы\Utils\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Enums\IncomeServerManagerCommand.h">
+      <Filter>Исходные файлы\Data\Enums</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\CommandsHelper\CommandsHelper.h">
+      <Filter>Исходные файлы\Utils\CommandsHelper</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

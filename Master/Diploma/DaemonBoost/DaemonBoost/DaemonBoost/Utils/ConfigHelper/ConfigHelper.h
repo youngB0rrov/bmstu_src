@@ -3,6 +3,7 @@
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <fstream>
+#include "../Logger/Logger.h"
 
 class ConfigHelper
 {
@@ -36,6 +37,6 @@ void ConfigHelper::ReadVariableFromConfig(const std::string& fileName, const std
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << "An exception ocurred, while reading variable " << variableName << " from config: " << e.what() << std::endl;
+		Logger::GetInstance() << "An exception ocurred, while reading variable " << variableName << " from config: " << e.what() << std::endl;
 	}
 }
