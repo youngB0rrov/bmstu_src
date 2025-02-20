@@ -23,6 +23,9 @@ private:
 	unsigned int _daemonPort;
 	std::string _daemonIp;
 
+	// Логирование
+	std::string _logPath;
+
 	std::vector<ClientInfo> _connectedClients;
 	std::vector<ServerInfo> _runningServers;
 

@@ -11,7 +11,13 @@ public:
 private:
 	boost::asio::io_context _context;
 	boost::thread _acceptThread;
+
 	unsigned int _port;
+
+	// Логирование
+	std::string _logPath;
+
+	// Переменные из конфига
 	std::string _scriptPath;
 
 	void CreateAcceptThread();

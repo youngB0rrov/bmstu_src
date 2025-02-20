@@ -6,6 +6,7 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
+#include <fstream>
 
 class Logger 
 {
@@ -13,6 +14,8 @@ public:
 	Logger(std::ostream& output = std::cout): out(output) {}
 	
 	static Logger& GetInstance();
+
+	void SetLogFile(const std::string& logDirectory);
 
 	template<typename T>
 	Logger& operator<<(const T& message)
@@ -32,8 +35,9 @@ public:
 	}
 
 private:
-	std::ostream& out;
-	std::ostringstream buffer;
+	std::ostream& out; // Standard ouput stream
+	std::ostringstream buffer; // Buffer for all log message
+	std::ofstream fileStream; // Output file stream
 	std::mutex _mutex;
 
 	void FlushBuffer();

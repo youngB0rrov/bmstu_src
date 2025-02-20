@@ -9,9 +9,13 @@
 TcpServer::TcpServer()
 {
     int port;
-    std::string scriptPath;
+    std::string scriptPath, logPath;
+
     ConfigHelper::ReadVariableFromConfig("appsettings.ini", "Network.listenPort", port);
+    ConfigHelper::ReadVariableFromConfig("appsettings.ini", "Logger.logPath", logPath);
+
     _port = port;
+    _logPath = logPath;
 
     #ifdef _WIN32
         ConfigHelper::ReadVariableFromConfig("appsettings.ini", "SystemPaths.scriptPathWindows", scriptPath);
@@ -23,6 +27,14 @@ TcpServer::TcpServer()
 
 void TcpServer::StartServer()
 {
+    try
+    {
+        Logger::GetInstance().SetLogFile(_logPath);
+    }
+    catch (std::runtime_error ex)
+    {
+        Logger::GetInstance() << std::string(ex.what()) << std::endl;
+    }
     _acceptThread = boost::thread(&TcpServer::CreateAcceptThread, this);
     _acceptThread.join();
 }

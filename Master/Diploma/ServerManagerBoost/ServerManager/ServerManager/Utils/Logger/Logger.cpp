@@ -1,11 +1,37 @@
 #include "Logger.h"
 #include <ctime>
 #include <iomanip>
+#include <boost/date_time.hpp>
+#include <boost/filesystem.hpp>
 
 Logger& Logger::GetInstance()
 {
 	static Logger instance;
 	return instance;
+}
+
+void Logger::SetLogFile(const std::string& logDirectory)
+{
+	boost::gregorian::date todayDate = boost::gregorian::day_clock::local_day();
+	std::string fileName = boost::gregorian::to_iso_extended_string(todayDate) + ".log";
+
+	boost::filesystem::path dirPath = boost::filesystem::absolute(logDirectory);
+	boost::filesystem::path filePath = boost::filesystem::path(logDirectory) / fileName;
+
+	if (!boost::filesystem::exists(dirPath))
+	{
+		if (!boost::filesystem::create_directory(dirPath))
+		{
+			std::string errorMessage = "Failed to create log directory: " + dirPath.string();
+			throw std::runtime_error(errorMessage);
+		}
+	}
+
+	fileStream.open(filePath.string(), std::ios::app);
+	if (!fileStream.is_open())
+	{
+		throw std::runtime_error("Failed to open log file");
+	}
 }
 
 void Logger::FlushBuffer()
@@ -24,7 +50,17 @@ void Logger::Log(const std::string& message)
 
 	std::tm timeInfo;
 	localtime_s(&timeInfo, &nowTime);
-	out << "[" << std::put_time(&timeInfo, "%Y-%m-%d %H:%M:%S")
+	std::ostringstream timeStampStream;
+
+	timeStampStream << "[" << std::put_time(&timeInfo, "%Y-%m-%d %H:%M:%S")
 		<< "." << std::setfill('0') << std::setw(3) << millisecondsCount
-		<< "] " << message;
+		<< "] ";
+	std::string timeStamp = timeStampStream.str();
+
+	out << timeStamp << message;
+	if (fileStream.is_open())
+	{
+		fileStream << timeStamp << message;
+		fileStream.flush();
+	}
 }
