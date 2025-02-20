@@ -30,8 +30,8 @@ bool UMainMenu::Initialize()
 {
 	if (!Super::Initialize()) return false;
 
-	CreateGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnClickedCreate);
-	JoinGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnClickedJoin);
+	CreatePrivateGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnClickedCreate);
+	JoinPrivateGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnClickedJoin);
 	CancelJoinConfirmButton->OnClicked.AddDynamic(this, &UMainMenu::OnClickedMain);
 	JoinGameConfirmButton->OnClicked.AddDynamic(this, &UMainMenu::OnClickedPlayerNameAtJoining);
 	CancelSessionNameConfirmButton->OnClicked.AddDynamic(this, &UMainMenu::OnClickedMain);
@@ -57,8 +57,9 @@ bool UMainMenu::Initialize()
 	LegendsLeagueButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnLegendsLeagueButtonClicked);
 	MainMenuMatchmakingButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingButtonClicked);
 	MatchmakingCreateButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingCreateButtonClicked);
-	MatchmakingFindButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingFindButtonClicked);
 	MatchmakingBackButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingBackButtonClicked);
+	PrivateGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnPrivateGameButtonClicked);
+	CancelPrivateGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnCancelPrivateGameButtonClicked);
 
 	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
 	bool bIsLoggedIn = false;
@@ -455,18 +456,6 @@ void UMainMenu::OnMatchmakingCreateButtonClicked()
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("Matchmaking is available in online mode only"));
 }
 
-void UMainMenu::OnMatchmakingFindButtonClicked()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Find matchmaking button clicked"))
-	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
-	if (gameInstance == nullptr) return;
-	if (gameInstance->GetIsFindingMatchInProgress()) return;
-
-	gameInstance->CreateSocketConnection();
-	gameInstance->InitializeReceiveSocketThread();
-	gameInstance->SendMessageToHostSocket(FString::Printf(TEXT("JOIN")));
-}
-
 void UMainMenu::OnMatchmakingBackButtonClicked()
 {
 	if (MenuSwitcher == nullptr || MainMenu == nullptr) return;
@@ -478,6 +467,18 @@ void UMainMenu::OnMatchmakingBackButtonClicked()
 	if (!gameInstance) return;
 	gameInstance->SetFindingMatchProgress(false);
 	gameInstance->DisposeReceiveSocketThread();
+}
+
+void UMainMenu::OnPrivateGameButtonClicked()
+{
+	if (MenuSwitcher == nullptr || MainMenu == nullptr) return;
+	MenuSwitcher->SetActiveWidget(PrivateMatch);
+}
+
+void UMainMenu::OnCancelPrivateGameButtonClicked()
+{
+	if (MenuSwitcher == nullptr || MainMenu == nullptr) return;
+	MenuSwitcher->SetActiveWidget(MainMenu);
 }
 
 TArray<FText> UMainMenu::GetCredentials()
@@ -594,12 +595,12 @@ void UMainMenu::SetMatchmakingHintTextVisibility(bool bIsVisible)
 
 void UMainMenu::SetCreateGameHintTextVisibility(bool bIsVisible)
 {
-	if (CreateGameHintText == nullptr)
+	if (CreateGameHintTextBlock == nullptr)
 	{
 		UE_LOG(LogTemp, Error, TEXT("MatchmakingCreateButtonHintTextPtr in invalid"))
 		return;
 	}
-	CreateGameHintText->SetVisibility(ESlateVisibility::Hidden);
+	CreateGameHintTextBlock->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void UMainMenu::HandleMatchmakingStatusAndConnect()

@@ -1,14 +1,16 @@
 #include "TcpServer.h"
-#include "../../Utils/ConfigHelper/ConfigHelper.h"
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/find_if.hpp>
+#include <sstream>
+#include <mutex>
+#include <unordered_map>
+#include <boost/uuid/string_generator.hpp>
+#include <boost/range/algorithm/max_element.hpp>
+#include "../../Utils/ConfigHelper/ConfigHelper.h"
 #include "../../Utils/Logger/Logger.h"
 #include "../../Utils/CommandsHelper/CommandsHelper.h"
 #include "../../Data/Enums/ServerCommandType.h"
-#include <sstream>
-#include <unordered_map>
-#include <boost/uuid/string_generator.hpp>
 
 TcpServer::TcpServer()
 {
@@ -158,21 +160,49 @@ void TcpServer::ProcessDataFromClient(std::string& message, boost::shared_ptr<bo
     ClientInfo clientInfo;
     clientInfo.Socket = socket;
     
-    clientInfo.UserType = ClientType::INITIATOR;
-    SendCommandToDaemon(std::string("START"));
+    // Попытка захвата лока для _runningServers
+    std::lock_guard<std::mutex> lock(_runningServersMutex);
 
-    //if (message == "CREATE")
-    //{
-    //    clientInfo.UserType = ClientType::INITIATOR;
-    //    SendCommandToDaemon(std::string("START"));
-    //}
-    //if (message == "JOIN")
-    //{
-    //    clientInfo.UserType = ClientType::PLAYER;
-    //}
+    if (_runningServers.empty())
+    {
+        Logger::GetInstance() << "Sending \"START\" command to daemon due to empty running server instances array" << std::endl;
+
+        clientInfo.UserType = ClientType::INITIATOR;
+        SendCommandToDaemon(std::string("START"));
+        _connectedClients.push_back(clientInfo);
+
+        Logger::GetInstance() << "Added client to queue: [CLIENT_ADDRESS=" << socket->remote_endpoint().address().to_string() << ":" << socket->remote_endpoint().port() << ", CLIENT_TYPE=" << clientInfo.UserType << "]" << std::endl;
+
+        return;
+    }
+
+    auto runningServerInstances = boost::adaptors::filter(_runningServers, [](const ServerInfo& serverInfo)
+    {
+        return serverInfo.m_currentPlayers != serverInfo.m_maxPlayers && serverInfo.m_currentPlayers > 0;
+    });
+
+    if (runningServerInstances.empty())
+    {
+        Logger::GetInstance() << "Sending \"START\" command to daemon due to all running server instances occupation" << std::endl;
+
+        clientInfo.UserType = ClientType::INITIATOR;
+        SendCommandToDaemon(std::string("START"));
+        _connectedClients.push_back(clientInfo);
+        
+        Logger::GetInstance() << "Added client to queue: [CLIENT_ADDRESS=" << socket->remote_endpoint().address().to_string() << ":" << socket->remote_endpoint().port() << ", CLIENT_TYPE=" << clientInfo.UserType << "]" << std::endl;
+
+        return;
+    }
     
-    _connectedClients.push_back(clientInfo);
-    Logger::GetInstance() << "Added client to queue: [CLIENT_ADDRESS=" << socket->remote_endpoint().address().to_string() << ":" << socket->remote_endpoint().port() << ", CLIENT_TYPE=" << clientInfo.UserType << "]" << std::endl;
+    clientInfo.UserType = ClientType::PLAYER;
+    auto& runningServerWithMostPlayers = *boost::range::max_element(runningServerInstances, [](const ServerInfo& A, const ServerInfo& B)
+    {
+        return A.m_currentPlayers < B.m_currentPlayers;
+    });
+
+    Logger::GetInstance() << "Found server instance [uuid=" << runningServerWithMostPlayers.m_uuid << "] for client [CLIENT_ADDRESS=" << socket->remote_endpoint().address().to_string() << ":" << socket->remote_endpoint().port() << ", CLIENT_TYPE=" << clientInfo.UserType << "]" << std::endl;
+    Logger::GetInstance() << "Senging data: [URI=" << runningServerWithMostPlayers.m_URI << "] to cleint: [CLIENT_ADDRESS=" << socket->remote_endpoint().address().to_string() << ":" << socket->remote_endpoint().port() << ", CLIENT_TYPE=" << clientInfo.UserType << "] " << std::endl;
+    SendDataToSocket(socket, runningServerWithMostPlayers.m_URI);
 }
 
 void TcpServer::ProcessDataFromServer(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket)

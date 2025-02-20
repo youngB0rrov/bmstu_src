@@ -77,6 +77,7 @@ void TcpServer::HandleIncomeQuery(boost::shared_ptr<boost::asio::ip::tcp::socket
                 {
                     Logger::GetInstance() << "Starting server instance..." << std::endl;
                     boost::thread(&TcpServer::StartServerInstance, this).detach();
+                    break;
                 }
                 default:
                     Logger::GetInstance() << "Unknown command type from server manager, skip processing data..." << std::endl;

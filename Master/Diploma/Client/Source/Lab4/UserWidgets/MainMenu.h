@@ -99,10 +99,13 @@ public:
 	void OnMatchmakingCreateButtonClicked();
 
 	UFUNCTION()
-	void OnMatchmakingFindButtonClicked();
+	void OnMatchmakingBackButtonClicked();
 
 	UFUNCTION()
-	void OnMatchmakingBackButtonClicked();
+	void OnPrivateGameButtonClicked();
+
+	UFUNCTION()
+	void OnCancelPrivateGameButtonClicked();
 	
 	TArray<FText> GetCredentials();
 	
@@ -127,10 +130,10 @@ private:
 	void SetMatchmakingStatusText(const FString& StatusText);
 	
 	UPROPERTY(meta=(BindWidget))
-	class UButton *CreateGameButton;
+	class UButton* CreatePrivateGameButton;
 
 	UPROPERTY(meta=(BindWidget))
-	UButton *JoinGameButton;
+	UButton* JoinPrivateGameButton;
 
 	UPROPERTY(meta=(BindWidget))
 	UButton *CancelJoinConfirmButton;
@@ -187,7 +190,7 @@ private:
 	UTextBlock* MatchmakingCreateButtonHintText;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* CreateGameHintText;
+	UTextBlock* CreateGameHintTextBlock;
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MatchmakingStatusText;
@@ -253,10 +256,16 @@ private:
 	UButton* MatchmakingCreateButton;
 
 	UPROPERTY(meta = (BindWidget))
-	UButton* MatchmakingFindButton;
+	UButton* MatchmakingBackButton;
 
 	UPROPERTY(meta = (BindWidget))
-	UButton* MatchmakingBackButton;
+	UWidget* PrivateMatch;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* CancelPrivateGameButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* PrivateGameButton;
 
 	UPROPERTY(meta = (BindWidget))
 	USizeBox* StatusSizeBox;

@@ -3,6 +3,7 @@
 #include <boost/thread.hpp>
 #include <string>
 #include <vector>
+#include <mutex>
 #include "../../Data/ClientInfo.h"
 #include "../../Data/ServerInfo.h"
 
@@ -16,6 +17,7 @@ private:
 	boost::asio::io_context _context;
 	boost::thread _clientsAcceptThread;
 	boost::thread _serversAcceptThread;
+	std::mutex _runningServersMutex;
 
 	// Параметры подключения
 	unsigned int _port;
