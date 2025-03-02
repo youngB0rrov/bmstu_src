@@ -195,6 +195,9 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MatchmakingStatusText;
 
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* MainMenuTitle;
+
 	UPROPERTY(meta=(BindWidget))
 	UButton* LeaderboardBackButton;
 
@@ -295,4 +298,6 @@ private:
 
 	const FString Waiting = "Please, wait...";
 	const FString Nothing = "Sorry, nothing has found. Try again...";
+	const FText LanGame = FText::FromString("LAN Game");
+	const FText InternetGame = FText::FromString("Internet Game");
 };

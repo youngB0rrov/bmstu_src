@@ -217,6 +217,11 @@ void UMainMenu::OnLanButtonClicked()
 {
 	GetGameInstance<ULab4GameInstance>()->SetIsLanGame(true);
 
+	if (MainMenuTitle != nullptr)
+	{
+		MainMenuTitle->SetText(LanGame);
+	}
+
 	if (MenuSwitcher == nullptr || MainMenu == nullptr) return;
 	
 	MenuSwitcher->SetActiveWidget(MainMenu);
@@ -229,6 +234,11 @@ void UMainMenu::OnInternetButtonClicked()
 	if (Lab4GameInstance != nullptr)
 	{
 		Lab4GameInstance->SetIsOnlineGame(false);
+	}
+
+	if (MainMenuTitle != nullptr)
+	{
+		MainMenuTitle->SetText(InternetGame);
 	}
 	
 	if (MainMenu == nullptr || AuthMenu == nullptr) return;
