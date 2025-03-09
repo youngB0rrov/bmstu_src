@@ -207,7 +207,7 @@ void TcpServer::ProcessDataFromClient(std::string& message, boost::shared_ptr<bo
 
 void TcpServer::ProcessDataFromServer(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
 {
-    Logger::GetInstance() << "Got data from dedicated server: " << message << std::endl;
+    Logger::GetInstance() << "Getting data from dedicated server: " << message << std::endl;
 
     ServerCommandType commandType = CommandsHelper::GetServerCommandType(message);
     std::unordered_map<std::string, std::string> commandKeyValuePairs = CommandsHelper::GetKeyValuePairs(message);
@@ -223,6 +223,7 @@ void TcpServer::ProcessDataFromServer(std::string& message, boost::shared_ptr<bo
             newServer.m_URI = commandKeyValuePairs["uri"];
             newServer.m_maxPlayers = atoi(commandKeyValuePairs["max_players"].c_str());
             newServer.m_currentPlayers = atoi(commandKeyValuePairs["current_players"].c_str());
+            newServer.m_serverState = CommandsHelper::GetServerStateType(commandKeyValuePairs["state"].c_str());
 
             _runningServers.insert(_runningServers.begin(), newServer);
             Logger::GetInstance() << "Registered server with uuid = " << newServer.m_uuid << std::endl;
@@ -251,10 +252,12 @@ void TcpServer::ProcessDataFromServer(std::string& message, boost::shared_ptr<bo
 
             ServerInfo& foundRegisteredServer(*registeredServer);
             int currentPlayers = atoi(commandKeyValuePairs["current_players"].c_str());
+            ServerState currentServerState = CommandsHelper::GetServerStateType(commandKeyValuePairs["state"].c_str());
 
-            Logger::GetInstance() << "Old value: " << foundRegisteredServer.m_currentPlayers << std::endl;
+            Logger::GetInstance() << "Old value: [current_players = " << foundRegisteredServer.m_currentPlayers << ", state = " << foundRegisteredServer.m_serverState << "]" << std::endl;
             foundRegisteredServer.m_currentPlayers = currentPlayers;
-            Logger::GetInstance() << "New value: " << foundRegisteredServer.m_currentPlayers << std::endl;
+            foundRegisteredServer.m_serverState = currentServerState;
+            Logger::GetInstance() << "New value: [current_players = " << foundRegisteredServer.m_currentPlayers << ", state = " << foundRegisteredServer.m_serverState << "]" << std::endl;
 
             Logger::GetInstance() << "Updating server job finished..." << std::endl;
             break;

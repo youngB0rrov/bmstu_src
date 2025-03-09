@@ -289,7 +289,8 @@ void AEmptyLobbyGameMode::SendUriToServerManager(const int32 Port)
 	FString uri = FString::Printf(TEXT("%s:%d"), *DaemonAddress, Port);
 	FString currentPlayers = FString::Printf(TEXT("%d"), GetNumPlayers());
 	FString maxPlayers = FString::Printf(TEXT("%d"), 10);
-	FString stringPayload = FString::Printf(TEXT("REGISTER_SERVER,uuid=%s,uri=%s,current_players=%s,max_players=%s"), *uuid, *uri, *currentPlayers, *maxPlayers);
+	FString serverState = FString::Printf(TEXT("LOBBY"));
+	FString stringPayload = FString::Printf(TEXT("REGISTER_SERVER,uuid=%s,uri=%s,current_players=%s,max_players=%s,state=%s"), *uuid, *uri, *currentPlayers, *maxPlayers, *serverState);
 
 	SendMessageWithSocket(stringPayload);
 }
@@ -298,7 +299,8 @@ void AEmptyLobbyGameMode::UpdatePlayersInfoForServerManager()
 {
 	FString uuid = GetServerInstanceUuid();
 	FString currentPlayers = FString::Printf(TEXT("%d"), GetNumPlayers());
-	FString stringPayload = FString::Printf(TEXT("UPDATE_SERVER,uuid=%s,current_players=%s"), *uuid, *currentPlayers);
+	FString serverState = FString::Printf(TEXT("LOBBY"));
+	FString stringPayload = FString::Printf(TEXT("UPDATE_SERVER,uuid=%s,current_players=%s,state=%s"), *uuid, *currentPlayers, *serverState);
 	SendMessageWithSocket(stringPayload);
 }
 

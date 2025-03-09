@@ -54,6 +54,9 @@
     <ClCompile Include="Utils\CommandsHelper\CommandsHelper.cpp">
       <Filter>Исходные файлы\Utils\CommandsHelper</Filter>
     </ClCompile>
+    <ClCompile Include="Data\Enums\ServerState.cpp">
+      <Filter>Исходные файлы\Data\Enums</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\TcpServer\TcpServer.h">
@@ -78,6 +81,9 @@
       <Filter>Исходные файлы\Utils\CommandsHelper</Filter>
     </ClInclude>
     <ClInclude Include="Data\Enums\ServerCommandType.h">
+      <Filter>Исходные файлы\Data\Enums</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Enums\ServerState.h">
       <Filter>Исходные файлы\Data\Enums</Filter>
     </ClInclude>
   </ItemGroup>

@@ -2,6 +2,7 @@
 #include <iostream>
 #include "CommandsHelper.h"
 #include "../../Data/Enums/ServerCommandType.h"
+#include "../../Data/Enums/ServerState.h"
 
 
 std::string CommandsHelper::GetCommandTypeFromMessage(const std::string& message)
@@ -31,6 +32,28 @@ ServerCommandType CommandsHelper::GetServerCommandType(const std::string& messag
     }
     
     return ServerCommandType::UNKNOWN;
+}
+
+ServerState CommandsHelper::GetServerStateType(const std::string& message)
+{
+    static const std::unordered_map<std::string, ServerState> stateMap =
+    {
+        { "LOBBY", ServerState::LOBBY },
+        { "MATCH_STARTING", ServerState::MATCH_STARTING },
+        { "MATCH_IN_PROGRESS", ServerState::MATCH_IN_PROGRESS },
+        { "STUTTING_DOWN", ServerState::STUTTING_DOWN },
+        { "RESTARTING", ServerState::RESTARTING },
+        { "UNKNOWN", ServerState::UNKNOWN },
+    };
+
+    auto iterator = stateMap.find(message);
+
+    if (iterator != stateMap.end())
+    {
+        return iterator->second;
+    }
+
+    return ServerState::UNKNOWN;
 }
 
 std::unordered_map<std::string, std::string> CommandsHelper::GetKeyValuePairs(const std::string& message)
