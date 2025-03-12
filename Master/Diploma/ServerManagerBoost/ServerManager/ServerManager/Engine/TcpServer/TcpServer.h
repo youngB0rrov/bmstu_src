@@ -11,7 +11,9 @@ class TcpServer
 {
 public:
 	TcpServer();
+
 	void StartServer();
+	const std::vector<ServerInfo>& GetServerInstances() const { return _runningServers; }
 
 private:
 	boost::asio::io_context _context;
@@ -24,9 +26,6 @@ private:
 	unsigned int _serversListenPort;
 	unsigned int _daemonPort;
 	std::string _daemonIp;
-
-	// Логирование
-	std::string _logPath;
 
 	std::vector<ClientInfo> _connectedClients;
 	std::vector<ServerInfo> _runningServers;

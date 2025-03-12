@@ -106,12 +106,13 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalModuleDependencies>
       </AdditionalModuleDependencies>
-      <AdditionalIncludeDirectories>C:\boost\boost_1_82_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\boost\boost_1_82_0;C:\Program Files\PDCurces\PDCurses;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\boost\boost_1_82_0\stage\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\boost\boost_1_82_0\stage\lib;C:\Program Files\PDCurces\PDCurses\wincon;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>pdcurses.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,19 +132,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Core\Application.cpp" />
     <ClCompile Include="Data\Enums\ClientType.cpp" />
     <ClCompile Include="Data\Enums\ServerState.cpp" />
+    <ClCompile Include="Engine\ConsoleMonitoring\ConsoleMonitoring.cpp" />
     <ClCompile Include="Engine\TcpServer\TcpServer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Utils\CommandsHelper\CommandsHelper.cpp" />
     <ClCompile Include="Utils\Logger\Logger.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Core\Application.h" />
     <ClInclude Include="Data\ClientInfo.h" />
     <ClInclude Include="Data\Enums\ClientType.h" />
     <ClInclude Include="Data\Enums\ServerCommandType.h" />
     <ClInclude Include="Data\Enums\ServerState.h" />
     <ClInclude Include="Data\ServerInfo.h" />
+    <ClInclude Include="Engine\ConsoleMonitoring\ConsoleMonitoring.h" />
     <ClInclude Include="Engine\TcpServer\TcpServer.h" />
     <ClInclude Include="Utils\CommandsHelper\CommandsHelper.h" />
     <ClInclude Include="Utils\ConfigHelper\ConfigHelper.h" />

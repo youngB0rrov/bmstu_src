@@ -1,11 +1,10 @@
 #include <iostream>
-#include "Engine/TcpServer/TcpServer.h"
+#include "./Core/Application.h"
 
 int main()
 {
-	TcpServer* tcpServer = new TcpServer();
-	tcpServer->StartServer();
+	Application application;
+	application.Run();
 
-	delete tcpServer;
 	return 0;
 }

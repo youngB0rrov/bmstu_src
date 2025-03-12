@@ -37,6 +37,12 @@
     <Filter Include="Исходные файлы\Utils\CommandsHelper">
       <UniqueIdentifier>{1a73abba-daf1-4343-8960-b7e25e911c38}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Исходные файлы\Engine\ConsoleMonitoring">
+      <UniqueIdentifier>{d61e4b5b-a10a-473d-aa9a-4a2d601934b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Core">
+      <UniqueIdentifier>{4a0247c4-787e-4d74-84cf-3f516a9d3d6f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -56,6 +62,12 @@
     </ClCompile>
     <ClCompile Include="Data\Enums\ServerState.cpp">
       <Filter>Исходные файлы\Data\Enums</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\ConsoleMonitoring\ConsoleMonitoring.cpp">
+      <Filter>Исходные файлы\Engine\ConsoleMonitoring</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Application.cpp">
+      <Filter>Исходные файлы\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -85,6 +97,12 @@
     </ClInclude>
     <ClInclude Include="Data\Enums\ServerState.h">
       <Filter>Исходные файлы\Data\Enums</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ConsoleMonitoring\ConsoleMonitoring.h">
+      <Filter>Исходные файлы\Engine\ConsoleMonitoring</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Application.h">
+      <Filter>Исходные файлы\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

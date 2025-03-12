@@ -16,32 +16,20 @@ TcpServer::TcpServer()
 {
     int port, daemonPort, serversListenPort;
     std::string daemonIp;
-    std::string logPath;
 
     ConfigHelper::ReadVariableFromConfig("appsettings.ini", "Network.listenPort", port);
     ConfigHelper::ReadVariableFromConfig("appsettings.ini", "DaemonNetwork.daemonPort", daemonPort);
     ConfigHelper::ReadVariableFromConfig("appsettings.ini", "DaemonNetwork.daemonIp", daemonIp);
     ConfigHelper::ReadVariableFromConfig("appsettings.ini", "Network.serversListenPort", serversListenPort);
-    ConfigHelper::ReadVariableFromConfig("appsettings.ini", "Logger.logPath", logPath);
 
     _port = port;
     _daemonPort = daemonPort;
     _daemonIp = daemonIp;
     _serversListenPort = serversListenPort;
-    _logPath = logPath;
 }
 
 void TcpServer::StartServer()
 {
-    try
-    {
-        Logger::GetInstance().SetLogFile(_logPath);
-    }
-    catch (std::runtime_error ex)
-    {
-        Logger::GetInstance() << std::string(ex.what()) << std::endl;
-    }
-
     Logger::GetInstance() << "Start listening requests on 0.0.0.0:" << _port << std::endl;
     _clientsAcceptThread = boost::thread(&TcpServer::CreateClientsAcceptThread, this);
     _serversAcceptThread = boost::thread(&TcpServer::CreateServersAcceptThread, this);
