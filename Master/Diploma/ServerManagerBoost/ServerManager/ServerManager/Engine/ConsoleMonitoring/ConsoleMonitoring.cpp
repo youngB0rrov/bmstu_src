@@ -95,6 +95,11 @@ void ConsoleMonitoring::DrawServers()
 		}
 	});
 
+	if (m_bIsSerching)
+	{
+		FilterServers(testServers);
+	}
+
 	int row = 1;
 	int uuidColumnWidth, uriColumnWidth, currentPlayersColumnWidth, maxPlayersColumnWidth, serverStateColumnWidth;
 	CalculateColumnsWidth(uuidColumnWidth, uriColumnWidth, currentPlayersColumnWidth, maxPlayersColumnWidth, serverStateColumnWidth);
@@ -106,7 +111,7 @@ void ConsoleMonitoring::DrawServers()
 			uriColumnWidth, server.m_URI.c_str(),
 			currentPlayersColumnWidth, server.m_currentPlayers,
 			maxPlayersColumnWidth, server.m_maxPlayers,
-			serverStateColumnWidth, ToString(server.m_serverState)
+			serverStateColumnWidth, ToString(server.m_serverState).c_str()
 		);
 
 		row++;
@@ -122,17 +127,39 @@ void ConsoleMonitoring::StartDrawLoop()
 		UpdateScreen();
 
 		int ch = getch();
-		if (ch == 266) // F2
+		if (ch == 265) // F1
+		{
+			ToggleSearchMode();
+		}
+		else if (ch == 266) // F2
 		{
 			ToggleSortColumn();
 		}
-		if (ch == 267)
+		else if (ch == 267)
 		{
 			ToggleSortDirection(); // F3
 		}
-		if (ch == 274) // F10
+		else if (ch == 274) // F10
 		{
 			break;
+		}
+		else if (ch == 27) // Esc
+		{
+			ToggleSearchMode();
+		}
+		else if (ch == 330 || ch == 8) // Backspace или Delete для удаления символа
+		{
+			if (!m_searchQueryString.empty())
+			{
+				m_searchQueryString.pop_back();
+			}
+		}
+		else if (ch >= 32 && ch <= 126) // Ввод любого символа с клавиатуры
+		{
+			if (m_bIsSerching)
+			{
+				m_searchQueryString += static_cast<char>(ch);
+			}
 		}
 
 		//boost::this_thread::sleep(boost::posix_time::seconds(1));
@@ -168,11 +195,17 @@ void ConsoleMonitoring::DrawFooter()
 		offset += valueLength;
 	}
 
-	std::string sortColumntText;
-	std::string sortDirectionText;
-
-	switch (m_sortColumn)
+	if (m_bIsSerching)
 	{
+		mvprintw(maxWindowHeight, offset + 1, "Searching (ESC/F1 to cancel): %s ", m_searchQueryString.c_str());
+	}
+	else
+	{
+		std::string sortColumntText;
+		std::string sortDirectionText;
+
+		switch (m_sortColumn)
+		{
 		case SortColumn::UUID:
 			sortColumntText = "UUID";
 			break;
@@ -190,11 +223,12 @@ void ConsoleMonitoring::DrawFooter()
 			break;
 		default:
 			sortColumntText = "UNDEFINED";
+		}
+
+		sortDirectionText = m_bDesendingSort ? "Descending" : "Ascending";
+
+		mvprintw(maxWindowHeight, offset + 1, "Sorting: %s (%s)", sortColumntText.c_str(), sortDirectionText.c_str());
 	}
-
-	sortDirectionText = m_bDesendingSort ? "Descending" : "Ascending";
-
-	mvprintw(maxWindowHeight, offset + 1, "Sorting: %s (%s)", sortColumntText.c_str(), sortDirectionText.c_str());
 }
 
 void ConsoleMonitoring::CleanupConsole()
@@ -225,6 +259,26 @@ void ConsoleMonitoring::ToggleSortDirection()
 	m_bDesendingSort = !m_bDesendingSort;
 
 	UpdateScreen();
+}
+
+void ConsoleMonitoring::ToggleSearchMode()
+{
+	m_bIsSerching = !m_bIsSerching;
+	m_searchQueryString = "";
+}
+
+void ConsoleMonitoring::FilterServers(std::vector<ServerInfo>& servers)
+{
+	if (m_searchQueryString.empty()) return;
+
+	servers.erase(std::remove_if(servers.begin(), servers.end(), [this](const ServerInfo& info)
+	{
+		return info.m_uuid.find(m_searchQueryString) == std::string::npos &&
+			info.m_URI.find(m_searchQueryString) == std::string::npos &&
+			std::to_string(info.m_currentPlayers).find(m_searchQueryString) == std::string::npos &&
+			std::to_string(info.m_maxPlayers).find(m_searchQueryString) == std::string::npos &&
+			ToString(info.m_serverState).find(m_searchQueryString) == std::string::npos;
+	}), servers.end());
 }
 
 void ConsoleMonitoring::CalculateColumnsWidth(int& uuid, int& uri, int& currentPlayers, int& maxPlayers, int& serverState)

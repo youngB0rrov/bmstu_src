@@ -26,7 +26,7 @@ std::ostream& operator<<(std::ostream& os, ServerState serverState)
 	return os;
 }
 
-const char* ToString(const ServerState& serverState)
+std::string ToString(const ServerState& serverState)
 {
 	switch (serverState)
 	{

@@ -33,6 +33,8 @@ public:
 	{
 		m_sortColumn = SortColumn::CURRENT_PLAYERS;
 		m_bDesendingSort = true;
+		m_bIsSerching = false;
+		m_searchQueryString = "";
 	};
 
 	void Run();
@@ -47,10 +49,14 @@ private:
 	void UpdateScreen();
 	void ToggleSortColumn();
 	void ToggleSortDirection();
+	void ToggleSearchMode();
+	void FilterServers(std::vector<ServerInfo>& servers);
 
 	static void CalculateColumnsWidth(int& uuid, int& uri, int& currentPlayers, int& maxPlayers, int& serverState);
 
 	TcpServer* m_tcpServer;
 	SortColumn m_sortColumn;
 	bool m_bDesendingSort;
+	bool m_bIsSerching;
+	std::string m_searchQueryString;
 };

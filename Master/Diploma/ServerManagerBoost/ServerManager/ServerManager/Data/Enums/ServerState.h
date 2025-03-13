@@ -14,4 +14,4 @@ enum class ServerState
 };
 
 std::ostream& operator<<(std::ostream& os, ServerState serverState);
-const char* ToString(const ServerState& serverState);
+std::string ToString(const ServerState& serverState);
