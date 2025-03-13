@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ostream>
+#include <string>
 
 enum class ServerState
 {
@@ -13,3 +14,4 @@ enum class ServerState
 };
 
 std::ostream& operator<<(std::ostream& os, ServerState serverState);
+const char* ToString(const ServerState& serverState);

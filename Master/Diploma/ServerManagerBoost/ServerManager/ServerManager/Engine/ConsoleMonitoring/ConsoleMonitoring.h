@@ -28,6 +28,7 @@ private:
 	void DrawTableHeader();
 	void DrawServers();
 	void StartDrawLoop();
+	void DrawFooter();
 	void CleanupConsole();
 
 	static void CalculateColumnsWidth(int& uuid, int& uri, int& currentPlayers, int& maxPlayers, int& serverState);

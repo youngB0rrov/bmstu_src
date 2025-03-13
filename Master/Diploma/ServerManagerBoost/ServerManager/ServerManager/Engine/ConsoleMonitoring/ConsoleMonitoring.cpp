@@ -23,6 +23,7 @@ void ConsoleMonitoring::Init()
 
 	start_color();
 	init_pair(1, COLOR_BLACK, COLOR_GREEN);
+	init_pair(2, COLOR_BLACK, COLOR_BLUE);
 
 	StartDrawLoop();
 }
@@ -32,11 +33,9 @@ void ConsoleMonitoring::DrawTableHeader()
 	int uuidColumnWidth, uriColumnWidth, currentPlayersColumnWidth, maxPlayersColumnWidth, serverStateColumnWidth;
 	CalculateColumnsWidth(uuidColumnWidth, uriColumnWidth, currentPlayersColumnWidth, maxPlayersColumnWidth, serverStateColumnWidth);
 
-	printw("Press \'q\' to quit monitoring tool");
-
 	attron(COLOR_PAIR(1));
 
-	mvprintw(1, 0, "%-*s %-*s %-*s %-*s %-*s",
+	mvprintw(0, 0, "%-*s %-*s %-*s %-*s %-*s",
 		uuidColumnWidth, "UUID",
 		uriColumnWidth, "Address",
 		currentPlayersColumnWidth, "Current players",
@@ -64,18 +63,18 @@ void ConsoleMonitoring::DrawServers()
 
 	const std::vector<ServerInfo>& testServers = m_tcpServer->GetServerInstances();
 
-	int row = 2;
+	int row = 1;
 	int uuidColumnWidth, uriColumnWidth, currentPlayersColumnWidth, maxPlayersColumnWidth, serverStateColumnWidth;
 	CalculateColumnsWidth(uuidColumnWidth, uriColumnWidth, currentPlayersColumnWidth, maxPlayersColumnWidth, serverStateColumnWidth);
 
 	for (auto& server : testServers)
 	{
-		mvprintw(row, 0, "%-*s %-*s %-*d %-*d %-*d",
+		mvprintw(row, 0, "%-*s %-*s %-*d %-*d %-*s",
 			uuidColumnWidth, server.m_uuid.c_str(),
 			uriColumnWidth, server.m_URI.c_str(),
 			currentPlayersColumnWidth, server.m_currentPlayers,
 			maxPlayersColumnWidth, server.m_maxPlayers,
-			serverStateColumnWidth, server.m_serverState
+			serverStateColumnWidth, ToString(server.m_serverState)
 		);
 
 		row++;
@@ -90,15 +89,45 @@ void ConsoleMonitoring::StartDrawLoop()
 		clear();
 		DrawTableHeader();
 		DrawServers();
+		DrawFooter();
 		refresh();
 
 		int ch = getch();
-		if (ch == 'q')
+		if (ch == 274)
 		{
 			break;
 		}
 
 		boost::this_thread::sleep(boost::posix_time::seconds(1));
+	}
+}
+
+void ConsoleMonitoring::DrawFooter()
+{
+	int maxWindowWidth, maxWindowHeight;
+	getmaxyx(stdscr, maxWindowHeight, maxWindowWidth);
+	maxWindowHeight -= 1;
+	size_t offset = 0;
+
+	static const std::vector<std::pair<std::string, std::string>> keyMap =
+	{
+		{ "F1", "Search" },
+		{ "F2", "Sort by" },
+		{ "F10", "Quit" }
+	};
+
+	for (auto& keyPair : keyMap)
+	{
+		size_t keyLength = keyPair.first.length();
+		size_t valueLength = keyPair.second.length();
+
+		mvprintw(maxWindowHeight, offset, keyPair.first.c_str());
+		offset += keyLength;
+		attron(COLOR_PAIR(2));
+
+		mvprintw(maxWindowHeight, offset, keyPair.second.c_str());
+		attroff(COLOR_PAIR(2));
+		offset += valueLength;
 	}
 }
 
