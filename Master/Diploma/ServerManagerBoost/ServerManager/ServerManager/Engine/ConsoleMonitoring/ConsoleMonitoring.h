@@ -17,10 +17,24 @@
 #include "../TcpServer/TcpServer.h"
 #include "../../Data/Enums/ServerState.h"
 
+enum class SortColumn
+{
+	UUID,
+	URI,
+	CURRENT_PLAYERS,
+	MAX_PLAYERS,
+	STATE
+};
+
 class ConsoleMonitoring
 {
 public:
-	ConsoleMonitoring(TcpServer* tcpServer) : m_tcpServer(tcpServer) {};
+	ConsoleMonitoring(TcpServer* tcpServer) : m_tcpServer(tcpServer) 
+	{
+		m_sortColumn = SortColumn::CURRENT_PLAYERS;
+		m_bDesendingSort = true;
+	};
+
 	void Run();
 
 private:
@@ -30,8 +44,13 @@ private:
 	void StartDrawLoop();
 	void DrawFooter();
 	void CleanupConsole();
+	void UpdateScreen();
+	void ToggleSortColumn();
+	void ToggleSortDirection();
 
 	static void CalculateColumnsWidth(int& uuid, int& uri, int& currentPlayers, int& maxPlayers, int& serverState);
 
 	TcpServer* m_tcpServer;
+	SortColumn m_sortColumn;
+	bool m_bDesendingSort;
 };
