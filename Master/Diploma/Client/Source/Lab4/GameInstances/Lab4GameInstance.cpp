@@ -495,7 +495,6 @@ void ULab4GameInstance::OnLoginComplete(int32 LocalUserNum, bool bWasSuccessful,
 	{
 		SetIsLanGame(false);
 		GEngine->AddOnScreenDebugMessage(-1, 3.5f, FColor::Green, FString::Printf(TEXT("Logged In Successfuly!")));
-		m_pMainMenu->ShowOnlineOnlyButtons();
 		m_pMainMenu->SetWidgetOnLoginComplete();
 		// SetInitialPlayerDataForCloudStorage();
 		RetrieveOffers(); 

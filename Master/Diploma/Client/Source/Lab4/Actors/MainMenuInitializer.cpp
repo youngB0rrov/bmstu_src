@@ -214,16 +214,6 @@ void AMainMenuInitializer::SetMatchmakingStatusAndConnect()
 	m_pMainMenu->HandleMatchmakingStatusAndConnect();
 }
 
-void AMainMenuInitializer::ShowOnlineOnlyButtons()
-{
-	if (m_pMainMenu == nullptr)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Faild to enable Matchmaking and leaderboards buttons, m_pMainMenu ptr is nullptr"))
-		return;
-	}
-	m_pMainMenu->ShowOnlineOnlyButtons();
-}
-
 void AMainMenuInitializer::GiveAccessToCreateMatchSection()
 {
 	if (m_pMainMenu == nullptr)

@@ -209,7 +209,7 @@ void TcpServer::ProcessDataFromServer(std::string& message, boost::shared_ptr<bo
 
             newServer.m_uuid = commandKeyValuePairs["uuid"];
             newServer.m_URI = commandKeyValuePairs["uri"];
-            newServer.m_maxPlayers = atoi(commandKeyValuePairs["max_players"].c_str());
+            newServer.m_maxPlayers = atoi(commandKeyValuePairs["max_players"].c_str()); // TODO: Какая сложность
             newServer.m_currentPlayers = atoi(commandKeyValuePairs["current_players"].c_str());
             newServer.m_serverState = CommandsHelper::GetServerStateType(commandKeyValuePairs["state"].c_str());
 

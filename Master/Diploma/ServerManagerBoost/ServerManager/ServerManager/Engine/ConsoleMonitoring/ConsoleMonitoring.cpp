@@ -186,18 +186,18 @@ void ConsoleMonitoring::DrawFooter()
 		size_t keyLength = keyPair.first.length();
 		size_t valueLength = keyPair.second.length();
 
-		mvprintw(maxWindowHeight, offset, keyPair.first.c_str());
+		mvprintw(maxWindowHeight, (int)offset, keyPair.first.c_str());
 		offset += keyLength;
 		attron(COLOR_PAIR(2));
 
-		mvprintw(maxWindowHeight, offset, keyPair.second.c_str());
+		mvprintw(maxWindowHeight, (int)offset, keyPair.second.c_str());
 		attroff(COLOR_PAIR(2));
 		offset += valueLength;
 	}
 
 	if (m_bIsSerching)
 	{
-		mvprintw(maxWindowHeight, offset + 1, "Searching (ESC/F1 to cancel): %s ", m_searchQueryString.c_str());
+		mvprintw(maxWindowHeight, (int)offset + 1, "Searching (ESC/F1 to cancel): %s ", m_searchQueryString.c_str());
 	}
 	else
 	{
@@ -227,7 +227,7 @@ void ConsoleMonitoring::DrawFooter()
 
 		sortDirectionText = m_bDesendingSort ? "Descending" : "Ascending";
 
-		mvprintw(maxWindowHeight, offset + 1, "Sorting: %s (%s)", sortColumntText.c_str(), sortDirectionText.c_str());
+		mvprintw(maxWindowHeight, (int)offset + 1, "Sorting: %s (%s)", sortColumntText.c_str(), sortDirectionText.c_str());
 	}
 }
 
@@ -286,9 +286,9 @@ void ConsoleMonitoring::CalculateColumnsWidth(int& uuid, int& uri, int& currentP
 	int maxWindowWidth, maxWindowHeight;
 	getmaxyx(stdscr, maxWindowHeight, maxWindowWidth);
 
-	uuid = maxWindowWidth * 0.29;
-	uri = maxWindowWidth * 0.20;
-	currentPlayers = maxWindowWidth * 0.14;
-	maxPlayers = maxWindowWidth * 0.14;
-	serverState = maxWindowWidth * 0.20;
+	uuid = (int)(maxWindowWidth * 0.29f);
+	uri = maxWindowWidth * 0.20f;
+	currentPlayers = maxWindowWidth * 0.14f;
+	maxPlayers = maxWindowWidth * 0.14f;
+	serverState = maxWindowWidth * 0.20f;
 }

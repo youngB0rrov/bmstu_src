@@ -25,17 +25,20 @@ void Application::Run()
 	try
 	{
 		Logger::GetInstance().SetLogFile(m_logPath);
+		Logger::GetInstance() << "Starting applicaton..." << std::endl;
+
+		boost::thread serverThread = boost::thread(&TcpServer::StartServer, m_tcpServer.get());
+		boost::thread consoleInterfaceThread = boost::thread(&ConsoleMonitoring::Run, m_consoleMonitoring.get());
+
+		serverThread.join();
+		consoleInterfaceThread.join();
 	}
 	catch (std::runtime_error ex)
 	{
 		Logger::GetInstance() << std::string(ex.what()) << std::endl;
 	}
-
-	Logger::GetInstance() << "Starting applicaton..." << std::endl;
-
-	boost::thread serverThread = boost::thread(&TcpServer::StartServer, m_tcpServer.get());
-	boost::thread consoleInterfaceThread = boost::thread(&ConsoleMonitoring::Run, m_consoleMonitoring.get());
-
-	serverThread.join();
-	consoleInterfaceThread.join();
+	catch (std::exception ex)
+	{
+		Logger::GetInstance() << std::string(ex.what()) << std::endl;
+	}
 }

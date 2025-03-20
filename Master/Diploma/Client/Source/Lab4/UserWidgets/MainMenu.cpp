@@ -39,7 +39,7 @@ bool UMainMenu::Initialize()
 	CancelNameConfirmButton->OnClicked.AddDynamic(this, &UMainMenu::OnClickedMain);
 	NameConfirmButton->OnClicked.AddDynamic(this, &UMainMenu::OnClickedStartGame);
 	InternetButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnInternetButtonClicked);
-	CancelInternetGame->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnToSelectModeButtonClicked);
+	CancelInternetGameButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnToSelectModeButtonClicked);
 	LogInButton->OnClicked.AddDynamic(this, &UMainMenu::OnLogInButtonClicked);
 	LoginAccountButton->OnClicked.AddDynamic(this, &UMainMenu::OnLoginViaAccountButtonClicked);
 	CancelAuthButton->OnClicked.AddDynamic(this, &UMainMenu::OnCancelAuthButtonClicked);
@@ -49,17 +49,19 @@ bool UMainMenu::Initialize()
 	ConfirmCredentials->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnConfirmCredentialsClicked);
 	TogglePassword->OnPressed.AddDynamic(this, &UMainMenu::UMainMenu::OnTogglePasswordButtonPressed);
 	TogglePassword->OnReleased.AddDynamic(this, &UMainMenu::UMainMenu::OnTogglePasswordButtonReleased);
-	LeaderboardsButton->OnClicked.AddDynamic(this, &UMainMenu::OnLeaderboardsButtonClicked);
+	TopPlayersButton->OnClicked.AddDynamic(this, &UMainMenu::OnLeaderboardsButtonClicked);
 	LeaderboardBackButton->OnClicked.AddDynamic(this, &UMainMenu::OnLeaderboardBackButtonClicked);
 	RecruitsLeagueButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnRecruitsLeagueButtonClicked);
 	GuardiansLeagueButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnGuardiansLeagueButtonClicked);
 	CrusaidersLeagueButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnCrusaidersLeagueButtonClicked);
 	LegendsLeagueButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnLegendsLeagueButtonClicked);
-	MainMenuMatchmakingButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingButtonClicked);
+	RaitingGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingButtonClicked);
 	MatchmakingCreateButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingCreateButtonClicked);
 	MatchmakingBackButton->OnClicked.AddDynamic(this, &UMainMenu::OnMatchmakingBackButtonClicked);
-	PrivateGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnPrivateGameButtonClicked);
+	LanPrivateGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnPrivateGameButtonClicked);
+	InternetPrivateGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnPrivateGameButtonClicked);
 	CancelPrivateGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnCancelPrivateGameButtonClicked);
+	CancelLanGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnCancelLanGameButtonClicked);
 
 	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
 	bool bIsLoggedIn = false;
@@ -69,8 +71,6 @@ bool UMainMenu::Initialize()
 	}
 
 	StatusSizeBox->SetVisibility(ESlateVisibility::Hidden);
-	MainMenuMatchmakingButton->SetIsEnabled(bIsLoggedIn);
-	LeaderboardsButton->SetIsEnabled(bIsLoggedIn);
 	return true;
 }
 
@@ -159,7 +159,19 @@ void UMainMenu::OnClickedJoin()
 
 void UMainMenu::OnClickedMain()
 {
-	MenuSwitcher->SetActiveWidget(MainMenu);
+	if (MenuSwitcher == nullptr) return;
+
+	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
+	if (gameInstance == nullptr) return;
+
+	if (gameInstance->GetIsLanGame() && LanGameWidget)
+	{
+		MenuSwitcher->SetActiveWidget(LanGameWidget);
+	}
+	else if (gameInstance->GetIfLoggedIn() && InternetGameWidget != nullptr)
+	{
+		MenuSwitcher->SetActiveWidget(InternetGameWidget);
+	}
 
 	m_pMainMenu->OnWidgetToMain(m_bIsCreateGame);
 }
@@ -217,14 +229,9 @@ void UMainMenu::OnLanButtonClicked()
 {
 	GetGameInstance<ULab4GameInstance>()->SetIsLanGame(true);
 
-	if (MainMenuTitle != nullptr)
-	{
-		MainMenuTitle->SetText(LanGame);
-	}
-
-	if (MenuSwitcher == nullptr || MainMenu == nullptr) return;
+	if (MenuSwitcher == nullptr || LanGameWidget == nullptr) return;
 	
-	MenuSwitcher->SetActiveWidget(MainMenu);
+	MenuSwitcher->SetActiveWidget(LanGameWidget);
 }
 
 void UMainMenu::OnInternetButtonClicked()
@@ -235,13 +242,8 @@ void UMainMenu::OnInternetButtonClicked()
 	{
 		Lab4GameInstance->SetIsOnlineGame(false);
 	}
-
-	if (MainMenuTitle != nullptr)
-	{
-		MainMenuTitle->SetText(InternetGame);
-	}
 	
-	if (MainMenu == nullptr || AuthMenu == nullptr) return;
+	if (InternetGameWidget == nullptr || AuthMenu == nullptr) return;
 
 	if (Lab4GameInstance && !Lab4GameInstance->GetLoginStatus())
 	{
@@ -249,7 +251,7 @@ void UMainMenu::OnInternetButtonClicked()
 		return;
 	}
 	
-	MenuSwitcher->SetActiveWidget(MainMenu);	
+	MenuSwitcher->SetActiveWidget(InternetGameWidget);	
 	
 }
 
@@ -343,15 +345,14 @@ void UMainMenu::OnLeaderboardsButtonClicked()
 
 void UMainMenu::OnLeaderboardBackButtonClicked()
 {
-	if (MenuSwitcher != nullptr)
-	{
-		MenuSwitcher->SetActiveWidget(MainMenu);
-		ClearRankedLeaderboardList();
+	if (MenuSwitcher == nullptr || InternetGameWidget == nullptr) return;
 
-		if (LeagueNameText != nullptr)
-		{
-			LeagueNameText->SetText(FText::FromString(FString::Printf(TEXT("Recruits"))));
-		}
+	MenuSwitcher->SetActiveWidget(InternetGameWidget);
+	ClearRankedLeaderboardList();
+
+	if (LeagueNameText != nullptr)
+	{
+		LeagueNameText->SetText(FText::FromString(FString::Printf(TEXT("Recruits"))));
 	}
 }
 
@@ -468,10 +469,10 @@ void UMainMenu::OnMatchmakingCreateButtonClicked()
 
 void UMainMenu::OnMatchmakingBackButtonClicked()
 {
-	if (MenuSwitcher == nullptr || MainMenu == nullptr) return;
+	if (MenuSwitcher == nullptr || InternetGameWidget == nullptr) return;
 
 	SetFindingMatchStatusWidgetVisibility(false);
-	MenuSwitcher->SetActiveWidget(MainMenu);
+	MenuSwitcher->SetActiveWidget(InternetGameWidget);
 
 	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
 	if (!gameInstance) return;
@@ -481,14 +482,32 @@ void UMainMenu::OnMatchmakingBackButtonClicked()
 
 void UMainMenu::OnPrivateGameButtonClicked()
 {
-	if (MenuSwitcher == nullptr || MainMenu == nullptr) return;
+	if (MenuSwitcher == nullptr || PrivateMatch == nullptr) return;
 	MenuSwitcher->SetActiveWidget(PrivateMatch);
 }
 
 void UMainMenu::OnCancelPrivateGameButtonClicked()
 {
-	if (MenuSwitcher == nullptr || MainMenu == nullptr) return;
-	MenuSwitcher->SetActiveWidget(MainMenu);
+	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
+	if (!gameInstance) return;
+
+	if (gameInstance->GetIsLanGame())
+	{
+		if (MenuSwitcher == nullptr || LanGameWidget == nullptr) return;
+		MenuSwitcher->SetActiveWidget(LanGameWidget);
+
+		return;
+	}
+
+	if (MenuSwitcher == nullptr || InternetGameWidget == nullptr) return;
+	MenuSwitcher->SetActiveWidget(InternetGameWidget);
+}
+
+void UMainMenu::OnCancelLanGameButtonClicked()
+{
+	if (MenuSwitcher == nullptr || ModeSelect == nullptr) return;
+
+	MenuSwitcher->SetActiveWidget(ModeSelect);
 }
 
 TArray<FText> UMainMenu::GetCredentials()
@@ -536,9 +555,9 @@ void UMainMenu::Teardown()
 
 void UMainMenu::SetWidgetOnLoginComplete()
 {
-	if (MenuSwitcher == nullptr || MainMenu == nullptr) return;
+	if (MenuSwitcher == nullptr || InternetGameWidget == nullptr) return;
 	
-	MenuSwitcher->SetActiveWidget(MainMenu);
+	MenuSwitcher->SetActiveWidget(InternetGameWidget);
 }
 
 void UMainMenu::AddRankedLeaderBoardRow(URankedLeaderboardRow* PlayerTableRow)
@@ -623,15 +642,6 @@ void UMainMenu::HandleMatchmakingStatusAndConnect()
 	APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	FString connectionString = gameInstance->GetConnectionAddress();
 	playerController->ClientTravel(connectionString, ETravelType::TRAVEL_Absolute);
-}
-
-void UMainMenu::ShowOnlineOnlyButtons()
-{
-	if (MainMenuMatchmakingButton == nullptr) return;
-	if (LeaderboardsButton == nullptr) return;
-
-	LeaderboardsButton->SetIsEnabled(true);
-	MainMenuMatchmakingButton->SetIsEnabled(true);
 }
 
 void UMainMenu::GiveAccessToCreateMatchSection()

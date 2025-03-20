@@ -4,8 +4,8 @@
 #include "PlayerTableRow.h"
 #include "Blueprint/UserWidget.h"
 #include "RankedLeaderboardRow.h"
-#include "Components/EditableText.h"
 #include "Components/SizeBox.h"
+#include "Components/EditableText.h"
 #include "MainMenu.generated.h"
 
 class UScrollBox;
@@ -106,6 +106,9 @@ public:
 
 	UFUNCTION()
 	void OnCancelPrivateGameButtonClicked();
+
+	UFUNCTION()
+	void OnCancelLanGameButtonClicked();
 	
 	TArray<FText> GetCredentials();
 	
@@ -119,7 +122,6 @@ public:
 	void SetMatchmakingHintTextVisibility(bool bIsVisible);
 	void SetCreateGameHintTextVisibility(bool bIsVisible);
 	void HandleMatchmakingStatusAndConnect();
-	void ShowOnlineOnlyButtons();
 	void GiveAccessToCreateMatchSection();
 
 protected:
@@ -167,9 +169,6 @@ private:
 
 	UPROPERTY(meta=(BindWidget))
 	UButton* LoginAccountButton;
-	
-	UPROPERTY(meta=(BindWidget))
-	UButton *CancelInternetGame;
 
 	UPROPERTY(meta=(BindWidget))
 	UButton *CancelAuthButton;
@@ -180,12 +179,6 @@ private:
 	UPROPERTY(meta=(BindWidget))
 	UButton* ConfirmCredentials;
 
-	UPROPERTY(meta=(BindWidget))
-	UButton* LeaderboardsButton;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* MainMenuMatchmakingButton;
-
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MatchmakingCreateButtonHintText;
 
@@ -194,9 +187,6 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MatchmakingStatusText;
-
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* MainMenuTitle;
 
 	UPROPERTY(meta=(BindWidget))
 	UButton* LeaderboardBackButton;
@@ -229,9 +219,6 @@ private:
 	class UWidgetSwitcher *MenuSwitcher;
 
 	UPROPERTY(meta=(BindWidget))
-	class UWidget *MainMenu;
-
-	UPROPERTY(meta=(BindWidget))
 	class UWidget *ModeSelect;
 
 	UPROPERTY(meta=(BindWidget))
@@ -245,6 +232,30 @@ private:
 	
 	UPROPERTY(meta=(BindWidget))
 	class UWidget *NameMenu;
+
+	UPROPERTY(meta=(BindWidget))
+	class UWidget* InternetGameWidget;
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* InternetPrivateGameButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* RaitingGameButton;
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* TopPlayersButton;
+
+	UPROPERTY(meta=(BindWidget))
+	UWidget* LanGameWidget;
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* LanPrivateGameButton;
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* CancelLanGameButton;
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* CancelInternetGameButton;
 
 	UPROPERTY(meta=(BindWidget))
 	UWidget* Credentials;
@@ -266,9 +277,6 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	UButton* CancelPrivateGameButton;
-
-	UPROPERTY(meta = (BindWidget))
-	UButton* PrivateGameButton;
 
 	UPROPERTY(meta = (BindWidget))
 	USizeBox* StatusSizeBox;

@@ -37,6 +37,7 @@ public:
 		m_searchQueryString = "";
 	};
 
+
 	void Run();
 
 private:
