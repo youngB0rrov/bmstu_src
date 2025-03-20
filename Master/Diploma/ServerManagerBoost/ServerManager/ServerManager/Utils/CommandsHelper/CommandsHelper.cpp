@@ -41,7 +41,7 @@ ServerState CommandsHelper::GetServerStateType(const std::string& message)
         { "LOBBY", ServerState::LOBBY },
         { "MATCH_STARTING", ServerState::MATCH_STARTING },
         { "MATCH_IN_PROGRESS", ServerState::MATCH_IN_PROGRESS },
-        { "STUTTING_DOWN", ServerState::STUTTING_DOWN },
+        { "STUTTING_DOWN", ServerState::SHTUTTING_DOWN },
         { "RESTARTING", ServerState::RESTARTING },
         { "UNKNOWN", ServerState::UNKNOWN },
     };

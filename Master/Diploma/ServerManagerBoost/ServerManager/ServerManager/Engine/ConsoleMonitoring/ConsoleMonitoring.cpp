@@ -49,34 +49,62 @@ void ConsoleMonitoring::DrawTableHeader()
 
 void ConsoleMonitoring::DrawServers()
 {
-	ServerInfo serverInfo1, serverInfo2, serverInfo3;
-	serverInfo1.m_currentPlayers = 1;
-	serverInfo1.m_maxPlayers = 10;
-	serverInfo1.m_uuid = "test123";
-	serverInfo1.m_URI = "127.0.0.1:7777";
-	serverInfo1.m_serverState = ServerState::LOBBY;
+	//ServerInfo serverInfo1, serverInfo2, serverInfo3, serverInfo4, serverInfo5, serverInfo6, serverInfo7;
+	//serverInfo1.m_currentPlayers = 1;
+	//serverInfo1.m_maxPlayers = 10;
+	//serverInfo1.m_uuid = "1D6B4B5D4194BE7B571B349038436F24";
+	//serverInfo1.m_URI = "192.168.1.12:7777";
+	//serverInfo1.m_serverState = ServerState::LOBBY;
 
-	serverInfo2.m_currentPlayers = 5;
-	serverInfo2.m_maxPlayers = 10;
-	serverInfo2.m_uuid = "test4321";
-	serverInfo2.m_URI = "127.0.0.1:7778";
-	serverInfo2.m_serverState = ServerState::MATCH_STARTING;
+	//serverInfo2.m_currentPlayers = 5;
+	//serverInfo2.m_maxPlayers = 10;
+	//serverInfo2.m_uuid = "E47F2C730D834563B84A1BFA52214b54";
+	//serverInfo2.m_URI = "192.168.1.12:7778";
+	//serverInfo2.m_serverState = ServerState::MATCH_STARTING;
 
-	serverInfo3.m_currentPlayers = 3;
-	serverInfo3.m_maxPlayers = 20;
-	serverInfo3.m_uuid = "qwerty321123";
-	serverInfo3.m_URI = "127.0.0.1:7779";
-	serverInfo3.m_serverState = ServerState::MATCH_IN_PROGRESS;
+	//serverInfo3.m_currentPlayers = 3;
+	//serverInfo3.m_maxPlayers = 25;
+	//serverInfo3.m_uuid = "7B39A2E0330C401784240B5401344C55";
+	//serverInfo3.m_URI = "192.168.1.12:7779";
+	//serverInfo3.m_serverState = ServerState::MATCH_IN_PROGRESS;
 
-	std::vector<ServerInfo> testServers = {
-		serverInfo1,
-		serverInfo2,
-		serverInfo3
-	};
+	//serverInfo4.m_currentPlayers = 7;
+	//serverInfo4.m_maxPlayers = 12;
+	//serverInfo4.m_uuid = "D424CCF9B03346B18E2FE34EF6E94E97";
+	//serverInfo4.m_URI = "192.168.1.12:7780";
+	//serverInfo4.m_serverState = ServerState::MATCH_IN_PROGRESS;
 
-	//const std::vector<ServerInfo>& testServers = m_tcpServer->GetServerInstances();
+	//serverInfo5.m_currentPlayers = 2;
+	//serverInfo5.m_maxPlayers = 30;
+	//serverInfo5.m_uuid = "7F9C79F69BC14ECE9BDDBD609C917F91";
+	//serverInfo5.m_URI = "192.168.1.12:7781";
+	//serverInfo5.m_serverState = ServerState::SHTUTTING_DOWN;
 
-	std::sort(testServers.begin(), testServers.end(), [this](const ServerInfo& A, const ServerInfo& B)
+	//serverInfo6.m_currentPlayers = 1;
+	//serverInfo6.m_maxPlayers = 10;
+	//serverInfo6.m_uuid = "71426A2CD9614D579FB62B0DE04D6981";
+	//serverInfo6.m_URI = "192.168.1.12:7782";
+	//serverInfo6.m_serverState = ServerState::LOBBY;
+
+	//serverInfo7.m_currentPlayers = 4;
+	//serverInfo7.m_maxPlayers = 20;
+	//serverInfo7.m_uuid = "2A923008C243404F88163414328D142F";
+	//serverInfo7.m_URI = "192.168.1.12:7783";
+	//serverInfo7.m_serverState = ServerState::MATCH_IN_PROGRESS;
+
+	//std::vector<ServerInfo> runningServers = {
+	//	serverInfo1,
+	//	serverInfo2,
+	//	serverInfo3,
+	//	serverInfo4,
+	//	serverInfo5,
+	//	serverInfo6,
+	//	serverInfo7
+	//};
+
+	std::vector<ServerInfo> runningServers = m_tcpServer->GetServerInstances();
+
+	std::sort(runningServers.begin(), runningServers.end(), [this](const ServerInfo& A, const ServerInfo& B)
 	{
 		switch (m_sortColumn)
 		{
@@ -97,14 +125,14 @@ void ConsoleMonitoring::DrawServers()
 
 	if (m_bIsSerching)
 	{
-		FilterServers(testServers);
+		FilterServers(runningServers);
 	}
 
 	int row = 1;
 	int uuidColumnWidth, uriColumnWidth, currentPlayersColumnWidth, maxPlayersColumnWidth, serverStateColumnWidth;
 	CalculateColumnsWidth(uuidColumnWidth, uriColumnWidth, currentPlayersColumnWidth, maxPlayersColumnWidth, serverStateColumnWidth);
 
-	for (auto& server : testServers)
+	for (auto& server : runningServers)
 	{
 		mvprintw(row, 0, "%-*s %-*s %-*d %-*d %-*s",
 			uuidColumnWidth, server.m_uuid.c_str(),

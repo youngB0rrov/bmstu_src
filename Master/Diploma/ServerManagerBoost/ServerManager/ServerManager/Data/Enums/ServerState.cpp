@@ -16,7 +16,7 @@ std::ostream& operator<<(std::ostream& os, ServerState serverState)
 	case ServerState::RESTARTING:
 		os << "RESTARTING";
 		break;
-	case ServerState::STUTTING_DOWN:
+	case ServerState::SHTUTTING_DOWN:
 		os << "STUTTING_DOWN";
 		break;
 	default:
@@ -36,7 +36,7 @@ std::string ToString(const ServerState& serverState)
 			return "MATCH_STARTING";
 		case ServerState::MATCH_IN_PROGRESS:
 			return "MATCH_IN_PROGRESS";
-		case ServerState::STUTTING_DOWN:
+		case ServerState::SHTUTTING_DOWN:
 			return "STUTTING_DOWN";
 		case ServerState::RESTARTING:
 			return "RESTARTING";
