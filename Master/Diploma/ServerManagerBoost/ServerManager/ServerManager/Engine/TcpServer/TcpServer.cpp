@@ -11,6 +11,9 @@
 #include "../../Utils/Logger/Logger.h"
 #include "../../Utils/CommandsHelper/CommandsHelper.h"
 #include "../../Data/Enums/ServerCommandType.h"
+#include "../../Data/Network/MessageFrameHeader.h"
+#include "../../Data/Network/ServerRegisterMessage.h"
+#include "../../Data/Network/ServerUpdateMessage.h"
 
 TcpServer::TcpServer()
 {
@@ -48,7 +51,6 @@ void TcpServer::CreateClientsAcceptThread()
 
     while (true)
     {
-        boost::this_thread::sleep(boost::posix_time::seconds(1));
         boost::shared_ptr<boost::asio::ip::tcp::socket> clientSocket(new boost::asio::ip::tcp::socket(_context));
         acceptor.accept(*clientSocket);
         boost::thread(boost::bind(&TcpServer::ReadDataFromClientSocket, this, clientSocket));
@@ -62,7 +64,6 @@ void TcpServer::CreateServersAcceptThread()
 
     while (true)
     {
-        boost::this_thread::sleep(boost::posix_time::seconds(1));
         boost::shared_ptr<boost::asio::ip::tcp::socket> serversSocket(new boost::asio::ip::tcp::socket(_context));
         acceptor.accept(*serversSocket);
         boost::thread(boost::bind(&TcpServer::ReadDataFromServerSocket, this, serversSocket));
@@ -114,14 +115,21 @@ void TcpServer::ReadDataFromServerSocket(boost::shared_ptr<boost::asio::ip::tcp:
     {
         while (true)
         {
-            char data[512];
+            MessageFrameHeader frameHeader;
+            boost::asio::read(*socket, boost::asio::buffer(&frameHeader, sizeof(MessageFrameHeader)));
 
-            size_t bytesRead = socket->read_some(boost::asio::buffer(data));
-            if (bytesRead > 0)
-            {
-                std::string message = std::string(data, bytesRead);
-                ProcessDataFromServer(message, socket);
-            }
+            std::vector<char> payload(frameHeader.m_payloadSize);
+            boost::asio::read(*socket, boost::asio::buffer(payload.data(), payload.size()));
+            
+            ProcessBinaryDataFromServer(frameHeader, payload);
+            //char data[512];
+
+            //size_t bytesRead = socket->read_some(boost::asio::buffer(data));
+            //if (bytesRead > 0)
+            //{
+            //    std::string message = std::string(data, bytesRead);
+            //    ProcessDataFromServer(message, socket);
+            //}
         }
     }
     catch (const boost::system::system_error& error)
@@ -138,7 +146,7 @@ void TcpServer::ReadDataFromServerSocket(boost::shared_ptr<boost::asio::ip::tcp:
 
     socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both);
     socket->close();
-    Logger::GetInstance() << "Client socket closed" << std::endl;
+    Logger::GetInstance() << "Server socket closed" << std::endl;
 }
 
 void TcpServer::ProcessDataFromClient(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket)
@@ -245,6 +253,79 @@ void TcpServer::ProcessDataFromServer(std::string& message, boost::shared_ptr<bo
             Logger::GetInstance() << "Old value: [current_players = " << foundRegisteredServer.m_currentPlayers << ", state = " << foundRegisteredServer.m_serverState << "]" << std::endl;
             foundRegisteredServer.m_currentPlayers = currentPlayers;
             foundRegisteredServer.m_serverState = currentServerState;
+            Logger::GetInstance() << "New value: [current_players = " << foundRegisteredServer.m_currentPlayers << ", state = " << foundRegisteredServer.m_serverState << "]" << std::endl;
+
+            Logger::GetInstance() << "Updating server job finished..." << std::endl;
+            break;
+        }
+        default:
+            Logger::GetInstance() << "Unknown command type from server, skip processing data..." << std::endl;
+    }
+}
+
+void TcpServer::ProcessBinaryDataFromServer(const MessageFrameHeader& header, const std::vector<char>& payload)
+{
+    Logger::GetInstance() << "Start processing data from dedicated server" << std::endl;
+    ServerCommandType commandType = static_cast<ServerCommandType>(header.m_commandType);
+
+    switch (commandType)
+    {
+        case ServerCommandType::REGISTER_SERVER:
+        {
+            Logger::GetInstance() << "Registering server job started..." << std::endl;
+            
+            if (payload.size() < sizeof(ServerRegisterMessage))
+            {
+                Logger::GetInstance() << "Invalid payload size for REGISTER_SERVER command. Finishing register server job" << std::endl;
+                return;
+            }
+
+            ServerRegisterMessage newServerRaw;
+            memcpy(&newServerRaw, payload.data(), sizeof(ServerRegisterMessage));
+
+            ServerInfo newServer = ServerInfo::FromRaw(newServerRaw);
+
+            _runningServers.insert(_runningServers.begin(), newServer);
+            Logger::GetInstance() << "Registered server with uuid = " << newServer.m_uuid << std::endl;
+            SendConnectionStringToClient(newServer.m_URI);
+
+            Logger::GetInstance() << "Registering server job finished..." << std::endl;
+            break;
+        }
+        case ServerCommandType::UPDATE_SERVER:
+        {
+            Logger::GetInstance() << "Updating server job started..." << std::endl;
+            
+            if (payload.size() < sizeof(ServerUpdateMessage))
+            {
+                Logger::GetInstance() << "Invalid payload size for REGISTER_SERVER command. Finishing register server job" << std::endl;
+                return;
+            }
+
+            ServerUpdateMessage updatedServerRaw;
+            memcpy(&updatedServerRaw, payload.data(), sizeof(ServerUpdateMessage));
+
+            ServerUpdateStruct updatedServer = ServerUpdateStruct::FromRaw(updatedServerRaw);
+            const std::string updatedInstanceUuid = updatedServer.m_uuid;
+
+            auto registeredServer = boost::find_if(_runningServers, [&updatedInstanceUuid](const ServerInfo& serverInfo)
+            {
+                return serverInfo.m_uuid == updatedInstanceUuid;
+            });
+
+            if (registeredServer == _runningServers.end())
+            {
+                Logger::GetInstance() << "Server with such uuid: " << updatedInstanceUuid << " not found" << std::endl;
+                Logger::GetInstance() << "Updating server job finished..." << std::endl;
+
+                return;
+            }
+
+            ServerInfo& foundRegisteredServer(*registeredServer);
+
+            Logger::GetInstance() << "Old value: [current_players = " << foundRegisteredServer.m_currentPlayers << ", state = " << foundRegisteredServer.m_serverState << "]" << std::endl;
+            foundRegisteredServer.m_currentPlayers = updatedServer.m_currentPlayers;
+            foundRegisteredServer.m_serverState = updatedServer.m_serverState;
             Logger::GetInstance() << "New value: [current_players = " << foundRegisteredServer.m_currentPlayers << ", state = " << foundRegisteredServer.m_serverState << "]" << std::endl;
 
             Logger::GetInstance() << "Updating server job finished..." << std::endl;

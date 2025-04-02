@@ -41,7 +41,9 @@ private:
 
 	void ClearServerTravelTimer();
 	void SendUriToServerManager(const int32 Port);
+	void RegisterPlayersInfoByteForServerManager(const int32 Port);
 	void UpdatePlayersInfoForServerManager();
+	void UpdatePlayersInfoByteForServerManager();
 	void FromStringToBinaryArray(const FString& Message, TArray<uint8>& OutBinaryArray);
 	void SendMessageWithSocket(const FString& Message);
 	bool InitializeSocketToServerManager();

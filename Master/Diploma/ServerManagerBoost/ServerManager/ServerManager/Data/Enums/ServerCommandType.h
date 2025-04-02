@@ -1,6 +1,8 @@
 #pragma once
 
-enum class ServerCommandType
+#include <cstdlib>
+
+enum class ServerCommandType: uint8_t
 {
 	REGISTER_SERVER,
 	UPDATE_SERVER,

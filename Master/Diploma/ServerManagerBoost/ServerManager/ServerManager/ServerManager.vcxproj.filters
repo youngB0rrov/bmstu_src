@@ -43,6 +43,12 @@
     <Filter Include="Исходные файлы\Core">
       <UniqueIdentifier>{4a0247c4-787e-4d74-84cf-3f516a9d3d6f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Исходные файлы\Data\Models">
+      <UniqueIdentifier>{d73e4cb3-d361-4c8d-a805-157ed42edc9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\Data\Network">
+      <UniqueIdentifier>{a21550a0-c93a-4cc8-a3db-5b92c49a7567}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -80,14 +86,8 @@
     <ClInclude Include="Data\Enums\ClientType.h">
       <Filter>Исходные файлы\Data\Enums</Filter>
     </ClInclude>
-    <ClInclude Include="Data\ClientInfo.h">
-      <Filter>Исходные файлы\Data</Filter>
-    </ClInclude>
     <ClInclude Include="Utils\Logger\Logger.h">
       <Filter>Исходные файлы\Utils\Logger</Filter>
-    </ClInclude>
-    <ClInclude Include="Data\ServerInfo.h">
-      <Filter>Исходные файлы\Data</Filter>
     </ClInclude>
     <ClInclude Include="Utils\CommandsHelper\CommandsHelper.h">
       <Filter>Исходные файлы\Utils\CommandsHelper</Filter>
@@ -103,6 +103,21 @@
     </ClInclude>
     <ClInclude Include="Core\Application.h">
       <Filter>Исходные файлы\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Network\MessageFrameHeader.h">
+      <Filter>Исходные файлы\Data\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Network\ServerRegisterMessage.h">
+      <Filter>Исходные файлы\Data\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Network\ServerUpdateMessage.h">
+      <Filter>Исходные файлы\Data\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Models\ClientInfo.h">
+      <Filter>Исходные файлы\Data\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Models\ServerInfo.h">
+      <Filter>Исходные файлы\Data\Models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

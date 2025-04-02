@@ -2,8 +2,9 @@
 
 #include <ostream>
 #include <string>
+#include <cstdint>
 
-enum class ServerState
+enum class ServerState: uint8_t
 {
 	LOBBY,
 	MATCH_STARTING,

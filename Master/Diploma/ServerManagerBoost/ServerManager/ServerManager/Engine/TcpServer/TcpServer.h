@@ -4,8 +4,9 @@
 #include <string>
 #include <vector>
 #include <mutex>
-#include "../../Data/ClientInfo.h"
-#include "../../Data/ServerInfo.h"
+#include "../../Data/Models/ClientInfo.h"
+#include "../../Data/Models/ServerInfo.h"
+#include "../../Data/Network/MessageFrameHeader.h"
 
 class TcpServer
 {
@@ -38,5 +39,6 @@ private:
 	void ReadDataFromServerSocket(boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
 	void ProcessDataFromClient(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
 	void ProcessDataFromServer(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
+	void ProcessBinaryDataFromServer(const MessageFrameHeader& header, const std::vector<char>& payload);
 	void SendConnectionStringToClient(std::string& message);
 };

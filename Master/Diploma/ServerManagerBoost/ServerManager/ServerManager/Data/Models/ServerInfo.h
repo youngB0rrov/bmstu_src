@@ -1,5 +1,6 @@
 #include <string>
-#include "./Enums/ServerState.h"
+#include "../Enums/ServerState.h"
+#include "../Network/ServerRegisterMessage.h";
 
 struct ServerInfo
 {
@@ -22,5 +23,18 @@ struct ServerInfo
 		m_serverState(serverInfo.m_serverState)
 	{
 
+	}
+
+	static ServerInfo FromRaw(const ServerRegisterMessage& raw)
+	{
+		ServerInfo serverInfo;
+
+		serverInfo.m_uuid = std::string(raw.m_uuid);
+		serverInfo.m_URI = std::string(raw.m_uri);
+		serverInfo.m_currentPlayers = raw.m_currentPlayers;
+		serverInfo.m_maxPlayers = raw.m_maxPlayers;
+		serverInfo.m_serverState = static_cast<ServerState>(raw.m_serverState);
+
+		return serverInfo;
 	}
 };

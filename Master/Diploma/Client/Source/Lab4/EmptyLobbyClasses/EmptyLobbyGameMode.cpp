@@ -2,12 +2,13 @@
 
 
 #include "EmptyLobbyGameMode.h"
-
+#include <cstdint>
 #include "EmptyLobbyPlayerController.h"
 #include "EmptyLobbyPlayerState.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/PlayerState.h"
 #include "Sockets.h"
+#include "FNetProtocolStructures.h"
 #include "SocketSubsystem.h"
 #include "Networking.h"
 #include "Lab4/GameInstances/Lab4GameInstance.h"
@@ -155,7 +156,8 @@ void AEmptyLobbyGameMode::PostLogin(APlayerController* NewPlayer)
 		}
 	}
 
-	UpdatePlayersInfoForServerManager();
+	//UpdatePlayersInfoForServerManager();
+	UpdatePlayersInfoByteForServerManager();
 }
 
 void AEmptyLobbyGameMode::BeginPlay()
@@ -199,7 +201,8 @@ void AEmptyLobbyGameMode::BeginPlay()
 	}
 	int32 Port = FCString::Atoi(*PortString);
 	UE_LOG(LogTemp, Log, TEXT("Server is listening on port: %d"), Port);
-	SendUriToServerManager(Port);
+	//SendUriToServerManager(Port);
+	RegisterPlayersInfoByteForServerManager(Port);
 }
 
 bool AEmptyLobbyGameMode::InitializeSocketToServerManager()
@@ -241,7 +244,8 @@ void AEmptyLobbyGameMode::Logout(AController* Exiting)
 {
 	Super::Logout(Exiting);
 
-	UpdatePlayersInfoForServerManager();
+	//UpdatePlayersInfoForServerManager();
+	UpdatePlayersInfoByteForServerManager();
 }
 
 void AEmptyLobbyGameMode::SendMessageWithSocket(const FString& Message)
@@ -302,6 +306,70 @@ void AEmptyLobbyGameMode::UpdatePlayersInfoForServerManager()
 	FString serverState = FString::Printf(TEXT("LOBBY"));
 	FString stringPayload = FString::Printf(TEXT("UPDATE_SERVER,uuid=%s,current_players=%s,state=%s"), *uuid, *currentPlayers, *serverState);
 	SendMessageWithSocket(stringPayload);
+}
+
+void AEmptyLobbyGameMode::RegisterPlayersInfoByteForServerManager(const int32 Port)
+{
+	FServerRegisterMessage payload;
+
+	FCStringAnsi::Strncpy(payload.Uuid, TCHAR_TO_ANSI(*GetServerInstanceUuid()), sizeof(payload.Uuid));
+	FCStringAnsi::Strncpy(payload.Uri, TCHAR_TO_ANSI(*FString::Printf(TEXT("%s:%d"), *DaemonAddress, Port)), sizeof(payload.Uri));
+	payload.CurrentPlayers = GetNumPlayers();
+	payload.MaxPlayers = 10;
+	payload.ServerState = static_cast<uint8_t>(ServerState::LOBBY);
+
+	MessageFrameHeader frameHeader;
+
+	frameHeader.CommandType = static_cast<uint8_t>(ServerCommandType::REGISTER_SERVER);
+	frameHeader.PayloadSize = sizeof(payload);
+
+	TArray<uint8> buffer;
+	buffer.Append((uint8*)&frameHeader, sizeof(frameHeader));
+	buffer.Append((uint8*)&payload, sizeof(payload));
+
+	int32 bytesSent = 0;
+
+	bool sendResult = ConnectionSocket->Send(buffer.GetData(), buffer.Num(), bytesSent);
+	if (bytesSent != buffer.Num() || !sendResult)
+	{
+		ESocketErrors lastSocketError = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetLastErrorCode();
+		FString socketErrorDescription = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetSocketError(lastSocketError);
+
+		UE_LOG(LogTemp, Error, TEXT("Error while submiting message to ServerManager: sent:%d, length:%d, sendResult: %d, error: %s"), bytesSent, buffer.Num(), sendResult, *socketErrorDescription)
+		return;
+	}
+	UE_LOG(LogTemp, Log, TEXT("Successfully sent register message to ServerManager (frameHeader size: %d; payloadSize: %d, bytes sent: %d"), sizeof(frameHeader), sizeof(payload), bytesSent)
+}
+
+void AEmptyLobbyGameMode::UpdatePlayersInfoByteForServerManager()
+{
+	FServerUpdateMessage payload;
+
+	FCStringAnsi::Strncpy(payload.Uuid, TCHAR_TO_ANSI(*GetServerInstanceUuid()), sizeof(payload.Uuid));
+	payload.CurrentPlayers = GetNumPlayers();
+	payload.ServerState = static_cast<uint8_t>(ServerState::LOBBY);
+
+	MessageFrameHeader frameHeader;
+
+	frameHeader.CommandType = static_cast<uint8_t>(ServerCommandType::UPDATE_SERVER);
+	frameHeader.PayloadSize = sizeof(payload);
+
+	TArray<uint8> buffer;
+	buffer.Append((uint8*)&frameHeader, sizeof(frameHeader));
+	buffer.Append((uint8*)&payload, sizeof(payload));
+
+	int32 bytesSent = 0;
+
+	bool sendResult = ConnectionSocket->Send(buffer.GetData(), buffer.Num(), bytesSent);
+	if (bytesSent != buffer.Num() || !sendResult)
+	{
+		ESocketErrors lastSocketError = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetLastErrorCode();
+		FString socketErrorDescription = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetSocketError(lastSocketError);
+
+		UE_LOG(LogTemp, Error, TEXT("Error while submiting message to ServerManager: sent:%d, length:%d, sendResult: %d, error: %s"), bytesSent, buffer.Num(), sendResult, *socketErrorDescription)
+			return;
+	}
+	UE_LOG(LogTemp, Log, TEXT("Successfully sent update message to ServerManager"))
 }
 
 void AEmptyLobbyGameMode::FromStringToBinaryArray(const FString& Message, TArray<uint8>& OutBinaryArray)
