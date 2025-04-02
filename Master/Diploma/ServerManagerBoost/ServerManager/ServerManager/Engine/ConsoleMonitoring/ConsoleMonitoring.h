@@ -14,6 +14,10 @@
 	#endif
 #endif
 
+#ifdef timeout
+	#undef timeout
+#endif
+
 #include "../TcpServer/TcpServer.h"
 #include "../../Data/Enums/ServerState.h"
 

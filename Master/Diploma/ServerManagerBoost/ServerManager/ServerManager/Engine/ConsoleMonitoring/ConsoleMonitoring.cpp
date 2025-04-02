@@ -148,7 +148,7 @@ void ConsoleMonitoring::DrawServers()
 
 void ConsoleMonitoring::StartDrawLoop()
 {
-	timeout(1000); // ќжидание ввода до 1 секунды
+	wtimeout(stdscr, 1000); // ќжидание ввода до 1 секунды
 
 	while (true)
 	{
@@ -315,8 +315,8 @@ void ConsoleMonitoring::CalculateColumnsWidth(int& uuid, int& uri, int& currentP
 	getmaxyx(stdscr, maxWindowHeight, maxWindowWidth);
 
 	uuid = (int)(maxWindowWidth * 0.29f);
-	uri = maxWindowWidth * 0.20f;
-	currentPlayers = maxWindowWidth * 0.14f;
-	maxPlayers = maxWindowWidth * 0.14f;
-	serverState = maxWindowWidth * 0.20f;
+	uri = (int)maxWindowWidth * 0.20f;
+	currentPlayers = (int)maxWindowWidth * 0.14f;
+	maxPlayers = (int)maxWindowWidth * 0.14f;
+	serverState = (int)maxWindowWidth * 0.20f;
 }

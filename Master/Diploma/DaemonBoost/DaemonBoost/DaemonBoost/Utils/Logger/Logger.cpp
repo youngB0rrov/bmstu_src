@@ -49,7 +49,13 @@ void Logger::Log(const std::string& message)
 	std::chrono::system_clock::rep millisecondsCount = (milliseconds.count() / 1000) % 1000;
 
 	std::tm timeInfo;
+
+#ifdef _WIN32
 	localtime_s(&timeInfo, &nowTime);
+#else
+	localtime_r(&nowTime, &timeInfo);
+#endif
+
 	std::ostringstream timeStampStream;
 
 	timeStampStream << "[" << std::put_time(&timeInfo, "%Y-%m-%d %H:%M:%S")

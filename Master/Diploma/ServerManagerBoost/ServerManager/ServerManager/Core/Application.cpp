@@ -1,5 +1,5 @@
 #include "Application.h"
-#include "boost/thread.hpp";
+#include "boost/thread.hpp"
 #include "../Utils/Logger/Logger.h"
 #include "../Utils/ConfigHelper/ConfigHelper.h"
 #include <string>

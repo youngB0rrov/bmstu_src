@@ -1,6 +1,6 @@
 #include <string>
 #include "../Enums/ServerState.h"
-#include "../Network/ServerRegisterMessage.h";
+#include "../Network/ServerRegisterMessage.h"
 
 struct ServerInfo
 {
