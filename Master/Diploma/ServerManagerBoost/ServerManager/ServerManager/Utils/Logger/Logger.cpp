@@ -56,7 +56,6 @@ void Logger::Log(const std::string& message)
 	localtime_r(&nowTime, &timeInfo);
 #endif
 
-	localtime_s(&timeInfo, &nowTime);
 	std::ostringstream timeStampStream;
 
 	timeStampStream << "[" << std::put_time(&timeInfo, "%Y-%m-%d %H:%M:%S")
