@@ -52,43 +52,43 @@ void ConsoleMonitoring::DrawServers()
 	//ServerInfo serverInfo1, serverInfo2, serverInfo3, serverInfo4, serverInfo5, serverInfo6, serverInfo7;
 	//serverInfo1.m_currentPlayers = 1;
 	//serverInfo1.m_maxPlayers = 10;
-	//serverInfo1.m_uuid = "1D6B4B5D4194BE7B571B349038436F24";
+	//serverInfo1.m_uuid = "886a0c1f-5095-4724-b7a6-c8067456b475";
 	//serverInfo1.m_URI = "192.168.1.12:7777";
 	//serverInfo1.m_serverState = ServerState::LOBBY;
 
 	//serverInfo2.m_currentPlayers = 5;
 	//serverInfo2.m_maxPlayers = 10;
-	//serverInfo2.m_uuid = "E47F2C730D834563B84A1BFA52214b54";
+	//serverInfo2.m_uuid = "75295fae-715f-40e7-aaff-f69ab9ebe4d9";
 	//serverInfo2.m_URI = "192.168.1.12:7778";
 	//serverInfo2.m_serverState = ServerState::MATCH_STARTING;
 
 	//serverInfo3.m_currentPlayers = 3;
 	//serverInfo3.m_maxPlayers = 25;
-	//serverInfo3.m_uuid = "7B39A2E0330C401784240B5401344C55";
+	//serverInfo3.m_uuid = "e9f53c2b-97fd-428c-9430-0bb3cf497805";
 	//serverInfo3.m_URI = "192.168.1.12:7779";
 	//serverInfo3.m_serverState = ServerState::MATCH_IN_PROGRESS;
 
 	//serverInfo4.m_currentPlayers = 7;
 	//serverInfo4.m_maxPlayers = 12;
-	//serverInfo4.m_uuid = "D424CCF9B03346B18E2FE34EF6E94E97";
+	//serverInfo4.m_uuid = "53b64d04-31f6-4251-8c61-0c6a683fce2e";
 	//serverInfo4.m_URI = "192.168.1.12:7780";
 	//serverInfo4.m_serverState = ServerState::MATCH_IN_PROGRESS;
 
 	//serverInfo5.m_currentPlayers = 2;
 	//serverInfo5.m_maxPlayers = 30;
-	//serverInfo5.m_uuid = "7F9C79F69BC14ECE9BDDBD609C917F91";
+	//serverInfo5.m_uuid = "5819a66a-f4e8-4f68-8a83-a2f113a1a70b";
 	//serverInfo5.m_URI = "192.168.1.12:7781";
 	//serverInfo5.m_serverState = ServerState::SHTUTTING_DOWN;
 
 	//serverInfo6.m_currentPlayers = 1;
 	//serverInfo6.m_maxPlayers = 10;
-	//serverInfo6.m_uuid = "71426A2CD9614D579FB62B0DE04D6981";
+	//serverInfo6.m_uuid = "90660580-2c9e-4ad9-bb1e-1c942b45e5bb";
 	//serverInfo6.m_URI = "192.168.1.12:7782";
 	//serverInfo6.m_serverState = ServerState::LOBBY;
 
 	//serverInfo7.m_currentPlayers = 4;
 	//serverInfo7.m_maxPlayers = 20;
-	//serverInfo7.m_uuid = "2A923008C243404F88163414328D142F";
+	//serverInfo7.m_uuid = "cf778f23-1bc5-48c2-97f5-ac628302ccd3";
 	//serverInfo7.m_URI = "192.168.1.12:7783";
 	//serverInfo7.m_serverState = ServerState::MATCH_IN_PROGRESS;
 
@@ -314,9 +314,9 @@ void ConsoleMonitoring::CalculateColumnsWidth(int& uuid, int& uri, int& currentP
 	int maxWindowWidth, maxWindowHeight;
 	getmaxyx(stdscr, maxWindowHeight, maxWindowWidth);
 
-	uuid = (int)(maxWindowWidth * 0.29f);
-	uri = (int)maxWindowWidth * 0.20f;
-	currentPlayers = (int)maxWindowWidth * 0.14f;
-	maxPlayers = (int)maxWindowWidth * 0.14f;
+	uuid = (int)(maxWindowWidth * 0.33f);
+	uri = (int)maxWindowWidth * 0.15f;
+	currentPlayers = (int)maxWindowWidth * 0.15f;
+	maxPlayers = (int)maxWindowWidth * 0.12f;
 	serverState = (int)maxWindowWidth * 0.20f;
 }

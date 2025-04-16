@@ -22,8 +22,11 @@ enum class ServerState : uint8_t
 
 struct FServerRegisterMessage
 {
-    char Uri[32];
-    char Uuid[37];
+    //char Uri[32];
+    //char Uuid[37];
+    uint32_t Ip;
+    uint16_t Port;
+    uint8_t Uuid[16];
     uint16_t CurrentPlayers;
     uint16_t MaxPlayers;
     uint8_t ServerState;
@@ -31,7 +34,8 @@ struct FServerRegisterMessage
 
 struct FServerUpdateMessage
 {
-    char Uuid[37];
+    //char Uuid[37];
+    uint8_t Uuid[16];
     uint16_t CurrentPlayers;
     uint8_t ServerState;
 };

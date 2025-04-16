@@ -48,7 +48,7 @@ private:
 	void SendMessageWithSocket(const FString& Message);
 	bool InitializeSocketToServerManager();
 	bool ReconnectToServerManager();
-	FString GetServerInstanceUuid();
+	FGuid GetServerInstanceUuid();
 
 protected:
 	virtual void PostLogin(APlayerController* NewPlayer) override;

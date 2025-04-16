@@ -1,6 +1,9 @@
 #include <string>
+#include <sstream>
 #include "../Enums/ServerState.h"
 #include "../Network/ServerRegisterMessage.h"
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 struct ServerInfo
 {
@@ -29,8 +32,15 @@ struct ServerInfo
 	{
 		ServerInfo serverInfo;
 
-		serverInfo.m_uuid = std::string(raw.m_uuid);
-		serverInfo.m_URI = std::string(raw.m_uri);
+		boost::uuids::uuid appUuid;
+		memcpy(&appUuid, raw.m_uuid, 16);
+
+		boost::asio::ip::address_v4 addr(raw.m_ip);
+		std::ostringstream oss;
+		oss << addr.to_string() << ":" << raw.m_port;
+
+		serverInfo.m_uuid = boost::uuids::to_string(appUuid);
+		serverInfo.m_URI = oss.str();
 		serverInfo.m_currentPlayers = raw.m_currentPlayers;
 		serverInfo.m_maxPlayers = raw.m_maxPlayers;
 		serverInfo.m_serverState = static_cast<ServerState>(raw.m_serverState);

@@ -39,6 +39,6 @@ private:
 	void ReadDataFromServerSocket(boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
 	void ProcessDataFromClient(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
 	void ProcessDataFromServer(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
-	void ProcessBinaryDataFromServer(const MessageFrameHeader& header, const std::vector<char>& payload);
+	void ProcessBinaryDataFromServer(const MessageFrameHeader& header, const char* payload, const size_t payloadSize);
 	void SendConnectionStringToClient(std::string& message);
 };

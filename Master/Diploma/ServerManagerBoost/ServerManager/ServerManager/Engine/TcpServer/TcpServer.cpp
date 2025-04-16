@@ -118,18 +118,16 @@ void TcpServer::ReadDataFromServerSocket(boost::shared_ptr<boost::asio::ip::tcp:
             MessageFrameHeader frameHeader;
             boost::asio::read(*socket, boost::asio::buffer(&frameHeader, sizeof(MessageFrameHeader)));
 
-            std::vector<char> payload(frameHeader.m_payloadSize);
-            boost::asio::read(*socket, boost::asio::buffer(payload.data(), payload.size()));
+            //char payload[frameHeader.m_payloadSize]; - нельзя
             
-            ProcessBinaryDataFromServer(frameHeader, payload);
-            //char data[512];
+            // Возможный вариант, но тогда надо вызывать free в другой функции и в блоке finally, иначе - memory leak 
+            //void* payload = malloc(frameHeader.m_payloadSize);
+            //boost::asio::read(*socket, boost::asio::buffer(static_cast<char*>(payload), frameHeader.m_payloadSize));
 
-            //size_t bytesRead = socket->read_some(boost::asio::buffer(data));
-            //if (bytesRead > 0)
-            //{
-            //    std::string message = std::string(data, bytesRead);
-            //    ProcessDataFromServer(message, socket);
-            //}
+            std::unique_ptr<char[]> payload(new char[frameHeader.m_payloadSize]);
+            size_t bytesRead = boost::asio::read(*socket, boost::asio::buffer(payload.get(), frameHeader.m_payloadSize));
+            
+            ProcessBinaryDataFromServer(frameHeader, payload.get(), bytesRead);
         }
     }
     catch (const boost::system::system_error& error)
@@ -263,7 +261,7 @@ void TcpServer::ProcessDataFromServer(std::string& message, boost::shared_ptr<bo
     }
 }
 
-void TcpServer::ProcessBinaryDataFromServer(const MessageFrameHeader& header, const std::vector<char>& payload)
+void TcpServer::ProcessBinaryDataFromServer(const MessageFrameHeader& header, const char* payload, const size_t payloadSize)
 {
     Logger::GetInstance() << "Start processing data from dedicated server" << std::endl;
     ServerCommandType commandType = static_cast<ServerCommandType>(header.m_commandType);
@@ -274,14 +272,14 @@ void TcpServer::ProcessBinaryDataFromServer(const MessageFrameHeader& header, co
         {
             Logger::GetInstance() << "Registering server job started..." << std::endl;
             
-            if (payload.size() < sizeof(ServerRegisterMessage))
+            if (payloadSize < sizeof(ServerRegisterMessage))
             {
                 Logger::GetInstance() << "Invalid payload size for REGISTER_SERVER command. Finishing register server job" << std::endl;
                 return;
             }
 
             ServerRegisterMessage newServerRaw;
-            memcpy(&newServerRaw, payload.data(), sizeof(ServerRegisterMessage));
+            memcpy(&newServerRaw, payload, sizeof(ServerRegisterMessage));
 
             ServerInfo newServer = ServerInfo::FromRaw(newServerRaw);
 
@@ -296,14 +294,14 @@ void TcpServer::ProcessBinaryDataFromServer(const MessageFrameHeader& header, co
         {
             Logger::GetInstance() << "Updating server job started..." << std::endl;
             
-            if (payload.size() < sizeof(ServerUpdateMessage))
+            if (payloadSize < sizeof(ServerUpdateMessage))
             {
                 Logger::GetInstance() << "Invalid payload size for REGISTER_SERVER command. Finishing register server job" << std::endl;
                 return;
             }
 
             ServerUpdateMessage updatedServerRaw;
-            memcpy(&updatedServerRaw, payload.data(), sizeof(ServerUpdateMessage));
+            memcpy(&updatedServerRaw, payload, sizeof(ServerUpdateMessage));
 
             ServerUpdateStruct updatedServer = ServerUpdateStruct::FromRaw(updatedServerRaw);
             const std::string updatedInstanceUuid = updatedServer.m_uuid;
