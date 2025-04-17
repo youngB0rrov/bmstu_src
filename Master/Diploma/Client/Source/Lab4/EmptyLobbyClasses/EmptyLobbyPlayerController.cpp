@@ -10,6 +10,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Lab4/GameInstances/Lab4GameInstance.h"
 #include "Net/UnrealNetwork.h"
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "WidgetsClasses/StatusControll.h"
 
 void AEmptyLobbyPlayerController::ReceivedPlayer()
@@ -29,11 +31,16 @@ void AEmptyLobbyPlayerController::BeginPlay()
 	Super::BeginPlay();
 	ServerGetEmptyLobbySettings();
 
-	ULab4GameInstance* GameInstance = GetGameInstance<ULab4GameInstance>();
+	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
 
-	if (GameInstance)
+	if (gameInstance == nullptr) return;
+
+	SetLobbyPlayerName(gameInstance->GetPlayerName());
+	
+	if (IsLocalController() && !IsRunningDedicatedServer() && !HasAuthority())
 	{
-		SetLobbyPlayerName(GameInstance->GetPlayerName());
+		FString matchPassword = gameInstance->GetPendingPassword();
+		ServerVerifyPassword(matchPassword, this);
 	}
 }
 
@@ -226,10 +233,81 @@ void AEmptyLobbyPlayerController::PushToTalkReleased()
 	GetWorld()->Exec(GetWorld(), *FString::Printf(TEXT("ToggleSpeaking 0")));
 }
 
+void AEmptyLobbyPlayerController::KickBackToMainMenu()
+{
+	if (EmptyLobbyHUD)
+	{
+		EmptyLobbyHUD->HidePasswordPopup();
+	}
+
+	ClientTravel(TEXT("/Game/MainMenu/MainMenuMap"), ETravelType::TRAVEL_Absolute);
+}
+
+void AEmptyLobbyPlayerController::ServerVerifyPassword_Implementation(const FString& EnteredPassword, APlayerController* PlayerController)
+{
+	if (IsRunningDedicatedServer())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Server is running in dedicated mode, skip checking password"))
+		return;
+	}
+
+	AEmptyLobbyGameMode* gameMode = GetWorld()->GetAuthGameMode<AEmptyLobbyGameMode>();
+
+	if (gameMode == nullptr) return;
+
+	IOnlineSubsystem* onlineSubsystem = IOnlineSubsystem::Get();
+	if (onlineSubsystem == nullptr) return;
+
+	IOnlineSessionPtr sessionPtr = onlineSubsystem->GetSessionInterface();
+	if (sessionPtr == nullptr) return;
+	
+	const FNamedOnlineSession* pOnlineSession = sessionPtr->GetNamedSession(TEXT("Session"));
+	if (pOnlineSession == nullptr) return;
+
+	FString serverPassword;
+	pOnlineSession->SessionSettings.Get(TEXT("SESSION_PASSWORD"), serverPassword);
+
+	if (serverPassword.IsEmpty())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Server password is not set, skiping password checking process"))
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Attemp of validating password for private match"))
+
+	if (serverPassword.Compare(EnteredPassword) != 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Password validation failed, returning connected player to the main menu"))
+		ClientShowPasswordPopupAndStartCounting();
+
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Password validation completed successfully"))
+}
+
 void AEmptyLobbyPlayerController::ClientAddCancellationMessage_Implementation()
 {
 	if (EmptyLobbyHUD)
 	{
 		EmptyLobbyHUD->ShowCancellationMessage();
 	}
+}
+
+void AEmptyLobbyPlayerController::ClientShowPasswordPopupAndStartCounting_Implementation()
+{
+	if (EmptyLobbyHUD)
+	{
+		EmptyLobbyHUD->ShowPasswordPopup();
+	}
+
+	FTimerHandle tempHandle;
+
+	GetWorld()->GetTimerManager().SetTimer(
+		tempHandle,
+		this,
+		&AEmptyLobbyPlayerController::KickBackToMainMenu,
+		3.5f,
+		false
+	);
 }

@@ -32,6 +32,7 @@ private:
 	void RequestServerTime();
 	void PushToTalkPressed();
 	void PushToTalkReleased();
+	void KickBackToMainMenu();
 
 	UFUNCTION(Server, Reliable)
 	void ServerRequestServerTime(float ClientRequestTime);
@@ -41,6 +42,9 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void SetLobbyPlayerName(const FString& PlayerName);
+
+	UFUNCTION(Server, Reliable)
+	void ServerVerifyPassword(const FString& EnteredPassword, APlayerController* PlayerController);
 	
 	bool bStartCountdownTimer = false;
 
@@ -85,4 +89,7 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void ClientAddCancellationMessage();
+
+	UFUNCTION(Client, Reliable)
+	void ClientShowPasswordPopupAndStartCounting();
 };

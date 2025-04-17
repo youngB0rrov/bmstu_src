@@ -17,6 +17,7 @@
 #include "GameFramework/PlayerState.h"
 #include "WebSocketsModule.h"
 #include "Lab4/Runnable/FReceiveThread.h"
+#include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineLeaderboardInterface.h"
 #include "Interfaces/OnlineStatsInterface.h"
 #include "Interfaces/OnlineUserCloudInterface.h"
@@ -75,8 +76,7 @@ void ULab4GameInstance::Init()
 	IdentityPtr = OnlineSubsystem->GetIdentityInterface();
 	
 	if(!SessionPtr.IsValid()) return;
-	
-	SessionPtr->OnFindSessionsCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnFindSessionsComplete);
+
 	SessionPtr->OnJoinSessionCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnJoinSessionComplete);
 
 	if (GEngine != nullptr)
@@ -285,6 +285,12 @@ void ULab4GameInstance::CreateSession()
 	
 	SessionSettings.Set(ServerNameKey, setting);
 	SessionSettings.Set(SEARCH_KEYWORDS, FString("Test session"), EOnlineDataAdvertisementType::ViaOnlineService);
+
+	if (!PendingPassword.IsEmpty())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Private match has password to connect, setting pasword in session settings"))
+		SessionSettings.Set(TEXT("SESSION_PASSWORD"), PendingPassword, EOnlineDataAdvertisementType::DontAdvertise);
+	}
 	
 	const FUniqueNetIdPtr NetID = GetFirstGamePlayer()->GetPreferredUniqueNetId().GetUniqueNetId();
 	GetFirstGamePlayer()->SetCachedUniqueNetId(NetID);
@@ -309,6 +315,8 @@ void ULab4GameInstance::OnCreateSessionComplete(FName SessionName, bool Success)
 
 void ULab4GameInstance::DestroySession()
 {
+	PendingPassword.Empty();
+
 	if (OnlineSubsystem == nullptr) return;
 
 	SessionPtr = OnlineSubsystem->GetSessionInterface();
@@ -332,6 +340,8 @@ void ULab4GameInstance::OnDestroySessionComplete(FName SessionName, bool Success
 
 void ULab4GameInstance::FindSessions()
 {
+	UE_LOG(LogTemp, Log, TEXT("Find session button clicked"))
+
 	if (OnlineSubsystem == nullptr) return;
 
 	if (!bIsLanGame)
@@ -366,7 +376,10 @@ void ULab4GameInstance::OnFindSessionsComplete(bool Success)
 		}
 
 		m_pMainMenu->OnInstanceFoundServers(ServersList);
+	}
 
+	if (SessionPtr != nullptr)
+	{
 		SessionPtr->ClearOnFindSessionsCompleteDelegates(this);
 	}
 }
@@ -522,18 +535,19 @@ void ULab4GameInstance::RefreshServersList()
 		m_pSessionSearch->bIsLanQuery = true;
 		m_pSessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 		SessionPtr->FindSessions(0, m_pSessionSearch.ToSharedRef());
+		SessionPtr->OnFindSessionsCompleteDelegates.AddUObject(this, &ULab4GameInstance::OnFindSessionsComplete);
 		return;
 	}
 	
-	SearchSettings = MakeShareable(new FOnlineSessionSearch());
-	
-	if (SearchSettings.IsValid())
-	{
-		SearchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("Test session"), EOnlineComparisonOp::Equals);
-		SearchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
-		SearchSettings->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
-		SessionPtr->FindSessions(0,SearchSettings.ToSharedRef());
-	}
+	//SearchSettings = MakeShareable(new FOnlineSessionSearch());
+	//
+	//if (SearchSettings.IsValid())
+	//{
+	//	SearchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("Test session"), EOnlineComparisonOp::Equals);
+	//	SearchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+	//	SearchSettings->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+	//	SessionPtr->FindSessions(0,SearchSettings.ToSharedRef());
+	//}
 }
 
 bool ULab4GameInstance::ChangeConfigToOnline()

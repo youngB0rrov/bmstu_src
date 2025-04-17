@@ -10,9 +10,12 @@
 #include "Kismet/GameplayStatics.h"
 #include "WidgetsClasses/StatusControll.h"
 #include "WidgetsClasses/StatusGrid.h"
+#include "WidgetsClasses/InvalidPasswordWidget.h"
 
 AEmptyLobbyHUD::AEmptyLobbyHUD()
 {
+	if (IsRunningDedicatedServer()) return;
+
 	static  ConstructorHelpers::FClassFinder<UUserWidget> BP_StatusControllClass(TEXT("/Game/EmptyLobby/WBP_StatusControllWidget"));
 	if (BP_StatusControllClass.Succeeded())
 	{
@@ -23,6 +26,12 @@ AEmptyLobbyHUD::AEmptyLobbyHUD()
 	if (BP_StatusGridClass.Succeeded())
 	{
 		StatusGridWidgetClass = BP_StatusGridClass.Class;
+	}
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> BP_InvalidPasswordWidgetClass(TEXT("/Game/EmptyLobby/WBP_InvalidPasswordWidget"));
+	if (BP_InvalidPasswordWidgetClass.Succeeded())
+	{
+		InvalidPasswordWidgetClass = BP_InvalidPasswordWidgetClass.Class;
 	}
 }
 
@@ -110,6 +119,26 @@ void AEmptyLobbyHUD::ShowCancellationMessage()
 			CancellationMessageDuration,
 			false
 		);
+	}
+}
+
+void AEmptyLobbyHUD::ShowPasswordPopup()
+{
+	AEmptyLobbyPlayerController* emptyLobbyPlayerController = Cast<AEmptyLobbyPlayerController>(GetOwningPlayerController());
+
+	if (emptyLobbyPlayerController && InvalidPasswordWidgetClass)
+	{
+		InvalidPasswordPopup = CreateWidget<UInvalidPasswordWidget>(emptyLobbyPlayerController, InvalidPasswordWidgetClass);
+		InvalidPasswordPopup->AddToViewport();
+	}
+}
+
+void AEmptyLobbyHUD::HidePasswordPopup()
+{
+	if (InvalidPasswordPopup != nullptr)
+	{
+		InvalidPasswordPopup->RemoveFromViewport();
+		InvalidPasswordPopup = nullptr;
 	}
 }
 

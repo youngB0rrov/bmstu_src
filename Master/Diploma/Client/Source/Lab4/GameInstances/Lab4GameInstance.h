@@ -138,6 +138,9 @@ public:
 	FString LoadBase64EncodedData(const FString& FilePath);
 	void ShowMatchmakingInputWidget(bool bIsVisible);
 
+	FORCEINLINE void SetPendingPassword(const FString& Password) { PendingPassword = Password; }
+	FORCEINLINE FString GetPendingPassword() const { return PendingPassword; };
+
 private:
 	UFUNCTION()
 	void CreateSession();
@@ -195,6 +198,8 @@ private:
 	FString m_PlayerName;
 	FName m_ServerName;
 	uint32 m_JoinIndex;
+
+	FString PendingPassword;
 
 	TArray<FString> m_PlayerNames;
 	TArray<class ALab4Character*> m_Characters;

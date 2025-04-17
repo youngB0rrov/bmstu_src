@@ -21,6 +21,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UUserWidget> StatusGridWidgetClass;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UUserWidget> InvalidPasswordWidgetClass;
+
 	const float CancellationMessageDuration = 1.9f;
 	
 public:
@@ -31,6 +34,8 @@ public:
 	void SetTimerVisability(bool bIsVisible);
 	void RefreshGrid();
 	void ShowCancellationMessage();
+	void ShowPasswordPopup();
+	void HidePasswordPopup();
 
 	UFUNCTION()
 	void HideCansellationMessage();
@@ -40,4 +45,7 @@ public:
 
 	UPROPERTY()
 	class UStatusGrid* StatusGridWidget;
+
+	UPROPERTY()
+	class UInvalidPasswordWidget* InvalidPasswordPopup;
 };

@@ -113,14 +113,14 @@ void AMainMenuInitializer::OnInstanceFoundServers(const TArray<FString>& ServerN
 {
 	m_pMainMenu->SetServersList(ServerNames);
 
-	if (ServerNames.Num() == 0)
-	{
-		m_pGameInstance->RefreshServersList();
-	}
-	else
-	{
-		m_pServersListUpdater->BeginTimer(m_UpdateServersListTime);
-	}
+	//if (ServerNames.Num() == 0)
+	//{
+	//	m_pGameInstance->RefreshServersList();
+	//}
+	//else
+	//{
+	//	m_pServersListUpdater->BeginTimer(m_UpdateServersListTime);
+	//}
 }
 
 void AMainMenuInitializer::SetWidgetOnLoginComplete()

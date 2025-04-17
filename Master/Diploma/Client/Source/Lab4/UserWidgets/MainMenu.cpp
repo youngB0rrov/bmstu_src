@@ -49,6 +49,10 @@ bool UMainMenu::Initialize()
 	ConfirmCredentials->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnConfirmCredentialsClicked);
 	TogglePassword->OnPressed.AddDynamic(this, &UMainMenu::UMainMenu::OnTogglePasswordButtonPressed);
 	TogglePassword->OnReleased.AddDynamic(this, &UMainMenu::UMainMenu::OnTogglePasswordButtonReleased);
+	CreateMatchPasswordToggleButton->OnPressed.AddDynamic(this, &UMainMenu::OnCreateMatchPasswordToggleButtonPressed);
+	CreateMatchPasswordToggleButton->OnReleased.AddDynamic(this, &UMainMenu::OnCreateMatchPasswordToggleButtonReleased);
+	JoinMatchPasswordToggleButton->OnPressed.AddDynamic(this, &UMainMenu::OnJoinMatchPasswordToggleButtonPressed);
+	JoinMatchPasswordToggleButton->OnReleased.AddDynamic(this, &UMainMenu::OnJoinMatchPasswordToggleButtonReleased);
 	TopPlayersButton->OnClicked.AddDynamic(this, &UMainMenu::OnLeaderboardsButtonClicked);
 	LeaderboardBackButton->OnClicked.AddDynamic(this, &UMainMenu::OnLeaderboardBackButtonClicked);
 	RecruitsLeagueButton->OnClicked.AddDynamic(this, &UMainMenu::UMainMenu::OnRecruitsLeagueButtonClicked);
@@ -62,6 +66,15 @@ bool UMainMenu::Initialize()
 	InternetPrivateGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnPrivateGameButtonClicked);
 	CancelPrivateGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnCancelPrivateGameButtonClicked);
 	CancelLanGameButton->OnClicked.AddDynamic(this, &UMainMenu::OnCancelLanGameButtonClicked);
+
+	if (CreateMatchPassword != nullptr)
+	{
+		CreateMatchPassword->SetIsPassword(true);
+	}
+	if (JoinMatchPassword != nullptr)
+	{
+		JoinMatchPassword->SetIsPassword(true);
+	}
 
 	ULab4GameInstance* gameInstance = GetGameInstance<ULab4GameInstance>();
 	bool bIsLoggedIn = false;
@@ -173,6 +186,16 @@ void UMainMenu::OnClickedMain()
 		MenuSwitcher->SetActiveWidget(InternetGameWidget);
 	}
 
+	if (JoinMatchPassword != nullptr)
+	{
+		JoinMatchPassword->SetText(FText::GetEmpty());
+	}
+
+	if (CreateMatchPassword != nullptr)
+	{
+		CreateMatchPassword->SetText(FText::GetEmpty());
+	}
+
 	m_pMainMenu->OnWidgetToMain(m_bIsCreateGame);
 }
 
@@ -193,6 +216,8 @@ void UMainMenu::OnClickedPlayerNameAtJoining()
 		m_pMainMenu->OnWidgetToStartGame(FString(""), m_bIsCreateGame);
 	}
 
+	FString matchPassword = JoinMatchPassword->GetText().ToString();
+	GetGameInstance<ULab4GameInstance>()->SetPendingPassword(matchPassword);
 }
 
 void UMainMenu::OnClickedPlayerNameAtCreation()
@@ -213,6 +238,12 @@ void UMainMenu::OnClickedPlayerNameAtCreation()
 		UE_LOG(LogTemp, Warning, TEXT("Clicked online"));
 		m_pMainMenu->OnWidgetToPlayerNameAtCreation(SessionNameEnterText->GetText().ToString());
 		m_pMainMenu->OnWidgetToStartGame(FString(""), m_bIsCreateGame);
+	}
+
+	FString matchPassword = CreateMatchPassword->GetText().ToString();
+	if (!matchPassword.IsEmpty())
+	{
+		GetGameInstance<ULab4GameInstance>()->SetPendingPassword(matchPassword);
 	}
 }
 
@@ -276,6 +307,34 @@ void UMainMenu::OnTogglePasswordButtonReleased()
 	{
 		UserPassword->SetIsPassword(true);
 	}
+}
+
+void UMainMenu::OnJoinMatchPasswordToggleButtonPressed()
+{
+	if (JoinMatchPassword == nullptr) return;
+
+	JoinMatchPassword->SetIsPassword(false);
+}
+
+void UMainMenu::OnJoinMatchPasswordToggleButtonReleased()
+{
+	if (JoinMatchPassword == nullptr) return;
+
+	JoinMatchPassword->SetIsPassword(true);
+}
+
+void UMainMenu::OnCreateMatchPasswordToggleButtonPressed()
+{
+	if (CreateMatchPassword == nullptr) return;
+
+	CreateMatchPassword->SetIsPassword(false);
+}
+
+void UMainMenu::OnCreateMatchPasswordToggleButtonReleased()
+{
+	if (CreateMatchPassword == nullptr) return;
+
+	CreateMatchPassword->SetIsPassword(true);
 }
 
 void UMainMenu::OnLogInButtonClicked()

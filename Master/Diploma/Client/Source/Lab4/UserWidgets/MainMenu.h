@@ -57,6 +57,18 @@ public:
 	void OnTogglePasswordButtonReleased();
 
 	UFUNCTION()
+	void OnJoinMatchPasswordToggleButtonPressed();
+
+	UFUNCTION()
+	void OnJoinMatchPasswordToggleButtonReleased();
+
+	UFUNCTION()
+	void OnCreateMatchPasswordToggleButtonPressed();
+
+	UFUNCTION()
+	void OnCreateMatchPasswordToggleButtonReleased();
+
+	UFUNCTION()
 	void OnLogInButtonClicked();
 	
 	UFUNCTION()
@@ -214,6 +226,18 @@ private:
 
 	UPROPERTY(meta=(BindWidget))
 	UEditableText* UserPassword;
+
+	UPROPERTY(meta=(BindWidget))
+	UEditableText* JoinMatchPassword;
+
+	UPROPERTY(meta = (BindWidget))
+	UEditableText* CreateMatchPassword;
+
+	UPROPERTY(meta=(BindWidget))
+	UButton* JoinMatchPasswordToggleButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* CreateMatchPasswordToggleButton;
 
 	UPROPERTY(meta=(BindWidget))
 	class UWidgetSwitcher *MenuSwitcher;

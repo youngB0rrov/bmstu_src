@@ -318,6 +318,18 @@ void AEmptyLobbyGameMode::UpdatePlayersInfoForServerManager()
 
 void AEmptyLobbyGameMode::RegisterPlayersInfoByteForServerManager(const int32 Port)
 {
+	if (!IsRunningDedicatedServer())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Server is not dedicated, skip sending udpate command to server manager"))
+			return;
+	}
+
+	if (ConnectionSocket == nullptr)
+	{
+		UE_LOG(LogTemp, Log, TEXT("ConnectionSocket is null. Skip sending update command to server manager"))
+			return;
+	}
+
 	FServerRegisterMessage payload;
 
 	//FCStringAnsi::Strncpy(payload.Uuid, TCHAR_TO_ANSI(*GetServerInstanceUuid()), sizeof(payload.Uuid));
@@ -360,6 +372,18 @@ void AEmptyLobbyGameMode::RegisterPlayersInfoByteForServerManager(const int32 Po
 
 void AEmptyLobbyGameMode::UpdatePlayersInfoByteForServerManager()
 {
+	if (!IsRunningDedicatedServer())
+	{
+		UE_LOG(LogTemp, Log, TEXT("Server is not dedicated, skip sending udpate command to server manager"))
+		return;
+	}
+
+	if (ConnectionSocket == nullptr)
+	{
+		UE_LOG(LogTemp, Log, TEXT("ConnectionSocket is null. Skip sending update command to server manager"))
+		return;
+	}
+
 	FServerUpdateMessage payload;
 
 	//FCStringAnsi::Strncpy(payload.Uuid, TCHAR_TO_ANSI(*GetServerInstanceUuid()), sizeof(payload.Uuid));
