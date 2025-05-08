@@ -41,4 +41,6 @@ private:
 	void ProcessDataFromServer(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
 	void ProcessBinaryDataFromServer(const ServerNetworkProtocol::MessageFrameHeader& header, const char* payload, const size_t payloadSize);
 	void SendConnectionStringToClient(std::string& message);
+	static ServerNetworkProtocol::ServerRegisterMessage ParseServerRegisterMessage(const char* data, size_t size);
+	static ServerNetworkProtocol::ServerUpdateMessage ParseServerUpdateMessage(const char* data, size_t size);
 };

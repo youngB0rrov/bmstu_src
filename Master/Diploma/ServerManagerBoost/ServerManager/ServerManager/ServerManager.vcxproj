@@ -155,6 +155,7 @@
     <ClInclude Include="Utils\CommandsHelper\CommandsHelper.h" />
     <ClInclude Include="Utils\ConfigHelper\ConfigHelper.h" />
     <ClInclude Include="Utils\Logger\Logger.h" />
+    <ClInclude Include="Utils\PackageReader\PackageReader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="appsettings.ini" />

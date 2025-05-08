@@ -13,6 +13,7 @@
 #include "../../Data/Enums/ServerCommandType.h"
 #include "../../Data/Models/ServerUpdateInfo.h"
 #include "../../Data/Network/ServerNetworkProtocol.h"
+#include "../../Utils/PackageReader/PackageReader.h"
 
 TcpServer::TcpServer()
 {
@@ -275,8 +276,9 @@ void TcpServer::ProcessBinaryDataFromServer(const ServerNetworkProtocol::Message
                 return;
             }
 
-            ServerNetworkProtocol::ServerRegisterMessage newServerRaw;
-            memcpy(&newServerRaw, payload, sizeof(ServerNetworkProtocol::ServerRegisterMessage));
+            //ServerNetworkProtocol::ServerRegisterMessage newServerRaw;
+            //memcpy(&newServerRaw, payload, sizeof(ServerNetworkProtocol::ServerRegisterMessage));
+            ServerNetworkProtocol::ServerRegisterMessage newServerRaw = ParseServerRegisterMessage(payload, payloadSize);
 
             ServerInfo newServer = ServerInfo::FromRaw(newServerRaw);
 
@@ -298,8 +300,9 @@ void TcpServer::ProcessBinaryDataFromServer(const ServerNetworkProtocol::Message
                 return;
             }
 
-            ServerNetworkProtocol::ServerUpdateMessage updatedServerRaw;
-            memcpy(&updatedServerRaw, payload, sizeof(ServerNetworkProtocol::ServerUpdateMessage));
+            //ServerNetworkProtocol::ServerUpdateMessage updatedServerRaw;
+            //memcpy(&updatedServerRaw, payload, sizeof(ServerNetworkProtocol::ServerUpdateMessage));
+            ServerNetworkProtocol::ServerUpdateMessage updatedServerRaw = ParseServerUpdateMessage(payload, payloadSize);
 
             ServerUpdateStruct updatedServer = ServerUpdateStruct::FromRaw(updatedServerRaw);
             const std::string updatedInstanceUuid = updatedServer.m_uuid;
@@ -352,4 +355,31 @@ void TcpServer::SendConnectionStringToClient(std::string& message)
     Logger::GetInstance() << "Senging data to cleint: " << message << std::endl;
     SendDataToSocket(firstInitiatorInQueue.Socket, message);
     _connectedClients.erase(_connectedClients.begin());
+}
+
+ServerNetworkProtocol::ServerRegisterMessage TcpServer::ParseServerRegisterMessage(const char* data, size_t size)
+{
+    PackageReader reader(data, size);
+    ServerNetworkProtocol::ServerRegisterMessage serverRegisterMessage{};
+
+    serverRegisterMessage.m_ip = reader.ReadUInt32();
+    serverRegisterMessage.m_port = reader.ReadUInt16();
+    reader.ReadBytes(serverRegisterMessage.m_uuid, 16);
+    serverRegisterMessage.m_currentPlayers = reader.ReadUInt16();
+    serverRegisterMessage.m_maxPlayers = reader.ReadUInt16();
+    serverRegisterMessage.m_serverState = reader.ReadUInt8();
+
+    return serverRegisterMessage;
+}
+
+ServerNetworkProtocol::ServerUpdateMessage TcpServer::ParseServerUpdateMessage(const char* data, size_t size)
+{
+    PackageReader reader(data, size);
+    ServerNetworkProtocol::ServerUpdateMessage serverUpdateMessage{};
+
+    reader.ReadBytes(serverUpdateMessage.m_uuid, 16);
+    serverUpdateMessage.m_currentPlayers = reader.ReadUInt16();
+    serverUpdateMessage.m_serverState = reader.ReadUInt8();
+
+    return serverUpdateMessage;
 }
