@@ -104,19 +104,16 @@
     <ClInclude Include="Core\Application.h">
       <Filter>Исходные файлы\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Data\Network\MessageFrameHeader.h">
-      <Filter>Исходные файлы\Data\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Data\Network\ServerRegisterMessage.h">
-      <Filter>Исходные файлы\Data\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Data\Network\ServerUpdateMessage.h">
-      <Filter>Исходные файлы\Data\Network</Filter>
-    </ClInclude>
     <ClInclude Include="Data\Models\ClientInfo.h">
       <Filter>Исходные файлы\Data\Models</Filter>
     </ClInclude>
     <ClInclude Include="Data\Models\ServerInfo.h">
+      <Filter>Исходные файлы\Data\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Network\ServerNetworkProtocol.h">
+      <Filter>Исходные файлы\Data\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Data\Models\ServerUpdateInfo.h">
       <Filter>Исходные файлы\Data\Models</Filter>
     </ClInclude>
   </ItemGroup>

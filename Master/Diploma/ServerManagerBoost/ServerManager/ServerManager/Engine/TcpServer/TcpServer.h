@@ -6,7 +6,7 @@
 #include <mutex>
 #include "../../Data/Models/ClientInfo.h"
 #include "../../Data/Models/ServerInfo.h"
-#include "../../Data/Network/MessageFrameHeader.h"
+#include "../../Data/Network/ServerNetworkProtocol.h"
 
 class TcpServer
 {
@@ -39,6 +39,6 @@ private:
 	void ReadDataFromServerSocket(boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
 	void ProcessDataFromClient(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
 	void ProcessDataFromServer(std::string& message, boost::shared_ptr<boost::asio::ip::tcp::socket> socket);
-	void ProcessBinaryDataFromServer(const MessageFrameHeader& header, const char* payload, const size_t payloadSize);
+	void ProcessBinaryDataFromServer(const ServerNetworkProtocol::MessageFrameHeader& header, const char* payload, const size_t payloadSize);
 	void SendConnectionStringToClient(std::string& message);
 };

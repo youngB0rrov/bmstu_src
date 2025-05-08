@@ -148,9 +148,8 @@
     <ClInclude Include="Data\Enums\ServerState.h" />
     <ClInclude Include="Data\Models\ClientInfo.h" />
     <ClInclude Include="Data\Models\ServerInfo.h" />
-    <ClInclude Include="Data\Network\MessageFrameHeader.h" />
-    <ClInclude Include="Data\Network\ServerRegisterMessage.h" />
-    <ClInclude Include="Data\Network\ServerUpdateMessage.h" />
+    <ClInclude Include="Data\Models\ServerUpdateInfo.h" />
+    <ClInclude Include="Data\Network\ServerNetworkProtocol.h" />
     <ClInclude Include="Engine\ConsoleMonitoring\ConsoleMonitoring.h" />
     <ClInclude Include="Engine\TcpServer\TcpServer.h" />
     <ClInclude Include="Utils\CommandsHelper\CommandsHelper.h" />

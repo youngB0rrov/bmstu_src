@@ -11,9 +11,8 @@
 #include "../../Utils/Logger/Logger.h"
 #include "../../Utils/CommandsHelper/CommandsHelper.h"
 #include "../../Data/Enums/ServerCommandType.h"
-#include "../../Data/Network/MessageFrameHeader.h"
-#include "../../Data/Network/ServerRegisterMessage.h"
-#include "../../Data/Network/ServerUpdateMessage.h"
+#include "../../Data/Models/ServerUpdateInfo.h"
+#include "../../Data/Network/ServerNetworkProtocol.h"
 
 TcpServer::TcpServer()
 {
@@ -113,21 +112,18 @@ void TcpServer::ReadDataFromServerSocket(boost::shared_ptr<boost::asio::ip::tcp:
 {
     try
     {
+        constexpr size_t maxServerPackageSize = ServerNetworkProtocol::MaxServerPackageSize;
+        char payload[maxServerPackageSize]{};
+
         while (true)
         {
-            MessageFrameHeader frameHeader;
-            boost::asio::read(*socket, boost::asio::buffer(&frameHeader, sizeof(MessageFrameHeader)));
+            ServerNetworkProtocol::MessageFrameHeader frameHeader;
+            boost::asio::read(*socket, boost::asio::buffer(&frameHeader, sizeof(ServerNetworkProtocol::MessageFrameHeader)));
 
-            //char payload[frameHeader.m_payloadSize]; - нельзя
+            //std::unique_ptr<char[]> payload(new char[frameHeader.m_payloadSize]);
+            size_t bytesRead = boost::asio::read(*socket, boost::asio::buffer(payload, frameHeader.m_payloadSize));
             
-            // Возможный вариант, но тогда надо вызывать free в другой функции и в блоке finally, иначе - memory leak 
-            //void* payload = malloc(frameHeader.m_payloadSize);
-            //boost::asio::read(*socket, boost::asio::buffer(static_cast<char*>(payload), frameHeader.m_payloadSize));
-
-            std::unique_ptr<char[]> payload(new char[frameHeader.m_payloadSize]);
-            size_t bytesRead = boost::asio::read(*socket, boost::asio::buffer(payload.get(), frameHeader.m_payloadSize));
-            
-            ProcessBinaryDataFromServer(frameHeader, payload.get(), bytesRead);
+            ProcessBinaryDataFromServer(frameHeader, payload, bytesRead);
         }
     }
     catch (const boost::system::system_error& error)
@@ -261,7 +257,7 @@ void TcpServer::ProcessDataFromServer(std::string& message, boost::shared_ptr<bo
     }
 }
 
-void TcpServer::ProcessBinaryDataFromServer(const MessageFrameHeader& header, const char* payload, const size_t payloadSize)
+void TcpServer::ProcessBinaryDataFromServer(const ServerNetworkProtocol::MessageFrameHeader& header, const char* payload, const size_t payloadSize)
 {
     Logger::GetInstance() << "Start processing data from dedicated server" << std::endl;
     ServerCommandType commandType = static_cast<ServerCommandType>(header.m_commandType);
@@ -271,15 +267,16 @@ void TcpServer::ProcessBinaryDataFromServer(const MessageFrameHeader& header, co
         case ServerCommandType::REGISTER_SERVER:
         {
             Logger::GetInstance() << "Registering server job started..." << std::endl;
+            std::lock_guard<std::mutex> lock(_runningServersMutex);
             
-            if (payloadSize < sizeof(ServerRegisterMessage))
+            if (payloadSize < ServerNetworkProtocol::PackageSizes[(int)ServerCommandType::REGISTER_SERVER])
             {
                 Logger::GetInstance() << "Invalid payload size for REGISTER_SERVER command. Finishing register server job" << std::endl;
                 return;
             }
 
-            ServerRegisterMessage newServerRaw;
-            memcpy(&newServerRaw, payload, sizeof(ServerRegisterMessage));
+            ServerNetworkProtocol::ServerRegisterMessage newServerRaw;
+            memcpy(&newServerRaw, payload, sizeof(ServerNetworkProtocol::ServerRegisterMessage));
 
             ServerInfo newServer = ServerInfo::FromRaw(newServerRaw);
 
@@ -293,15 +290,16 @@ void TcpServer::ProcessBinaryDataFromServer(const MessageFrameHeader& header, co
         case ServerCommandType::UPDATE_SERVER:
         {
             Logger::GetInstance() << "Updating server job started..." << std::endl;
+            std::lock_guard<std::mutex> lock(_runningServersMutex);
             
-            if (payloadSize < sizeof(ServerUpdateMessage))
+            if (payloadSize < ServerNetworkProtocol::PackageSizes[(int)ServerCommandType::UPDATE_SERVER])
             {
-                Logger::GetInstance() << "Invalid payload size for REGISTER_SERVER command. Finishing register server job" << std::endl;
+                Logger::GetInstance() << "Invalid payload size for UPDATE_SERVER command. Finishing register server job" << std::endl;
                 return;
             }
 
-            ServerUpdateMessage updatedServerRaw;
-            memcpy(&updatedServerRaw, payload, sizeof(ServerUpdateMessage));
+            ServerNetworkProtocol::ServerUpdateMessage updatedServerRaw;
+            memcpy(&updatedServerRaw, payload, sizeof(ServerNetworkProtocol::ServerUpdateMessage));
 
             ServerUpdateStruct updatedServer = ServerUpdateStruct::FromRaw(updatedServerRaw);
             const std::string updatedInstanceUuid = updatedServer.m_uuid;

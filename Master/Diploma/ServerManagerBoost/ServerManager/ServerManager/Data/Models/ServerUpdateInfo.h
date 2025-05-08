@@ -1,20 +1,12 @@
 #pragma once
 
+#include <string>
 #include <cstdint>
 #include <string>
 #include "../Enums/ServerState.h"
+#include "../Network/ServerNetworkProtocol.h"
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
-
-#pragma pack(push, 1)
-struct ServerUpdateMessage
-{
-	//char m_uuid[37];
-	uint8_t m_uuid[16];
-	uint16_t m_currentPlayers;
-	uint8_t m_serverState;
-};
-#pragma pack(pop)
 
 struct ServerUpdateStruct
 {
@@ -22,7 +14,9 @@ struct ServerUpdateStruct
 	int m_currentPlayers;
 	ServerState m_serverState;
 
-	static ServerUpdateStruct FromRaw(const ServerUpdateMessage& raw)
+	ServerUpdateStruct(): m_uuid(""), m_currentPlayers(0), m_serverState(ServerState::LOBBY) { }
+
+	static ServerUpdateStruct FromRaw(const ServerNetworkProtocol::ServerUpdateMessage& raw)
 	{
 		ServerUpdateStruct serverUpdateStruct;
 

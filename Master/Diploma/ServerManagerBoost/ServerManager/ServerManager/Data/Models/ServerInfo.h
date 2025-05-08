@@ -1,7 +1,7 @@
 #include <string>
 #include <sstream>
 #include "../Enums/ServerState.h"
-#include "../Network/ServerRegisterMessage.h"
+#include "../Network/ServerNetworkProtocol.h"
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
@@ -28,7 +28,7 @@ struct ServerInfo
 
 	}
 
-	static ServerInfo FromRaw(const ServerRegisterMessage& raw)
+	static ServerInfo FromRaw(const ServerNetworkProtocol::ServerRegisterMessage& raw)
 	{
 		ServerInfo serverInfo;
 
