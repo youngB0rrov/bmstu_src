@@ -267,9 +267,13 @@ void AEmptyLobbyPlayerController::ServerVerifyPassword_Implementation(const FStr
 	FString serverPassword;
 	pOnlineSession->SessionSettings.Get(TEXT("SESSION_PASSWORD"), serverPassword);
 
+	AEmptyLobbyPlayerState* playerState = PlayerController->GetPlayerState<AEmptyLobbyPlayerState>();
+
 	if (serverPassword.IsEmpty())
 	{
 		UE_LOG(LogTemp, Log, TEXT("Server password is not set, skiping password checking process"))
+		playerState->bIsVerified = true;
+
 		return;
 	}
 
@@ -283,6 +287,7 @@ void AEmptyLobbyPlayerController::ServerVerifyPassword_Implementation(const FStr
 		return;
 	}
 
+	playerState->bIsVerified = true;
 	UE_LOG(LogTemp, Log, TEXT("Password validation completed successfully"))
 }
 
@@ -307,7 +312,15 @@ void AEmptyLobbyPlayerController::ClientShowPasswordPopupAndStartCounting_Implem
 		tempHandle,
 		this,
 		&AEmptyLobbyPlayerController::KickBackToMainMenu,
-		3.5f,
+		10.0f,
 		false
 	);
+}
+
+void AEmptyLobbyPlayerController::OnPlayerVerified()
+{
+	if (EmptyLobbyHUD)
+	{
+		EmptyLobbyHUD->RefreshGrid();
+	}
 }

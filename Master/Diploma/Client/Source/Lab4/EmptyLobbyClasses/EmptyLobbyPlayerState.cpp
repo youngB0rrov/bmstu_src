@@ -17,6 +17,7 @@ void AEmptyLobbyPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AEmptyLobbyPlayerState, bIsReady);
+	DOREPLIFETIME(AEmptyLobbyPlayerState, bIsVerified);
 }
 
 void AEmptyLobbyPlayerState::OnRep_bIsReady()
@@ -33,6 +34,31 @@ void AEmptyLobbyPlayerState::OnRep_bIsReady()
 			UE_LOG(LogTemp, Warning, TEXT("Refresh player table in OnRep_funciton"));
 			EmptyLobbyHUD->RefreshGrid();
 		}
+	}
+}
+
+void AEmptyLobbyPlayerState::OnRep_bIsVerified()
+{
+	AEmptyLobbyPlayerController* pc = Cast<AEmptyLobbyPlayerController>(GetOwner());
+	if (pc != nullptr)
+	{
+		pc->OnPlayerVerified();
+	}
+}
+
+void AEmptyLobbyPlayerState::BeginPlay()
+{
+	Super::BeginPlay();
+
+	AEmptyLobbyPlayerController* pc = Cast<AEmptyLobbyPlayerController>(GetOwner());
+	if (pc && pc->IsLocalController() && HasAuthority())
+	{
+		bIsVerified = true;
+	}
+
+	if (IsRunningDedicatedServer())
+	{
+		bIsVerified = true;
 	}
 }
 

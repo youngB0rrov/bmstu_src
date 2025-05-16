@@ -92,4 +92,6 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void ClientShowPasswordPopupAndStartCounting();
+
+	void OnPlayerVerified();
 };

@@ -48,7 +48,7 @@ void UStatusGrid::SetPlayersList()
 	{
 		AEmptyLobbyPlayerState* EmptyLobbyPlayerState = Cast<AEmptyLobbyPlayerState>(*It);
 
-		if (EmptyLobbyPlayerState)
+		if (EmptyLobbyPlayerState && EmptyLobbyPlayerState->bIsVerified)
 		{
 			EmptyLobbyPlayerStates.Push(EmptyLobbyPlayerState);
 		}

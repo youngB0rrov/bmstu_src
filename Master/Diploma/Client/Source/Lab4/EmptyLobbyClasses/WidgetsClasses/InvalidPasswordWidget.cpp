@@ -17,5 +17,11 @@ bool UInvalidPasswordWidget::Initialize()
 
 void UInvalidPasswordWidget::OnInvalidPasswordConfirmationButtonClicked()
 {
+	APlayerController* pc = GetOwningPlayer();
+	if (pc != nullptr)
+	{
+		pc->ClientTravel(TEXT("/Game/MainMenu/MainMenuMap"), ETravelType::TRAVEL_Absolute);
+	}
+	
 	this->RemoveFromViewport();
 }

@@ -22,11 +22,20 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_bIsReady)
 	bool bIsReady;
 
+	UPROPERTY(ReplicatedUsing = OnRep_bIsVerified)
+	bool bIsVerified;
+
 	FORCEINLINE bool GetPlayerStatus() const { return bIsReady; }
 
 	UFUNCTION()
 	void OnRep_bIsReady();
 
+	UFUNCTION()
+	void OnRep_bIsVerified();
+
 	UFUNCTION(Server, Reliable)
 	void SetStatusToReady(const uint16& ButtonFlag);
+	
+protected:
+	virtual void BeginPlay() override;
 };
